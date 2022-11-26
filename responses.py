@@ -3,6 +3,7 @@ from requests_oauthlib import OAuth1Session
 from KEYS_DONT_PUSH import *
 
 import json
+import sqlite3
 
 
 class Respose():
@@ -16,8 +17,7 @@ class Respose():
         response = self.auth.get(self.base_url + sub_url)   
         #format response into dict
         self.response = json.loads(response._content.decode("utf-8"))
+        return self.response["data"]
 
-
-    def display_response(self) -> None:
-        print(self.response["data"])
+        
         
