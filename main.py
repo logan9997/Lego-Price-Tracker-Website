@@ -1,21 +1,24 @@
 from responses import *
 from database import *
+from misc import *
 
 import time
 
 def main():
-    start = time.time()
-
+    
     resp = Respose()
     db = DatabaseManagment()
 
-    item1 = resp.get_response("items/MINIFIG/sw0282/price")
-    item2 = resp.get_response("items/MINIFIG/sw0283/price")
-    db.add_price_info([item1, item2])
+    target_id = "sw0001a"
 
-    fin = time.time()
-    print(f"FIN IN {fin-start}")
+    subsets = resp.get_response_data(f"items/MINIFIG/{target_id}/subsets")
+    supersets = resp.get_response_data(f"items/MINIFIG/{target_id}/supersets")
+    colours = resp.get_response_data(f"items/MINIFIG/{target_id}/colors")
+
+    print(f"{subsets}\n\n{supersets}\n\n{colours}")
 
 if __name__ == "__main__":
+    start = time.time()
     main()
-
+    fin = time.time()
+    print(f"FINISHED IN {round(fin-start,3)} SECONDS")

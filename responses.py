@@ -3,8 +3,6 @@ from requests_oauthlib import OAuth1Session
 from KEYS_DONT_PUSH import *
 
 import json
-import sqlite3
-
 
 class Respose():
 
@@ -13,11 +11,20 @@ class Respose():
         self.auth = OAuth1Session(CONSUMER_KEY, CONSUMER_SECRET, TOKEN_VALUE, TOKEN_SECRET)
 
 
-    def get_response(self, sub_url:str) -> None:
+    def get_response_data(self, sub_url:str, **display:bool) -> None:
+        display = display.get("display", False)
         response = self.auth.get(self.base_url + sub_url)   
         #format response into dict
         self.response = json.loads(response._content.decode("utf-8"))
-        return self.response["data"]
+        if "data" in self.response:
+            if display:
+                print(self.response["data"])
+            return self.response["data"]
+        else:
+            print(f"\n{'ERROR '*8}\n\n {self.response['meta']}\n\n{'ERROR '*8}\n")
+            return None
+
+
 
         
         
