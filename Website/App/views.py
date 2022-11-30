@@ -7,12 +7,25 @@ from .forms import MinifigSelect
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
 from my_scripts.responses import * 
+from my_scripts.database import *
+from my_scripts.misc import get_star_wars_fig_ids
 
 resp = Respose()
 
-def index(request):
 
-    minifig_ids = ["sw0001a", "sw0001b", "sw0001c"]
+def update_prices_table():
+    db = DatabaseManagment()
+
+    figs = get_star_wars_fig_ids()[:5]
+    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price") for f in figs]
+    db.add_price_info(figs)
+
+def index(request):
+    update_prices_table()
+
+    with open(r"App\Data\itemIDsList.txt", "r") as ids:
+        minifig_ids = ids.readlines()
+    minifig_ids = [m.rstrip("\n") for m in minifig_ids]
 
     selected_minfig = request.POST.get("minifig_id")
     if selected_minfig != None:
@@ -28,12 +41,15 @@ def index(request):
 def minifig_page(request, minifig_id):
 
     supersets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/supersets")[0]["entries"]
-    subsets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/subsets", display=True)
+    subsets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/subsets")
+    #colors = resp.get_response_data(f"items/MINIFIG/{minifig_id}/colors")
+    general_info = resp.get_response_data(f"items/MINIFIG/{minifig_id}")
 
     context = {
         "minifig_id":minifig_id,
         "supersets":supersets,
         "subsets":subsets,
+        "general_info":general_info,
     }
 
     return render(request, "App/minifig_page.html", context=context)

@@ -4,7 +4,7 @@ import datetime
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db")
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\Website\db.sqlite3")
         self.cursor = self.con.cursor()
 
 
@@ -21,6 +21,7 @@ class DatabaseManagment():
         #add all prices for current day
         today = datetime.date.today()
         for item in items:
+            print("££££",item)
             try:
                 self.cursor.execute(f"""
                     INSERT INTO Price VALUES

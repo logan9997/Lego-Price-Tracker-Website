@@ -1,6 +1,6 @@
 from requests_oauthlib import OAuth1Session
 
-from KEYS_DONT_PUSH import *
+from my_scripts.KEYS_DONT_PUSH import *
 
 import json
 
