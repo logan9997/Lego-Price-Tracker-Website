@@ -6,7 +6,9 @@ from .forms import MinifigSelect
 
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
-from my_scripts import responses
+from my_scripts.responses import * 
+
+resp = Respose()
 
 def index(request):
 
@@ -25,8 +27,14 @@ def index(request):
 
 def minifig_page(request, minifig_id):
 
+    supersets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/supersets")[0]["entries"]
+    subsets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/subsets", display=True)
+
     context = {
-        "minifig_id":minifig_id
+        "minifig_id":minifig_id,
+        "supersets":supersets,
+        "subsets":subsets,
     }
 
     return render(request, "App/minifig_page.html", context=context)
+

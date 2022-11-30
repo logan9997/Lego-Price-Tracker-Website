@@ -1,0 +1,22 @@
+body {
+    background-color:whitesmoke;
+}
+
+table {
+    background-color: rgb(245, 245, 220);
+    width: 800px;
+}
+
+tr {
+    background-color: rgb(225, 225, 200);
+}
+
+td {
+    padding: 5px;
+}
+
+.table-header {
+    background-color: rgb(185, 185, 160);
+}
+
+/* border padding margin */

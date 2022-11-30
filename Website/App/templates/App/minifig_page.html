@@ -1,13 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="{% static 'App/styles.css' %}">
 </head>
 <body>
     <h1>MINIFIG PAGE</h1>
     <p>{{ minifig_id }}</p>
+
+    <h2>SUPERSETS</h2>
+
+    <table>
+        <tr class="table-header">
+            <td>Set Name</td>
+            <td>Set ID</td>
+        </tr>
+        {% for set in supersets %}
+        <tr>
+            <td>{{ set.item.name }}</td>
+            <td>{{ set.item.no }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>SUBSETS</h3>
+    <table>
+        <tr class="table-header">
+            <td>Piece Name</td>
+            <td>Piece ID</td>
+        </tr>
+        {% for set in subsets %}
+        <tr>
+            <td>{{ set.entries.0.item.name }}</td>
+            <td>{{ set.entries.0.item.no }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>
