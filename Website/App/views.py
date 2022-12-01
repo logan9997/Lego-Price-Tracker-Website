@@ -16,12 +16,16 @@ resp = Respose()
 def update_prices_table():
     db = DatabaseManagment()
 
-    figs = get_star_wars_fig_ids()[:5]
+
+    figs = get_star_wars_fig_ids()
     figs = [resp.get_response_data(f"items/MINIFIG/{f}/price") for f in figs]
     db.add_price_info(figs)
 
 def index(request):
-    update_prices_table()
+    
+    db = DatabaseManagment()
+    if db.check_for_todays_date() == 0:
+        update_prices_table()
 
     with open(r"App\Data\itemIDsList.txt", "r") as ids:
         minifig_ids = ids.readlines()
@@ -39,17 +43,20 @@ def index(request):
 
 
 def minifig_page(request, minifig_id):
-
-    supersets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/supersets")[0]["entries"]
+    db = DatabaseManagment()
+    supersets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/supersets")
     subsets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/subsets")
     #colors = resp.get_response_data(f"items/MINIFIG/{minifig_id}/colors")
     general_info = resp.get_response_data(f"items/MINIFIG/{minifig_id}")
+    prices = db.get_minifig_prices(minifig_id)
+    print(supersets)
 
     context = {
         "minifig_id":minifig_id,
         "supersets":supersets,
         "subsets":subsets,
         "general_info":general_info,
+        "prices": prices,
     }
 
     return render(request, "App/minifig_page.html", context=context)

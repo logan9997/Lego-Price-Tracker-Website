@@ -12,6 +12,21 @@
     <h1>MINIFIG PAGE</h1>
     <p>{{ minifig_id }}</p>
 
+    <table>
+        <tr class="table-header">
+            <td>average price: </td>
+            <td>min price: </td>
+            <td>max price: </td>
+            <td>total quantity available: </td>
+        </tr>
+        <tr>
+            <td>{{ prices.0 }}</td>
+            <td>{{ prices.1 }}</td>
+            <td>{{ prices.2 }}</td>
+            <td>{{ prices.3 }}</td>
+        </tr>
+    </table>
+
     <h2>SUPERSETS</h2>
 
     <img src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
@@ -26,9 +41,10 @@
             <td>Set ID</td>
         </tr>
         {% for set in supersets %}
+        {{set.entries}}
         <tr>
-            <td>{{ set.item.name }}</td>
-            <td>{{ set.item.no }}</td>
+            <td>{{ set.entries.item.name }}</td>
+            <td>{{ set.entries.item.no }}</td>
         </tr>
         {% endfor %}
     </table>

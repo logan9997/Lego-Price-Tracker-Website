@@ -24,7 +24,7 @@ class DatabaseManagment():
             print("££££",item)
             try:
                 self.cursor.execute(f"""
-                    INSERT INTO Price VALUES
+                    INSERT INTO App_price VALUES
                     (
                         '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
                         '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
@@ -44,3 +44,22 @@ class DatabaseManagment():
             GROUP BY itemID
         """)
         return [str(fig_id).split("'")[1] for fig_id in result.fetchall()]
+
+
+    def check_for_todays_date(self) -> int:
+        today = datetime.date.today()
+        result = self.cursor.execute(f"""
+            SELECT COUNT()
+            FROM App_price
+            WHERE date = '{today}'
+        """)
+        return result.fetchall()
+
+
+    def get_minifig_prices(self, minifig_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT avg_price, min_price, max_price, total_quantity
+            FROM App_price
+            WHERE item_id = '{minifig_id}'
+        """)
+        return result.fetchall()

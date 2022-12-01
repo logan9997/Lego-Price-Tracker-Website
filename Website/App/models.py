@@ -10,3 +10,4 @@ class Price(models.Model):
     avg_price = models.FloatField()
     min_price = models.FloatField()
     max_price = models.FloatField()
+    total_quantity = models.IntegerField()
