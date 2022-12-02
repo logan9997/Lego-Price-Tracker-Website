@@ -15,7 +15,7 @@ td {
     padding: 5px;
 }
 
-.table-header {
+table tr th {
     background-color: rgb(185, 185, 160);
 }
 

@@ -12,53 +12,59 @@
     <h1>MINIFIG PAGE</h1>
     <p>{{ minifig_id }}</p>
 
-    <table>
-        <tr class="table-header">
-            <td>average price: </td>
-            <td>min price: </td>
-            <td>max price: </td>
-            <td>total quantity available: </td>
-        </tr>
-        <tr>
-            <td>{{ prices.0 }}</td>
-            <td>{{ prices.1 }}</td>
-            <td>{{ prices.2 }}</td>
-            <td>{{ prices.3 }}</td>
-        </tr>
-    </table>
 
-    <h2>SUPERSETS</h2>
+
+    
 
     <img src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
 
     <p>Name: {{ general_info.name }}</p>
     <p>Year Released: {{ general_info.year_released }}</p>
     
+    <h1>PRICES</h1>
 
     <table>
-        <tr class="table-header">
-            <td>Set Name</td>
-            <td>Set ID</td>
+        <tr>
+            <th>average price: </th>
+            <th>min price: </th>
+            <th>max price: </th>
+            <th>total quantity available: </th>
+        </tr>
+        <tr>
+            <td>{{ prices.0.0 }}</td>
+            <td>{{ prices.0.1 }}</td>
+            <td>{{ prices.0.2 }}</td>
+            <td>{{ prices.0.3 }}</td>
+        </tr>
+    </table>
+
+    <h1>SUPERSETS</h1>
+
+    <table>
+        <tr>
+            <th>Set Name</th>
+            <th>Set ID</th>
         </tr>
         {% for set in supersets %}
-        {{set.entries}}
+
         <tr>
-            <td>{{ set.entries.item.name }}</td>
-            <td>{{ set.entries.item.no }}</td>
+            <td>{{ set.item.name }}</td>
+            <td>{{ set.item.no }}</td>
         </tr>
         {% endfor %}
     </table>
 
-    <h3>SUBSETS</h3>
+    <h1>SUBSETS</h1>
     <table>
-        <tr class="table-header">
-            <td>Piece Name</td>
-            <td>Piece ID</td>
-        </tr>
-        {% for set in subsets %}
         <tr>
-            <td>{{ set.entries.0.item.name }}</td>
-            <td>{{ set.entries.0.item.no }}</td>
+            <th>Piece Name</th>
+            <th>Piece ID</th>
+        </tr>
+        {% for part in parts_info %}
+        <tr>
+            <td>{{ part.name }}</td>
+            <td>{{ part.no }}</td>
+            <td><img src="{{part.thumbnail_url}}" alt="thumbnail"></td>
         </tr>
         {% endfor %}
     </table>
