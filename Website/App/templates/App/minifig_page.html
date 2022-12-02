@@ -42,14 +42,15 @@
 
     <table>
         <tr>
+            <th>Set Image</th>
             <th>Set Name</th>
             <th>Set ID</th>
         </tr>
-        {% for set in supersets %}
-
+        {% for set in sets_info %}
         <tr>
-            <td>{{ set.item.name }}</td>
-            <td>{{ set.item.no }}</td>
+            <td><img src="{{ set.thumbnail_url }}" alt="thumbnail"></td>
+            <td>{{ set.name }}</td>
+            <td><a href="https://www.bricklink.com/v2/catalog/catalogitem.page?S={{ set.item.no }}">{{ set.no }}</a></td>
         </tr>
         {% endfor %}
     </table>
@@ -57,14 +58,16 @@
     <h1>SUBSETS</h1>
     <table>
         <tr>
+            <th>Piece Image</th>
             <th>Piece Name</th>
             <th>Piece ID</th>
         </tr>
         {% for part in parts_info %}
         <tr>
-            <td>{{ part.name }}</td>
-            <td>{{ part.no }}</td>
             <td><img src="{{part.thumbnail_url}}" alt="thumbnail"></td>
+            <td>{{ part.name }}</td>
+            <td><a target="_blank" href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{part.no}}">{{part.no}}</a></td>
+            <!-- <td>{{ part.quantity }}</td> -->
         </tr>
         {% endfor %}
     </table>

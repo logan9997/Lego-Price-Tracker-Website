@@ -52,14 +52,17 @@ def minifig_page(request, minifig_id):
         general_info = resp.get_response_data(f"items/MINIFIG/{minifig_id}")
         prices = db.get_minifig_prices(minifig_id)
 
-        parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]["color"]}') for p in subsets]
 
+        sets_info = [resp.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"]]
+        print("SETS INFO"*5,sets_info)
+        parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
         context.update({
             "supersets":supersets[0]["entries"],
             "subsets":subsets,
             "general_info":general_info,
             "prices": prices,
             "parts_info":parts_info,
+            "sets_info":sets_info,
         })
 
 
