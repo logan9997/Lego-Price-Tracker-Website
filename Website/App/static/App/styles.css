@@ -1,8 +1,74 @@
 body {
     background-color:whitesmoke;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
+#minifig-profile, #general-info {
+    background-color: rgb(115, 211, 243);
+    height: 20rem;
+    text-align: center;
+    border: 0.2rem black solid;
+    margin-bottom: 2rem;
+}
+
+#minifig-profile {
+    width: 20%;
+    float: left;
+
+}
+
+    #minifig-name {
+        font-size: medium;
+        margin: auto;
+        background-color: rgb(40, 239, 166);
+        padding: 0.75rem;
+    }
+
+    #minifig-id {
+        margin: auto;
+        padding-top: 1.2rem;
+        padding-bottom: 0.2rem;
+    }
+
+    #minifig-image {
+        height: auto;
+        min-width: 38%;
+        margin-top: 0.8rem;
+        border: 0.2rem black solid;
+        border-radius: 0.4rem;
+    }
+
+#general-info {
+    width: 78%;
+    float: right;
+}
+
+    .general-info-tabs {
+        display: inline-block;
+        width: 31%;
+        border: 0.2rem black solid;
+        height: 18rem;
+        margin-top: 1rem;
+        background-color: aqua;
+
+    }
+
+    #test {
+        margin-left: 10px;
+        float: left;
+    }
+
+    #current-price-tab {
+
+    }
+
+    #info-tab {
+        margin-right: 10px;
+        float: right;
+    }
+
 table {
+    text-align: center;
     background-color: rgb(245, 245, 220);
     width: 800px;
 }
