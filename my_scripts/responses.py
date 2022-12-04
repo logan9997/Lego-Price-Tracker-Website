@@ -21,7 +21,8 @@ class Respose():
                 print(self.response["data"])
             return self.response["data"]
         else:
-            print(f"\n{'ERROR '*8}\n\n {self.response['meta']}\n\n{'ERROR '*8}\n")
+            if display:
+                print(f'ERROR AT {sub_url}\n{self.response["meta"]}\n')
             return None
 
 

@@ -1,0 +1,9 @@
+To Add:
+-Change prices from current items for sale to past sales.
+-Home page
+-Biggest winners/losers
+-Price trends
+-Method to get all item ids
+-Optimization (seperate pages for sub/supersets)
+-Login Page
+-Watchlist / portfolio

@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'App/styles.css' now 'U' %}">
 </head>
 <body>
-    {{minifig_id}}
-    <form action="{% url 'index'  %}" method="post">
-        {% csrf_token %}
-        <select name="minifig_id" id="minifig_id">
-            {% for minifig_id in minifig_ids %}
-                <option value="{{minifig_id}}">{{minifig_id}}</option>
-            {% endfor %}
-        </select>
 
-        <button type="submit">Submit!</button>
+    <nav>
+        <h1>{{header}}</h1>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Search</a></li>
+            <li><a href="#">Portfolio</a></li>
+            <li><a href="#">Trending</a></li>
+        </ul>
+    </nav>
 
-    </form>
+    {% block content%}
 
+    {% endblock %}
 
-
+    <footer>
+        <p>Page Created By: Logan Baxter</p>
+    </footer>
 </body>
 </html>

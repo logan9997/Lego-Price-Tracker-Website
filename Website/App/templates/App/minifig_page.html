@@ -1,52 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <head>
-    {% load static %}
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% extends 'App/base.html' %}
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'App/styles.css' now 'U' %}">
 </head>
 <body>
-    <h1>MINIFIG PAGE</h1>
+    {% block content %}
+    <section id="tophalf-container">
+        <section id="minifig-profile">
+            <h1 id="minifig-name">{{ general_info.name }}</h1>
+            <p id="minifig-id">{{ general_info.no }}</p>
+            <img id="minifig-image" src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
+            <p>Year Released: {{ general_info.year_released }}</p>  
+        </section>
+
+        <section id="general-info">
+
+            <div id="test" class="general-info-tabs">
+                <h1>OWNERSHIP</h1>
+                <p>Own This: No</p>
+                <p>Owned by: 94</p>
+                <p>Ownership ^14%</p>
+            </div>
 
 
-    <section id="minifig-profile">
-        <h1 id="minifig-name">{{ general_info.name }}</h1>
-        <p id="minifig-id">{{ general_info.no }}</p>
-        <img id="minifig-image" src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
-        <p>Year Released: {{ general_info.year_released }}</p>  
+
+            <div id="info-tab" class="general-info-tabs">
+                <h1>DETAILS</h1>
+                <p>ID: {{ general_info.no }}</p>
+                <p>Pieces: {{ parts_info|length }}</p>
+                <p>Sets appears in: {{ sets_info|length }}</p>
+                <p>Year released: {{ general_info.year_released }}</p>
+            </div>
+
+            <div id="current-price-tab" class="general-info-tabs">
+                <h1>PRICES</h1>
+                <p>avg price:</p> <p style="color:{{price_changes.avg_price}}">£{{ prices.0.1 }}</p>
+                <p>min price:</p> <p style="color:{{price_changes.min_price}}">£{{ prices.0.2 }}</p>
+                <p>max price:</p> <p style="color:{{price_changes.max_price}}">£{{ prices.0.3 }}</p>
+            </div>
+
+        </section>
     </section>
 
-    <section id="general-info">
+    <!-- <section id="price-trends"> -->
+    <div id="myPlot"></div>    <!-- </section> -->
 
-        <div id="test" class="general-info-tabs">
-            <h1>PLACEHOLDER</h1>
-        </div>
+    <script>
+        var xArray = {{avg_prices}};
+        var yArray = {{dates}};
+
+        console.log("xarray", length(xArray))
+        for (i = 0; i<length(xArray); i++) {
+            console.log(xArray[i])
+        }
 
 
-
-        <div id="info-tab" class="general-info-tabs">
-            <h1>DETAILS</h1>
-            <p>ID: {{ general_info.no }}</p>
-            <p>Pieces: {{ parts_info|length }}</p>
-            <p>Sets appears in: {{ sets_info|length }}</p>
-            <p>Year released: {{ general_info.year_released }}</p>
-        </div>
-
-        <div id="current-price-tab" class="general-info-tabs">
-            <h1>PRICES</h1>
-            <p>avg price: £{{ prices.0.0 }}</p>
-            <p>min price: £{{ prices.0.1 }}</p>
-            <p>max price: £{{ prices.0.2 }}</p>
-        </div>
-
-    </section>
+        console.log(xArray)
+        
+        // Define Data
+        var data = [{
+          x: xArray,
+          y: yArray,
+          mode:"lines"
+        }];
+        
+        // Define Layout
+        var layout = {
+          xaxis: {range: [40, 160], title: "Square Meters"},
+          yaxis: {range: [5, 16], title: "Price in Millions"},  
+          title: "House Prices vs. Size"
+        };
+        
+        // Display using Plotly
+        Plotly.newPlot("myPlot", data, layout);
+    </script>
     
     <!-- <h1>PRICES (current items for sale)</h1> -->
 
-    <table>
+    <!-- <table>
         <tr>
             <th>average price: </th>
             <th>min price: </th>
@@ -93,10 +125,12 @@
                 <td><img src="{{part.thumbnail_url}}" alt="thumbnail"></td>
                 <td>{{ part.name }}</td>
                 <td><a target="_blank" href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{part.no}}">{{part.no}}</a></td>
-                <!-- <td>{{ part.quantity }}</td> -->
+                <td>{{ part.quantity }}</td>
             </tr>
             {% endfor %}
     </table>
-    {% endif %}
+    {% endif %} -->
+
+    {% endblock %}
 </body>
 </html>

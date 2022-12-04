@@ -4,7 +4,7 @@ import datetime
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\Website\db.sqlite3")
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db")
         self.cursor = self.con.cursor()
 
 
@@ -21,10 +21,10 @@ class DatabaseManagment():
         #add all prices for current day
         today = datetime.date.today()
         for item in items:
-            print("££££",item)
+            print(item["item"]["no"])
             try:
                 self.cursor.execute(f"""
-                    INSERT INTO App_price VALUES
+                    INSERT INTO Price VALUES
                     (
                         '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
                         '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
@@ -32,6 +32,7 @@ class DatabaseManagment():
                     )
                 """)
             except sqlite3.IntegrityError:
+                print("sqlite3.IntegrityError")
                 pass
         self.con.commit()
 
@@ -50,7 +51,7 @@ class DatabaseManagment():
         today = datetime.date.today()
         result = self.cursor.execute(f"""
             SELECT COUNT()
-            FROM App_price
+            FROM Price
             WHERE date = '{today}'
         """)
         return result.fetchall()
@@ -58,8 +59,18 @@ class DatabaseManagment():
 
     def get_minifig_prices(self, minifig_id) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT avg_price, min_price, max_price, total_quantity
-            FROM App_price
+            SELECT date, avg_price, min_price, max_price, total_qty
+            FROM Price
             WHERE item_id = '{minifig_id}'
         """)
         return result.fetchall()
+
+    def get_dates(self, minifig_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT date
+            FROM Price
+            WHERE item_id = '{minifig_id}'
+        """)
+        return result.fetchall()       
+
+        
