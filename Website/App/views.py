@@ -1,4 +1,5 @@
 import sys
+import json
 
 from django.shortcuts import render, redirect
 from .forms import MinifigSelect
@@ -18,7 +19,7 @@ def update_prices_table():
 
 
     figs = get_star_wars_fig_ids()
-    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price") for f in figs]
+    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price", display=True) for f in figs]
     print(figs)
 
     db.add_price_info(figs)
@@ -62,14 +63,13 @@ def minifig_page(request, minifig_id):
         general_info = resp.get_response_data(f"items/MINIFIG/{minifig_id}")
         dates = [[c for c in d] for d in dates]
         dates = [d[0] for d in dates]
-        print(dates)
+        dates = [d.replace("-", "/") for d in dates]
+
         price_changes = {
             "avg_price":get_price_colour(prices[-1][1] - prices[0][1]),
             "min_price":get_price_colour(prices[-1][2] - prices[0][2]),
             "max_price":get_price_colour(prices[-1][3] - prices[0][3]),
         }
-
-        print(prices)
 
         #provide default value as some items do not have any supersets
         sets_info = []

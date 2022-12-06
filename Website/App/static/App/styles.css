@@ -123,6 +123,10 @@ nav ul li a {
     border: 0.2rem black solid;
 }
 
+    #myPlot {
+        text-align: center;
+    }
+
 table {
     text-align: center;
     background-color: rgb(245, 245, 220);

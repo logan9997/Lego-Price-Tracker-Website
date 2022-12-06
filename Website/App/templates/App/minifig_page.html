@@ -43,20 +43,18 @@
         </section>
     </section>
 
-    <!-- <section id="price-trends"> -->
-    <div id="myPlot"></div>    <!-- </section> -->
-
+    <section id="price-trends">
+        <div id="myPlot"></div>    
+    </section>
+    
+    {{ dates|json_script:"dates" }}
     <script>
-        var xArray = {{avg_prices}};
-        var yArray = {{dates}};
-
-        console.log("xarray", length(xArray))
-        for (i = 0; i<length(xArray); i++) {
-            console.log(xArray[i])
-        }
-
-
+        var yArray = {{avg_prices}};
+        var xArray = JSON.parse(document.getElementById('dates').textContent);
+        // var xArray = ['2022/12/03', '2022/12/04', '2022/12/05'];
+    
         console.log(xArray)
+        console.log(yArray)
         
         // Define Data
         var data = [{
@@ -67,9 +65,9 @@
         
         // Define Layout
         var layout = {
-          xaxis: {range: [40, 160], title: "Square Meters"},
-          yaxis: {range: [5, 16], title: "Price in Millions"},  
-          title: "House Prices vs. Size"
+          xaxis: {range: [0, 10], title: "Date"},
+          yaxis: {range: [Math.min(yArray), Math.max(yArray)], title: "Price (£)"},  
+          title: "PRICES"
         };
         
         // Display using Plotly
