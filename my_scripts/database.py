@@ -40,9 +40,9 @@ class DatabaseManagment():
     def get_all_items(self) -> list[str]:
         #return a list of all items inside 'Price' table
         result = self.cursor.execute(f"""
-            SELECT itemID
+            SELECT item_id
             FROM Price
-            GROUP BY itemID
+            GROUP BY item_id
         """)
         return [str(fig_id).split("'")[1] for fig_id in result.fetchall()]
 
@@ -71,6 +71,56 @@ class DatabaseManagment():
             FROM Price
             WHERE item_id = '{minifig_id}'
         """)
-        return result.fetchall()       
+        return result.fetchall()     
 
+    def save_item_names(self, item_names):
+        for item in item_names:
+            item_id = item.get('item_id') ; item_name = item.get('item_name')
+
+            if '"' in item_name:
+                item_name = item_name.replace('"', '')
+
+            print(item_id, item_name)
+            try:
+                self.cursor.execute(f'''
+                    INSERT INTO item VALUES
+                    ("{item_id}","{item_name}") 
+                ''')
+                self.con.commit()
+            except sqlite3.IntegrityError:
+                pass  
         
+
+    def get_item_names(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT *
+            FROM item
+        """)
+        return result.fetchall()
+
+    
+    def get_biggest_trends(self) -> list[str]:
+        result = self.cursor.execute('''
+            select name, P1.item_id, round(avg_price - (
+                select avg_price
+                from price P2
+                where P2.item_id = P1.item_id
+                    and date = (
+                        select max(date)
+                        from price
+                    ) 
+            ),2) as [£ change]
+
+            from price P1, item I
+            where I.item_id = P1.item_id 
+                and date = (
+                    select min(date)
+                    from price
+                ) 
+            order by [£ change] desc
+        ''')
+
+        result = result.fetchall()
+        losers = result[len(result)-10:][::-1]
+        winners = result[:10]
+        return {"losers":losers, "winners":winners}
