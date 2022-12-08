@@ -44,14 +44,26 @@
     </section>
 
     <section id="price-trends">
-        <div id="myPlot"></div>    
+
+        <div id="chart-options">
+            <h1>Chart Options</h1>
+            <form action="" method="post">
+                <select name="currency" id="currency" onchange="this.form.submit()">
+                    <option value="GBP">GBP (£)</option>
+                    <option value="USD">USD ($)</option>
+                </select>
+
+                <input type="submit" value="GO!">
+            </form>
+        </div>
+
+        <div id="price-date-graph"></div>    
     </section>
     
     {{ dates|json_script:"dates" }}
     <script>
         var yArray = {{avg_prices}};
         var xArray = JSON.parse(document.getElementById('dates').textContent);
-        // var xArray = ['2022/12/03', '2022/12/04', '2022/12/05'];
     
         console.log(xArray)
         console.log(yArray)
@@ -60,23 +72,23 @@
         var data = [{
           x: xArray,
           y: yArray,
-          mode:"lines"
+          mode:"dots"
         }];
-        
-        // Define Layout
+
+        // Define Layout 
         var layout = {
-          xaxis: {range: [0, 10], title: "Date"},
+          xaxis: {range: [0, 10], title: "Date", autorange: true,},
           yaxis: {range: [Math.min(yArray), Math.max(yArray)], title: "Price (£)"},  
           title: "PRICES"
         };
         
         // Display using Plotly
-        Plotly.newPlot("myPlot", data, layout);
+        Plotly.newPlot("price-date-graph", data, layout);
     </script>
     
-    <!-- <h1>PRICES (current items for sale)</h1> -->
+    <!-- <h1>PRICES (current items for sale)</h1> 
 
-    <!-- <table>
+    <table>
         <tr>
             <th>average price: </th>
             <th>min price: </th>
@@ -127,7 +139,7 @@
             </tr>
             {% endfor %}
     </table>
-    {% endif %} -->
+    {% endif %}-->
 
     {% endblock %}
 </body>

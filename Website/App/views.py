@@ -19,7 +19,7 @@ def update_prices_table():
 
 
     figs = get_star_wars_fig_ids()
-    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price", display=True) for f in figs]
+    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price") for f in figs]
     print(figs)
 
     db.add_price_info(figs)
@@ -40,10 +40,14 @@ def index(request):
 
     selected_minfig = request.POST.get("minifig_id")
     if selected_minfig != None:
-        return redirect(f"http://127.0.0.1:8000/{selected_minfig}")
+        return redirect(f"http://127.0.0.1:8000/minifig_page/{selected_minfig}")
+
+
+    minifig_names = db.get_item_names()
 
     context = {
         "minifig_ids":minifig_ids,
+        "minifig_names":minifig_names,
         "header":"HOME"
     }
 
@@ -64,6 +68,8 @@ def minifig_page(request, minifig_id):
         dates = [[c for c in d] for d in dates]
         dates = [d[0] for d in dates]
         dates = [d.replace("-", "/") for d in dates]
+
+        print(prices)
 
         price_changes = {
             "avg_price":get_price_colour(prices[-1][1] - prices[0][1]),
@@ -91,3 +97,16 @@ def minifig_page(request, minifig_id):
 
     return render(request, "App/minifig_page.html", context=context)
 
+
+def trending(request):
+
+    db = DatabaseManagment()
+    trending = db.get_biggest_trends()
+
+    context = {
+        "header":"Trending",
+        "losers":trending["losers"],
+        "winners":trending["winners"],
+        }
+
+    return render(request, "App/trending.html", context=context)

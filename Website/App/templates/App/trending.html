@@ -1,0 +1,41 @@
+{% extends 'App/base.html' %}
+
+{% block content %}
+
+    <section id="winners-losers">
+        <div id="losers">
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price Change</th>
+                </tr>
+                {% for minifig in losers %}
+                    <tr>
+                        <td>{{minifig.1}}</td>
+                        <td>{{minifig.0}}</td>
+                        <td>{{minifig.2}}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div id="winners">
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price Change</th>
+                </tr>
+                {% for minifig in winners %}
+                    <tr>
+                        <td>{{minifig.1}}</td>
+                        <td>{{minifig.0}}</td>
+                        <td>+{{minifig.2}}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </section>
+
+{% endblock%}

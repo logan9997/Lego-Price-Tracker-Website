@@ -44,6 +44,10 @@ nav ul li a {
     text-decoration: none;
 }
 
+#minifig_id {
+    width: 10rem;
+}
+
 #minifig-profile, #general-info {
     background-color: rgb(115, 211, 243);
     height: 20rem;
@@ -115,22 +119,61 @@ nav ul li a {
         float: right;
     }
 
+#chart-options {
+    width: 12%;
+    float: left;
+    text-align: center;
+}
+
 #price-trends {
-    margin-top: 1rem;
+    margin-top: 2rem;
     width: 100%;
     height: 30rem;
     background-color: rgb(115, 211, 243);
     border: 0.2rem black solid;
 }
 
-    #myPlot {
+    #price-date-graph {
+        height: 100%;
+        width: 86%;
+        float: right;
+        border-left: 0.2rem black solid;
+    }
+
+#winners-losers {
+    width: 100%;
+    height: 40rem;
+    background-color: aqua;
+}
+
+    #winners, #losers {
+        width: 40%;
+        height: 36rem;
+        background-color:rgb(115, 211, 243) ;
+        word-wrap: break-word;
+        margin-top: 2rem;
+        border: 0.2rem black solid;
         text-align: center;
     }
+
+    #winners {
+        float: left;
+        margin-left: 4rem;
+    }
+
+    #losers {
+        float: right;
+        margin-right: 4rem;
+    }
+
+
+
 
 table {
     text-align: center;
     background-color: rgb(245, 245, 220);
-    width: 800px;
+    word-wrap: break-word;
+    height: 100%;
 }
 
 tr {

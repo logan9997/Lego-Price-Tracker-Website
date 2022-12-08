@@ -14,8 +14,8 @@
     <form action="{% url 'index'  %}" method="post">
         {% csrf_token %}
         <select name="minifig_id" id="minifig_id">
-            {% for minifig_id in minifig_ids %}
-                <option value="{{minifig_id}}">{{minifig_id}}</option>
+            {% for minifig_id in minifig_names %}
+                <option value="{{minifig_id.0}}">{{minifig_id.1}}</option>
             {% endfor %}
         </select>
 
