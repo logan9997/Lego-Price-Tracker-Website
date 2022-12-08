@@ -30,7 +30,7 @@ def index(request):
     #print(db.check_for_todays_date())
     if db.check_for_todays_date() == [(0,)]:
         print("UPDATING DB...")
-        update_prices_table()
+       # update_prices_table()
     else:
         print("DB UP TO DATE")
 
@@ -43,6 +43,8 @@ def index(request):
         return redirect(f"http://127.0.0.1:8000/minifig_page/{selected_minfig}")
 
 
+    urls = [resp.get_response_data(f"items/MINIFIG/{m}") for m in minifig_ids[60:]]
+    db.save_item_names(urls)
     minifig_names = db.get_item_names()
 
     context = {
@@ -101,12 +103,19 @@ def minifig_page(request, minifig_id):
 def trending(request):
 
     db = DatabaseManagment()
-    trending = db.get_biggest_trends()
+    winners, losers = db.get_biggest_trends()
+    winners = [{
+        "name":m[0],
+        "id":m[1],
+        "change":m[2],
+        "img_url":resp.get_response_data(f"items/MINIFIG/{m[1]}")["thumbnail_url"]
+    } for m in winners]
+
 
     context = {
         "header":"Trending",
-        "losers":trending["losers"],
-        "winners":trending["winners"],
+        "losers":losers,
+        "winners":winners,
         }
 
     return render(request, "App/trending.html", context=context)

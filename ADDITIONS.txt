@@ -1,4 +1,5 @@
 To Add:
+-add img url to item table
 -Change prices from current items for sale to past sales.
 -Home page
 -Biggest winners/losers

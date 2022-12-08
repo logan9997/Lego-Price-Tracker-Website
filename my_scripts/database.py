@@ -75,16 +75,19 @@ class DatabaseManagment():
 
     def save_item_names(self, item_names):
         for item in item_names:
-            item_id = item.get('item_id') ; item_name = item.get('item_name')
+            item_id = item.get('no') ; item_name = item.get('name')
+            thumbnail_url = item.get('thumbnail_url')
+            if "'" in item_name:
+                item_name = item_name.replace("'", '')
 
-            if '"' in item_name:
-                item_name = item_name.replace('"', '')
-
-            print(item_id, item_name)
+            if "'" in thumbnail_url:
+                thumbnail_url = thumbnail_url.replace("'", '"')
+                
+            print(item_name)
             try:
                 self.cursor.execute(f'''
                     INSERT INTO item VALUES
-                    ("{item_id}","{item_name}") 
+                    ('{item_id}','{item_name}','{thumbnail_url}') 
                 ''')
                 self.con.commit()
             except sqlite3.IntegrityError:
@@ -101,26 +104,26 @@ class DatabaseManagment():
     
     def get_biggest_trends(self) -> list[str]:
         result = self.cursor.execute('''
-            select name, P1.item_id, round(avg_price - (
-                select avg_price
-                from price P2
-                where P2.item_id = P1.item_id
-                    and date = (
-                        select max(date)
-                        from price
+            SELECT name, P1.item_id, round(avg_price - (
+                SELECT avg_price
+                FROM price P2
+                WHERE P2.item_id = P1.item_id
+                    AND date = (
+                        SELECT max(date)
+                        FROM price
                     ) 
             ),2) as [£ change]
 
-            from price P1, item I
-            where I.item_id = P1.item_id 
-                and date = (
-                    select min(date)
-                    from price
+            FROM price P1, item I
+            WHERE I.item_id = P1.item_id 
+                AND date = (
+                    SELECT min(date)
+                    FROM price
                 ) 
-            order by [£ change] desc
+            ORDER BY [£ change] desc
         ''')
 
         result = result.fetchall()
         losers = result[len(result)-10:][::-1]
         winners = result[:10]
-        return {"losers":losers, "winners":winners}
+        return losers, winners

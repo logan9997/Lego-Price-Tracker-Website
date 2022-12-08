@@ -3,7 +3,7 @@
 {% block content %}
 
     <section id="winners-losers">
-        <div id="losers">
+        <!-- <div id="losers">
             <table>
                 <tr>
                     <th>ID</th>
@@ -18,23 +18,17 @@
                     </tr>
                 {% endfor %}
             </table>
-        </div>
+        </div> -->
 
         <div id="winners">
-            <table>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price Change</th>
-                </tr>
-                {% for minifig in winners %}
-                    <tr>
-                        <td>{{minifig.1}}</td>
-                        <td>{{minifig.0}}</td>
-                        <td>+{{minifig.2}}</td>
-                    </tr>
-                {% endfor %}
-            </table>
+        {% for minifig in winners %}
+            <div class="trending-minifig">
+                {{minifig.change}}
+                <div class="image-container">
+                    <img id="minifig-image" src="{{minifig.img_url}}" alt="">
+                </div>
+            </div>
+        {% endfor %}
         </div>
     </section>
 

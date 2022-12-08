@@ -82,7 +82,7 @@ nav ul li a {
 
     #minifig-image {
         height: 9rem;
-        width: auto;
+        width: 7rem;
         margin-top: 0.8rem;
         border: 0.2rem black solid;
         border-radius: 0.4rem;
@@ -146,26 +146,25 @@ nav ul li a {
     background-color: aqua;
 }
 
-    #winners, #losers {
-        width: 40%;
-        height: 36rem;
-        background-color:rgb(115, 211, 243) ;
-        word-wrap: break-word;
-        margin-top: 2rem;
-        border: 0.2rem black solid;
-        text-align: center;
-    }
-
     #winners {
-        float: left;
-        margin-left: 4rem;
+        background-color: rgb(115, 211, 243) ;
+        margin: auto;
     }
 
-    #losers {
-        float: right;
-        margin-right: 4rem;
-    }
+        .trending-minifig {
+            background-color: aqua;
+            padding: 2rem;
+            width: 50%;
+            height: 16rem;
+            text-align: center;
+            margin: auto;
+            margin-bottom: 1rem;
+        }
 
+        .image-container {
+            width: 30%;
+            float: left;
+        }
 
 
 
