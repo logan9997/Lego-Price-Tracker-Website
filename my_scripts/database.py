@@ -1,39 +1,29 @@
 import sqlite3
 import datetime
 
+
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db")
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db", check_same_thread=False)
         self.cursor = self.con.cursor()
 
 
-    def add_category_info(self, categories) -> None:
-        for category in categories:
-            self.cursor.execute(f'''
-                INSERT INTO Category VALUES
-                ("{category["category_id"]}", "{category["category_name"]}")
-            ''')
-        self.con.commit()
-
-
-    def add_price_info(self, items) -> None:
+    def add_price_info(self, item) -> None:
         #add all prices for current day
         today = datetime.date.today()
-        for item in items:
-            print(item["item"]["no"])
-            try:
-                self.cursor.execute(f"""
-                    INSERT INTO Price VALUES
-                    (
-                        '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
-                        '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
-                        '{item["total_quantity"]}'
-                    )
-                """)
-            except sqlite3.IntegrityError:
-                print("sqlite3.IntegrityError")
-                pass
+        print(item["item"]["no"])
+        try:
+            self.cursor.execute(f"""
+                INSERT INTO Price VALUES
+                (
+                    '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
+                    '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
+                    '{item["total_quantity"]}'
+                )
+            """)
+        except sqlite3.IntegrityError:
+            pass
         self.con.commit()
 
 
@@ -63,6 +53,7 @@ class DatabaseManagment():
             FROM Price
             WHERE item_id = '{minifig_id}'
         """)
+        
         return result.fetchall()
 
     def get_dates(self, minifig_id) -> list[str]:
@@ -72,34 +63,6 @@ class DatabaseManagment():
             WHERE item_id = '{minifig_id}'
         """)
         return result.fetchall()     
-
-    def save_item_names(self, item_names):
-        for item in item_names:
-            item_id = item.get('no') ; item_name = item.get('name')
-            thumbnail_url = item.get('thumbnail_url')
-            if "'" in item_name:
-                item_name = item_name.replace("'", '')
-
-            if "'" in thumbnail_url:
-                thumbnail_url = thumbnail_url.replace("'", '"')
-                
-            print(item_name)
-            try:
-                self.cursor.execute(f'''
-                    INSERT INTO item VALUES
-                    ('{item_id}','{item_name}','{thumbnail_url}') 
-                ''')
-                self.con.commit()
-            except sqlite3.IntegrityError:
-                pass  
-        
-
-    def get_item_names(self) -> list[str]:
-        result = self.cursor.execute(f"""
-            SELECT *
-            FROM item
-        """)
-        return result.fetchall()
 
     
     def get_biggest_trends(self) -> list[str]:
@@ -127,3 +90,95 @@ class DatabaseManagment():
         losers = result[len(result)-10:][::-1]
         winners = result[:10]
         return losers, winners
+
+
+    def group_by_items(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id, type
+            FROM item
+            GROUP BY item_id
+        """)
+        return result.fetchall()
+
+
+    def get_parent_themes(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT REPLACE(theme_path, '/', ''), thumbnail_url
+            FROM item
+            WHERE theme_path NOT LIKE '%~%'
+                AND type = 'S'
+            GROUP BY theme_path
+        """)
+        return result.fetchall()
+
+
+    def get_theme_items(self, theme_path) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id, type
+            FROM item
+            WHERE theme_path = '{theme_path}'
+        """)
+        return result.fetchall()      
+
+
+    def get_item_ids(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id, type
+            FROM item
+            GROUP BY item_id
+        """)
+        return result.fetchall()
+
+
+    def insert_thumbnail_url_name(self, details) -> None:
+        self.cursor.execute(f"""
+            UPDATE item
+            SET thumbnail_url = '{details.get("thumbnail_url")}', name = '{details.get("name")}'
+            WHERE item_id = '{details.get("item_id")}'
+        """)
+        self.con.commit()
+
+
+    def insert_year_released(self, year_released, item_id) -> None:
+        self.cursor.execute(f"""
+            UPDATE item
+            SET year_released = '{year_released}'
+            WHERE item_id = '{item_id}'
+        """)
+        self.con.commit()
+
+
+    def get_item_info(self, item_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id, name, year_released, thumbnail_url
+            FROM item
+            WHERE item_id = '{item_id}'
+            GROUP BY item_id
+        """)
+        return result.fetchall()
+
+    def get_not_null_years(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id
+            FROM item
+            WHERE year_released is null
+        """)
+        return result.fetchall()
+
+
+    def get_thumbnail_url(self, item_id) -> str:
+        result = self.cursor.execute(f"""
+            SELECT thumbnail_url
+            FROM item
+            WHERE item_id = '{item_id}'
+            GROUP BY item_id
+        """)
+        return result.fetchall()        
+
+
+#update database without calling a view
+def main():
+    pass
+    
+if __name__ == "__main__":
+    main()
