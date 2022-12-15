@@ -23,9 +23,16 @@
         <div id="winners">
         {% for minifig in winners %}
             <div class="trending-minifig">
-                {{minifig.change}}
+                
                 <div class="image-container">
+                    <p>{{minifig.id}}</p>
                     <img id="minifig-image" src="{{minifig.img_url}}" alt="">
+                </div>
+
+                <div class="text-container">
+                    
+                    <p>{{minifig.name}}</p>
+                    <p>+{{minifig.change}} (£)</p>                    
                 </div>
             </div>
         {% endfor %}

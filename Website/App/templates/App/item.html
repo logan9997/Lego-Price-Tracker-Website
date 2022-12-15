@@ -8,8 +8,8 @@
     {% block content %}
     <section id="tophalf-container">
         <section id="minifig-profile">
-            <h1 id="minifig-name">{{ general_info.name }}</h1>
-            <p id="minifig-id">{{ general_info.no }}</p>
+            <h1 id="minifig-name">{{ general_info.1 }}</h1>
+            <p id="minifig-id">{{ general_info.item_id }}</p>
             <img id="minifig-image" src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
             <p>Year Released: {{ general_info.year_released }}</p>  
         </section>
@@ -23,11 +23,9 @@
                 <p>Ownership ^14%</p>
             </div>
 
-
-
             <div id="info-tab" class="general-info-tabs">
                 <h1>DETAILS</h1>
-                <p>ID: {{ general_info.no }}</p>
+                <p>ID: {{ general_info.item_id }}</p>
                 <p>Pieces: {{ parts_info|length }}</p>
                 <p>Sets appears in: {{ sets_info|length }}</p>
                 <p>Year released: {{ general_info.year_released }}</p>
@@ -86,60 +84,7 @@
         Plotly.newPlot("price-date-graph", data, layout);
     </script>
     
-    <!-- <h1>PRICES (current items for sale)</h1> 
 
-    <table>
-        <tr>
-            <th>average price: </th>
-            <th>min price: </th>
-            <th>max price: </th>
-            <th>total quantity available: </th>
-        </tr>
-        <tr>
-            <td>{{ prices.0.0 }}</td>
-            <td>{{ prices.0.1 }}</td>
-            <td>{{ prices.0.2 }}</td>
-            <td>{{ prices.0.3 }}</td>
-        </tr>
-    </table>
-
-    {% if sets_info|length != 0 %}
-    <h1>SUPERSETS</h1>
-
-    <table>
-        <tr>
-            <th>Set Image</th>
-            <th>Set Name</th>
-            <th>Set ID</th>
-        </tr>
-        {% for set in sets_info %}
-        <tr>
-            <td><img src="{{ set.thumbnail_url }}" alt="{{ set }}"></td>
-            <td>{{ set.name }}</td>
-            <td><a target="_blank" href="https://www.bricklink.com/v2/catalog/catalogitem.page?S={{set.no}}">{{ set.no }}</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
-
-    {% if parts_info|length != 0 %}
-    <h1>SUBSETS</h1>
-    <table>
-        <tr>
-            <th>Piece Image</th>
-            <th>Piece Name</th>
-            <th>Piece ID</th>
-        </tr>        
-            {% for part in parts_info %}
-            <tr>
-                <td><img src="{{part.thumbnail_url}}" alt="thumbnail"></td>
-                <td>{{ part.name }}</td>
-                <td><a target="_blank" href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{part.no}}">{{part.no}}</a></td>
-                <td>{{ part.quantity }}</td>
-            </tr>
-            {% endfor %}
-    </table>
-    {% endif %}-->
 
     {% endblock %}
 </body>

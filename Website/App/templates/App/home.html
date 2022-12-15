@@ -11,13 +11,9 @@
     {% block content %}
 
     {{minifig_id}}
-    <form action="{% url 'index'  %}" method="post">
+    <form action="{% url 'index' %}" method="post">
         {% csrf_token %}
-        <select name="minifig_id" id="minifig_id">
-            {% for minifig_id in minifig_names %}
-                <option value="{{minifig_id.0}}">{{minifig_id.1}}</option>
-            {% endfor %}
-        </select>
+        <input type="text" name="minifig_id">
 
         <button type="submit">Submit!</button>
 
