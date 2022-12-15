@@ -1,9 +1,6 @@
 import sys
-import json
 
 from django.shortcuts import render, redirect
-from .forms import MinifigSelect
-
 
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
@@ -12,72 +9,61 @@ from my_scripts.database import *
 from my_scripts.misc import get_star_wars_fig_ids, get_price_colour
 
 resp = Respose()
+db = DatabaseManagment()
 
 
 def update_prices_table():
-    db = DatabaseManagment()
+    #return  (item_ids, type) grouped by item id
+    items = db.group_by_items()[500:700]
+    
+    #update prices
+    type_convert = {"M":"MINIFIG", "S":"SET"}
+    for item in items:
+        item_info = resp.get_response_data(f"items/{type_convert[item[1]]}/{item[0]}/price")
+        db.add_price_info(item_info)
 
-
-    figs = get_star_wars_fig_ids()
-    figs = [resp.get_response_data(f"items/MINIFIG/{f}/price") for f in figs]
-    print(figs)
-
-    db.add_price_info(figs)
 
 def index(request):
     
-    db = DatabaseManagment()
     #print(db.check_for_todays_date())
     if db.check_for_todays_date() == [(0,)]:
         print("UPDATING DB...")
-       # update_prices_table()
+        #update_prices_table()
     else:
         print("DB UP TO DATE")
 
-    with open(r"App\Data\itemIDsList.txt", "r") as ids:
-        minifig_ids = ids.readlines()
-    minifig_ids = [m.rstrip("\n") for m in minifig_ids]
+    item_ids = [item_id[0] for item_id in db.get_item_ids()] 
 
     selected_minfig = request.POST.get("minifig_id")
-    if selected_minfig != None:
-        return redirect(f"http://127.0.0.1:8000/minifig_page/{selected_minfig}")
-
-
-    urls = [resp.get_response_data(f"items/MINIFIG/{m}") for m in minifig_ids[60:]]
-    db.save_item_names(urls)
-    minifig_names = db.get_item_names()
+    if selected_minfig in item_ids:
+        return redirect(f"http://127.0.0.1:8000/item/{selected_minfig}")
 
     context = {
-        "minifig_ids":minifig_ids,
-        "minifig_names":minifig_names,
         "header":"HOME"
     }
 
     return render(request, "App/home.html", context=context)
 
 
-def minifig_page(request, minifig_id):
-    db = DatabaseManagment()
+def item(request, item_id):
     context = {}
 
-    if minifig_id != "favicon.ico":
-        supersets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/supersets")
-        subsets = resp.get_response_data(f"items/MINIFIG/{minifig_id}/subsets")
+    if item_id != "favicon.ico":
+        supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
+        subsets = resp.get_response_data(f"items/MINIFIG/{item_id}/subsets")
 
-        dates = db.get_dates(minifig_id)
-        prices = db.get_minifig_prices(minifig_id)
-        general_info = resp.get_response_data(f"items/MINIFIG/{minifig_id}")
+        prices = db.get_minifig_prices(item_id)
+        dates = db.get_dates(item_id)
         dates = [[c for c in d] for d in dates]
         dates = [d[0] for d in dates]
         dates = [d.replace("-", "/") for d in dates]
 
-        print(prices)
-
-        price_changes = {
-            "avg_price":get_price_colour(prices[-1][1] - prices[0][1]),
-            "min_price":get_price_colour(prices[-1][2] - prices[0][2]),
-            "max_price":get_price_colour(prices[-1][3] - prices[0][3]),
-        }
+        if len(prices) > 0:
+            context.update({
+                "avg_price":get_price_colour(prices[-1][1] - prices[0][1]),
+                "min_price":get_price_colour(prices[-1][2] - prices[0][2]),
+                "max_price":get_price_colour(prices[-1][3] - prices[0][3]),
+            })
 
         #provide default value as some items do not have any supersets
         sets_info = []
@@ -86,29 +72,37 @@ def minifig_page(request, minifig_id):
 
         parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
 
+        print(db.get_item_info(item_id)[0][2])
+
+        general_info = {
+            "item_id":db.get_item_info(item_id)[0][0],
+            "name":db.get_item_info(item_id)[0][1],
+            "year_released":db.get_item_info(item_id)[0][2],
+            "thumbnail_url":db.get_item_info(item_id)[0][3]
+        }
+
         context.update({
             "general_info":general_info,
             "prices": prices,
-            "price_changes":price_changes,
             "dates":dates,
             "avg_prices":[price[1] for price in prices],
             "parts_info":parts_info,
             "sets_info":sets_info,
-            "header":minifig_id.upper(),
+            "header":item_id.upper(),
         })
 
-    return render(request, "App/minifig_page.html", context=context)
+    return render(request, "App/item.html", context=context)
 
 
 def trending(request):
 
-    db = DatabaseManagment()
-    winners, losers = db.get_biggest_trends()
+    losers, winners = db.get_biggest_trends()
+    #create list[dict] of all of the biggest winners / losers
     winners = [{
         "name":m[0],
         "id":m[1],
         "change":m[2],
-        "img_url":resp.get_response_data(f"items/MINIFIG/{m[1]}")["thumbnail_url"]
+        "img_url":db.get_thumbnail_url(m[1])[0][0]
     } for m in winners]
 
 
@@ -119,3 +113,27 @@ def trending(request):
         }
 
     return render(request, "App/trending.html", context=context)
+
+
+def search(request):
+    #get theme_path, thumbnail_url for each theme (type = 'S')
+    themes = [theme for theme in db.get_parent_themes()]
+
+    context = {
+        "header":"Search",
+        "theme_details":themes,
+    }
+
+    return render(request, "App/search.html", context=context)
+
+
+def theme_page(request, theme_path):
+    #get item_id, type for all items equal to theme_path
+    theme_items = db.get_theme_items(theme_path)
+
+    context = {
+        "header":theme_path,
+        "theme_items":theme_items,
+    }
+
+    return render(request, "App/theme.html", context=context)
