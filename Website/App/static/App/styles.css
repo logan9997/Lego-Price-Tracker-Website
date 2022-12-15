@@ -155,15 +155,29 @@ nav ul li a {
             background-color: aqua;
             padding: 2rem;
             width: 50%;
-            height: 16rem;
+            height: 12rem;
             text-align: center;
             margin: auto;
             margin-bottom: 1rem;
+            border: 0.2rem black solid;
         }
 
         .image-container {
             width: 30%;
             float: left;
+            /* margin: auto; */
+            border-right: 0.2rem black solid;
+            height: auto;
+
+        }
+
+            .image-container p {
+                margin-top: -0.85rem;
+            }
+
+        .text-container {
+            text-align: center;
+            /* float: right; */
         }
 
 
@@ -188,3 +202,24 @@ table tr th {
 }
 
 /* border padding margin */
+
+#all-themes-container {
+    text-align: center;
+}
+
+.theme-container {
+    width: 10rem;
+    height: 10.6rem;
+    background-color: aqua;
+    display: inline-block;
+    margin: 1rem;
+    text-align: center;
+    border: black 0.35rem double ;
+    vertical-align: top;
+}
+
+    .theme-container img {
+        width: 8rem;
+        height: 6rem;
+        vertical-align: top;
+    }
