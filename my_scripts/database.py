@@ -11,7 +11,7 @@ class DatabaseManagment():
 
     def add_price_info(self, item) -> None:
         #add all prices for current day
-        today = datetime.date.today()
+        today = datetime.date.today().strftime('%Y-%m-%d')
         print(item["item"]["no"])
         try:
             self.cursor.execute(f"""
@@ -92,6 +92,15 @@ class DatabaseManagment():
         return losers, winners
 
 
+    def check_if_price_recorded(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id
+            FROM price
+            WHERE date = '{datetime.datetime.today().strftime('%Y-%m-%d')}'
+        """)
+        return result.fetchall()
+
+
     def group_by_items(self) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT item_id, type
@@ -104,9 +113,10 @@ class DatabaseManagment():
     def get_parent_themes(self) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT REPLACE(theme_path, '/', ''), thumbnail_url
-            FROM item
+            FROM item, theme
             WHERE theme_path NOT LIKE '%~%'
                 AND type = 'S'
+                AND item.item_id = theme.item_id
             GROUP BY theme_path
         """)
         return result.fetchall()
@@ -114,18 +124,20 @@ class DatabaseManagment():
 
     def get_theme_items(self, theme_path) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item_id, type
-            FROM item
-            WHERE theme_path = '{theme_path}'
+            SELECT item.item_id, type
+            FROM item, theme
+            WHERE item.item_id = theme.item_id
+                AND theme_path = '{theme_path}'
         """)
         return result.fetchall()      
 
 
     def get_item_ids(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item_id, type
-            FROM item
-            GROUP BY item_id
+            SELECT item.item_id, type
+            FROM item, theme
+            WHERE item.item_id = theme.item_id
+                AND theme_path LIKE '%Star Wars%'
         """)
         return result.fetchall()
 
@@ -173,12 +185,57 @@ class DatabaseManagment():
             WHERE item_id = '{item_id}'
             GROUP BY item_id
         """)
-        return result.fetchall()        
+        return result.fetchall()     
+
+
+    def transfer_to_theme(self) -> None:
+        result = self.cursor.execute(f"""
+            SELECT item.item_id, theme_path
+            FROM item, theme
+            WHERE item.item_id = theme.item_id
+                AND item.type = 'S'
+
+        """)   
+        results = result.fetchall()
+
+        for result in results:
+            self.cursor.execute(f"""
+                INSERT INTO theme VALUES
+                    ('{result[0]}', '{result[1]}')
+            """)
+            self.con.commit()
+
+
+    def get_sub_themes(self, parent_theme) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT REPLACE(theme_path, '{parent_theme}~', ''), thumbnail_url
+            FROM theme, item
+            WHERE theme.item_id = item.item_id
+                AND theme_path LIKE '{parent_theme}_%'
+            GROUP BY theme_path
+        """)
+        return result.fetchall()    
 
 
 #update database without calling a view
 def main():
-    pass
+    from responses import Response
+    db = DatabaseManagment()
+    resp = Response()
+    #insert prices for today
+
+    items = db.get_item_ids()
+    items_recorded = [item[0] for item in db.check_if_price_recorded()]
+
+    type_convert = {"M":"MINIFIG", "S":"SET"}
+
+    print(items_recorded)
+
+    for item in items:
+        if item[0] in items_recorded:
+            continue
+        item = resp.get_response_data(f'items/{type_convert[item[1]]}/{item[0]}/price')
+        db.add_price_info(item)
     
 if __name__ == "__main__":
     main()
