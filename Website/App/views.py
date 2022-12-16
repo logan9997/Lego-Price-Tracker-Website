@@ -6,9 +6,9 @@ sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\
 
 from my_scripts.responses import * 
 from my_scripts.database import *
-from my_scripts.misc import get_star_wars_fig_ids, get_price_colour
+from my_scripts.misc import get_price_colour
 
-resp = Respose()
+resp = Response()
 db = DatabaseManagment()
 
 
@@ -127,13 +127,33 @@ def search(request):
     return render(request, "App/search.html", context=context)
 
 
-def theme_page(request, theme_path):
-    #get item_id, type for all items equal to theme_path
-    theme_items = db.get_theme_items(theme_path)
+def theme(request, themes):
+    #theme = "".join([theme + "/" for theme in themes])
+    theme_items = db.get_theme_items(themes) #return all sets for theme
+    sub_themes = db.get_sub_themes(themes) #return of all sub-themes (if any) for theme
 
     context = {
-        "header":theme_path,
+        "header":themes,
         "theme_items":theme_items,
+        "sub_themes":sub_themes,
     }
 
     return render(request, "App/theme.html", context=context)
+
+
+def login(request):
+
+    context = {
+        "header":"LOGIN"
+    }
+
+    return render(request, "App/login.html", context=context)
+
+
+def join(request):
+
+    context = {
+        "header":"JOIN"
+    }
+
+    return render(request, "App/join.html", context=context)
