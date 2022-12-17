@@ -216,26 +216,59 @@ class DatabaseManagment():
         """)
         return result.fetchall()    
 
+    #########################################TRANSER##########################
+    def get_all(self,table):
+
+        result = self.cursor.execute(f"""
+            SELECT *
+            FROM {table}
+        """)
+        return result.fetchall()
+
+
+def insert(table, info):
+    con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3")
+    cursor = con.cursor()
+    for row in info:
+        print(f"""INSERT INTO App_{table} VALUES {row}""")
+        cursor.execute(f"""
+            INSERT INTO App_{table} ('theme_path','item_id')
+            VALUES {row}
+        """)
+        con.commit()
+
 
 #update database without calling a view
 def main():
-    from responses import Response
     db = DatabaseManagment()
-    resp = Response()
-    #insert prices for today
 
-    items = db.get_item_ids()
-    items_recorded = [item[0] for item in db.check_if_price_recorded()]
+    tables = ['user']
+    
+    for table in tables:
+        info = db.get_all(table)
 
-    type_convert = {"M":"MINIFIG", "S":"SET"}
+        insert(table, info)
 
-    print(items_recorded)
-
-    for item in items:
-        if item[0] in items_recorded:
-            continue
-        item = resp.get_response_data(f'items/{type_convert[item[1]]}/{item[0]}/price')
-        db.add_price_info(item)
     
 if __name__ == "__main__":
     main()
+
+
+
+    # from responses import Response
+    # db = DatabaseManagment()
+    # resp = Response()
+    # #insert prices for today
+
+    # items = db.get_item_ids()
+    # items_recorded = [item[0] for item in db.check_if_price_recorded()]
+
+    # type_convert = {"M":"MINIFIG", "S":"SET"}
+
+    # print(items_recorded)
+
+    # for item in items:
+    #     if item[0] in items_recorded:
+    #         continue
+    #     item = resp.get_response_data(f'items/{type_convert[item[1]]}/{item[0]}/price')
+    #     db.add_price_info(item)
