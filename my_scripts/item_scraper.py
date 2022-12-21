@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from themes import THEMES
 from database import DatabaseManagment
 
 
@@ -172,8 +171,6 @@ class Scraper():
 
 
 
-           
-#    themes = [theme for theme in THEMES.rsplit("\n") if theme != ''] 
 def main():
     '''
     cd OneDrive/Documents/programming/python/api's/bl_api/my_scripts

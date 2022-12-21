@@ -4,7 +4,7 @@ from my_scripts.keys import *
 
 import json
 
-class Respose():
+class Response():
 
     def __init__(self) -> None:
         self.base_url = "https://api.bricklink.com/api/store/v1/"
@@ -26,6 +26,10 @@ class Respose():
             return {"ERROR":self.response}
 
 
+def main():
+    resp = Response()
+    a = resp.get_response_data(f"items/MINIFIG/sw0001a/price")
 
         
-        
+if __name__ == "__main__":
+    main()

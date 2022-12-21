@@ -4,6 +4,6 @@ from django.urls import path
 
 urlpatterns = [
     path('', views.index, name="index"),
-    path('minifig_page/<str:minifig_id>/', views.minifig_page, name="minifig_page"),
+    path('item/<str:item_id>/', views.item, name="item"),
     path('trending/', views.trending, name="trending"),
 ]
