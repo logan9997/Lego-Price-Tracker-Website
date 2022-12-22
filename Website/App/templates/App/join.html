@@ -2,6 +2,18 @@
 
 {% block content %}
 
-
+<section id="signup-form">
+    <form action="{% url 'join' %}" method="post">
+        <label for="username">username</label>
+        <input type="text" name="username">
+        <label for="email">email</label>
+        <input type="text" name="email">
+        <label for="password">password</label>
+        <input type="text" name="password">
+        <label for="password_confirmation">password_confirmation</label>
+        <input type="text" name="password_confirmation">
+        <input type="submit" value="Join!">
+    </form>
+</section>
 
 {% endblock %}

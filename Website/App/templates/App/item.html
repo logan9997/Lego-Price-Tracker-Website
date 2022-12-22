@@ -2,15 +2,17 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <head>
     {% extends 'App/base.html' %}
+    {% load static %}
     <title>Document</title>
 </head>
 <body>
     {% block content %}
     <section id="tophalf-container">
-        <section id="minifig-profile">
-            <h1 id="minifig-name">{{ general_info.1 }}</h1>
-            <p id="minifig-id">{{ general_info.item_id }}</p>
-            <img id="minifig-image" src="{{ general_info.thumbnail_url }}" alt="{{minifig_id}}">
+        <section id="item-profile">
+            <h1 id="item-name">{{ general_info.1 }}</h1>
+            <p id="item-id">{{ general_info.item_id }}</p>
+            {{image_path}}
+            <img id="item-image" src="{% static image_path %}" alt="{{item_id}}">
             <p>Year Released: {{ general_info.year_released }}</p>  
         </section>
 
