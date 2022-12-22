@@ -1,6 +1,7 @@
 import sys
 
 from django.shortcuts import render, redirect
+from .forms import AddItemToPortfolio, PortfolioItemsSort
 
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
@@ -26,11 +27,11 @@ def update_prices_table():
 def index(request):
     
     #print(db.check_for_todays_date())
-    if db.check_for_todays_date() == [(0,)]:
-        print("UPDATING DB...")
-        #update_prices_table()
-    else:
-        print("DB UP TO DATE")
+    # if db.check_for_todays_date() == [(0,)]:
+    #     print("UPDATING DB...")
+    #     #update_prices_table()
+    # else:
+    #     print("DB UP TO DATE")
 
     item_ids = [item_id[0] for item_id in db.get_item_ids()] 
 
@@ -49,8 +50,8 @@ def item(request, item_id):
     context = {}
 
     if item_id != "favicon.ico":
-        supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
-        subsets = resp.get_response_data(f"items/MINIFIG/{item_id}/subsets")
+        # supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
+        # subsets = resp.get_response_data(f"items/MINIFIG/{item_id}/subsets")
 
         prices = db.get_minifig_prices(item_id)
         dates = db.get_dates(item_id)
@@ -66,28 +67,27 @@ def item(request, item_id):
             })
 
         #provide default value as some items do not have any supersets
-        sets_info = []
-        if supersets != []:
-            sets_info = [resp.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"] if resp.get_response_data(f'items/SET/{s["item"]["no"]}') != None]
+        # sets_info = []
+        # if supersets != []:
+        #     sets_info = [resp.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"] if resp.get_response_data(f'items/SET/{s["item"]["no"]}') != None]
 
-        parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
+        # parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
 
-        print(db.get_item_info(item_id)[0][2])
-
+        # print(db.get_item_info(item_id)[0][2])
         general_info = {
             "item_id":db.get_item_info(item_id)[0][0],
             "name":db.get_item_info(item_id)[0][1],
             "year_released":db.get_item_info(item_id)[0][2],
-            "thumbnail_url":db.get_item_info(item_id)[0][3]
         }
 
         context.update({
             "general_info":general_info,
+            "image_path":f"App/images/{item_id}.png",
             "prices": prices,
             "dates":dates,
             "avg_prices":[price[1] for price in prices],
-            "parts_info":parts_info,
-            "sets_info":sets_info,
+            # "parts_info":parts_info,
+            # "sets_info":sets_info,
             "header":item_id.upper(),
         })
 
@@ -102,7 +102,8 @@ def trending(request):
         "name":m[0],
         "id":m[1],
         "change":m[2],
-        "img_url":db.get_thumbnail_url(m[1])[0][0]
+        "image_path":f"App/images/{m[1]}.png",
+
     } for m in winners]
 
 
@@ -157,3 +158,58 @@ def join(request):
     }
 
     return render(request, "App/join.html", context=context)
+
+
+def portfolio(request):
+
+    user_id = 1
+    portfolio_items = db.get_portfolio_items(user_id) 
+
+    #format portfolio items into dict for readability in template
+    portfolio_items = [{
+        "image_path":f"App/images/{portfolio_item[0]}.png",
+        "item_id":portfolio_item[0],
+        "condition":portfolio_item[1],
+        "quantity":portfolio_item[2],
+        "item_name":portfolio_item[3],
+        "item_type":portfolio_item[4],
+        "year_released":portfolio_item[5],
+        # "avg_price":portfolio_item[6],
+        # "min_price":portfolio_item[7],
+        # "max_price":portfolio_item[8],
+        # "total_quantity":portfolio_item[9], 
+    } for portfolio_item in portfolio_items]
+
+    #Add to portfolio
+    if request.method == "POST":
+        if "item_id" in request.POST:
+            form = AddItemToPortfolio(request.POST)
+            if form.is_valid():
+                item_id = form.cleaned_data["item_id"]
+                condition = form.cleaned_data["condition"]
+                quantity = form.cleaned_data["quantity"]
+
+                #if the item ID exists, add to database
+                item_ids = [item_id[0] for item_id in db.get_item_ids()]
+                if item_id in item_ids:
+
+                    if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
+                        db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
+                    else:
+                        db.add_to_portfolio(item_id, condition, quantity, user_id)
+
+        #sorting
+        elif "sort_field" in request.POST:
+            field_order_convert = {"ASC":False, "DESC":True}
+            form = PortfolioItemsSort(request.POST)
+            if form.is_valid():
+                item_filter = form.cleaned_data["sort_field"][0]
+                field_order = form.cleaned_data["field_order"][0]
+                portfolio_items = sorted(portfolio_items, key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+        return redirect("http://127.0.0.1:8000/portfolio/")
+
+    context = {
+        "portfolio_items":portfolio_items,
+    }    
+
+    return render(request, "App/portfolio.html", context=context)
