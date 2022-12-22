@@ -40,3 +40,4 @@ class Portfolio(models.Model):
         ("U", "used"), ("N", "new")
     ))
     quantity = models.IntegerField()
+    #date_added = models.DateField('%d-%m-%Y',  null=True, default=None)
