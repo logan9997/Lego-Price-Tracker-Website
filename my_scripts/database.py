@@ -5,7 +5,7 @@ import datetime
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db", check_same_thread=False)
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
 
 
@@ -15,7 +15,7 @@ class DatabaseManagment():
         print(item["item"]["no"])
         try:
             self.cursor.execute(f"""
-                INSERT INTO Price VALUES
+                INSERT INTO App_price VALUES
                 (
                     '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
                     '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
@@ -31,7 +31,7 @@ class DatabaseManagment():
         #return a list of all items inside 'Price' table
         result = self.cursor.execute(f"""
             SELECT item_id
-            FROM Price
+            FROM App_price
             GROUP BY item_id
         """)
         return [str(fig_id).split("'")[1] for fig_id in result.fetchall()]
@@ -41,7 +41,7 @@ class DatabaseManagment():
         today = datetime.date.today()
         result = self.cursor.execute(f"""
             SELECT COUNT()
-            FROM Price
+            FROM App_price
             WHERE date = '{today}'
         """)
         return result.fetchall()
@@ -49,8 +49,8 @@ class DatabaseManagment():
 
     def get_minifig_prices(self, minifig_id) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT date, avg_price, min_price, max_price, total_qty
-            FROM Price
+            SELECT date, avg_price, min_price, max_price, total_quantity
+            FROM App_price
             WHERE item_id = '{minifig_id}'
         """)
         
@@ -59,7 +59,7 @@ class DatabaseManagment():
     def get_dates(self, minifig_id) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT date
-            FROM Price
+            FROM App_price
             WHERE item_id = '{minifig_id}'
         """)
         return result.fetchall()     
@@ -67,23 +67,23 @@ class DatabaseManagment():
     
     def get_biggest_trends(self) -> list[str]:
         result = self.cursor.execute('''
-            SELECT name, P1.item_id, round(avg_price - (
+            SELECT item_name, P1.item_id, round(avg_price - (
                 SELECT avg_price
-                FROM price P2
+                FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
                         SELECT max(date)
-                        FROM price
+                        FROM App_price
                     ) 
             ),2) as [£ change]
 
-            FROM price P1, item I
+            FROM App_price P1, App_item I
             WHERE I.item_id = P1.item_id 
                 AND date = (
                     SELECT min(date)
-                    FROM price
+                    FROM App_price
                 ) 
-            ORDER BY [£ change] desc
+            ORDER BY [£ change] DESC
         ''')
 
         result = result.fetchall()
@@ -95,7 +95,7 @@ class DatabaseManagment():
     def check_if_price_recorded(self) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT item_id
-            FROM price
+            FROM App_price
             WHERE date = '{datetime.datetime.today().strftime('%Y-%m-%d')}'
         """)
         return result.fetchall()
@@ -103,8 +103,8 @@ class DatabaseManagment():
 
     def group_by_items(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item_id, type
-            FROM item
+            SELECT item_id, item_type
+            FROM App_item
             GROUP BY item_id
         """)
         return result.fetchall()
@@ -112,11 +112,11 @@ class DatabaseManagment():
 
     def get_parent_themes(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT REPLACE(theme_path, '/', ''), thumbnail_url
-            FROM item, theme
+            SELECT REPLACE(theme_path, '/', '')
+            FROM App_item, App_theme
             WHERE theme_path NOT LIKE '%~%'
-                AND type = 'S'
-                AND item.item_id = theme.item_id
+                AND item_type = 'S'
+                AND App_item.item_id = App_theme.item_id
             GROUP BY theme_path
         """)
         return result.fetchall()
@@ -124,9 +124,9 @@ class DatabaseManagment():
 
     def get_theme_items(self, theme_path) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item.item_id, type
-            FROM item, theme
-            WHERE item.item_id = theme.item_id
+            SELECT App_item.item_id, item_type
+            FROM App_item, App_theme
+            WHERE App_item.item_id = App_theme.item_id
                 AND theme_path = '{theme_path}'
         """)
         return result.fetchall()      
@@ -134,26 +134,15 @@ class DatabaseManagment():
 
     def get_item_ids(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item.item_id, type
-            FROM item, theme
-            WHERE item.item_id = theme.item_id
-                AND theme_path LIKE '%Star Wars%'
+            SELECT App_item.item_id
+            FROM App_item
         """)
         return result.fetchall()
 
 
-    def insert_thumbnail_url_name(self, details) -> None:
-        self.cursor.execute(f"""
-            UPDATE item
-            SET thumbnail_url = '{details.get("thumbnail_url")}', name = '{details.get("name")}'
-            WHERE item_id = '{details.get("item_id")}'
-        """)
-        self.con.commit()
-
-
     def insert_year_released(self, year_released, item_id) -> None:
         self.cursor.execute(f"""
-            UPDATE item
+            UPDATE App_item
             SET year_released = '{year_released}'
             WHERE item_id = '{item_id}'
         """)
@@ -162,8 +151,8 @@ class DatabaseManagment():
 
     def get_item_info(self, item_id) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT item_id, name, year_released, thumbnail_url
-            FROM item
+            SELECT item_id, item_name, year_released 
+            FROM App_item
             WHERE item_id = '{item_id}'
             GROUP BY item_id
         """)
@@ -172,28 +161,18 @@ class DatabaseManagment():
     def get_not_null_years(self) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT item_id
-            FROM item
+            FROM App_item
             WHERE year_released is null
         """)
         return result.fetchall()
 
 
-    def get_thumbnail_url(self, item_id) -> str:
-        result = self.cursor.execute(f"""
-            SELECT thumbnail_url
-            FROM item
-            WHERE item_id = '{item_id}'
-            GROUP BY item_id
-        """)
-        return result.fetchall()     
-
-
     def transfer_to_theme(self) -> None:
         result = self.cursor.execute(f"""
-            SELECT item.item_id, theme_path
-            FROM item, theme
-            WHERE item.item_id = theme.item_id
-                AND item.type = 'S'
+            SELECT App_item.item_id, theme_path
+            FROM App_item, App_theme
+            WHERE App_item.item_id = App_theme.item_id
+                AND item.item_type = 'S'
 
         """)   
         results = result.fetchall()
@@ -208,32 +187,120 @@ class DatabaseManagment():
 
     def get_sub_themes(self, parent_theme) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT REPLACE(theme_path, '{parent_theme}~', ''), thumbnail_url
-            FROM theme, item
-            WHERE theme.item_id = item.item_id
+            SELECT REPLACE(theme_path, '{parent_theme}~', '')
+            FROM App_theme, App_item
+            WHERE App_theme.item_id = App_item.item_id
                 AND theme_path LIKE '{parent_theme}_%'
             GROUP BY theme_path
         """)
-        return result.fetchall()    
+        return result.fetchall()  
 
-    #########################################TRANSER##########################
-    def get_all(self,table):
 
+    def get_starwars_ids(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT *
-            FROM {table}
+            SELECT item_id
+            FROM App_item
         """)
         return result.fetchall()
+
+
+    def fetch_theme_details(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_type, theme_path
+            FROM App_item I, App_theme T
+            WHERE I.item_id = T.item_id
+        """)
+        return result.fetchall()
+
+
+    def add_theme_details(self, theme_details, item_type) -> None:
+        for item in theme_details[item_type]:
+            self.cursor.execute(f"""
+                INSERT INTO App_theme ('theme_path', 'item_id') VALUES ('{theme_details["path"]}', '{item}')
+            """)
+            self.con.commit()
+
+
+    def get_portfolio_items(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT PO.item_id, condition, quantity, item_name, item_type, year_released
+            FROM App_portfolio PO, App_user U, App_item I
+            WHERE U.user_id = {user_id}
+                AND I.item_id = PO.item_id 
+                AND PO.user_id = U.user_id 
+        """)
+        return result.fetchall()
+
+
+    def add_to_portfolio(self, item_id, condition, quantity, user_id) -> None:
+        self.cursor.execute(f"""
+            INSERT INTO App_portfolio ('item_id', 'condition', 'quantity', 'user_id')
+            VALUES ('{item_id}','{condition}','{quantity}','{user_id}')
+        """)
+        self.con.commit()
+
+
+    def update_portfolio_item_quantity(self, item_id, condition, quantity, user_id):
+        self.cursor.execute(f"""
+            UPDATE App_portfolio
+            SET quantity = quantity + {quantity}
+            WHERE item_id = '{item_id}'
+                AND user_id = {user_id}
+                AND condition = '{condition}'
+        """)
+
+
+    def check_login(self, username, password) -> bool:
+        result = self.cursor.execute(f"""
+            SELECT *
+            FROM App_user
+            WHERE username = '{username}'
+                AND password = '{password}'
+        """)
+        if len(result.fetchall()) == 1:
+            return True
+        return False
+
+    
+    def check_if_username_or_email_exists(self, username, email) -> bool:
+        result = self.cursor.execute(f"""
+            SELECT username, email
+            FROM App_user
+            WHERE username = '{username}' 
+                OR email = '{email}'
+        """)
+        if len(result.fetchall()) > 0:
+            return False
+        return True
+
+
+    def add_user(self, username, email, password) -> None:
+        self.cursor.execute(f"""
+            INSERT INTO App_user ('username','email','password')
+            VALUES ('{username}', '{email}', '{password}')
+        """)
+        self.con.commit()
+
+    #########################################TRANSER##########################
+def get_all(table):
+    con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db")
+    cursor = con.cursor()        
+    result = cursor.execute(f"""
+        SELECT *
+        FROM {table}
+    """)
+    return result.fetchall()
 
 
 def insert(table, info):
     con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3")
     cursor = con.cursor()
     for row in info:
+        
         print(f"""INSERT INTO App_{table} VALUES {row}""")
         cursor.execute(f"""
-            INSERT INTO App_{table} ('theme_path','item_id')
-            VALUES {row}
+            INSERT INTO App_{table} ('item_id','item_name')
+            VALUES ('{row[0]}', '{row[1]}')
         """)
         con.commit()
 
@@ -242,11 +309,11 @@ def insert(table, info):
 def main():
     db = DatabaseManagment()
 
-    tables = ['user']
+    tables = ['item']
     
     for table in tables:
-        info = db.get_all(table)
-
+        info = get_all(table)
+        print(info)
         insert(table, info)
 
     
