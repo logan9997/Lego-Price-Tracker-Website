@@ -182,24 +182,6 @@ nav ul li a {
 
 
 
-table {
-    text-align: center;
-    background-color: rgb(245, 245, 220);
-    word-wrap: break-word;
-    height: 100%;
-}
-
-tr {
-    background-color: rgb(225, 225, 200);
-}
-
-td {
-    padding: 5px;
-}
-
-table tr th {
-    background-color: rgb(185, 185, 160);
-}
 
 /* border padding margin */
 
@@ -223,3 +205,4 @@ table tr th {
         height: 6rem;
         vertical-align: top;
     }
+
