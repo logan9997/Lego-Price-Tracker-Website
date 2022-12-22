@@ -1,7 +1,23 @@
 import sys
+from datetime import datetime as dt, timedelta
 
 from django.shortcuts import render, redirect
-from .forms import AddItemToPortfolio, PortfolioItemsSort
+from django.core import serializers
+
+from .forms import (
+    AddItemToPortfolio, 
+    PortfolioItemsSort, 
+    LoginForm,
+    SignupFrom
+)
+
+from .models import (
+    Price,
+    Portfolio,
+    Item,
+    User,
+    Theme
+)
 
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
@@ -95,7 +111,6 @@ def item(request, item_id):
 
 
 def trending(request):
-
     losers, winners = db.get_biggest_trends()
     #create list[dict] of all of the biggest winners / losers
     winners = [{
@@ -144,25 +159,83 @@ def theme(request, themes):
 
 def login(request):
 
-    context = {
-        "header":"LOGIN"
-    }
+    context = {}
+    #if not login attempts have been made set to 0
+    if "login_attempts" not in request.session:
+        request.session["login_attempts"] = 0
+
+    #check if login block has exipred
+    if "login_retry_date" not in request.session:
+        login_blocked = False
+    else:
+        if dt.today() > request.session["login_retry_date"]: 
+            login_blocked = False
+        else:
+            login_blocked = True
+
+    #analyse login form
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid() and not login_blocked:
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+
+            #check if username and password match, create new user_id session, del login_attempts session
+            if db.check_login(username, password):
+                user_id = User.objects.filter(username=username, password=password)
+                user_id = user_id.values_list("user_id", flat=True)[0]
+                request.session["user_id"] = user_id
+                del request.session["login_attempts"]
+                return redirect("http://127.0.0.1:8000/")
+            else:
+                print("no login")
+
+            #if login not valid
+            request.session["login_attempts"] += 1
+            return redirect("http://127.0.0.1:8000/login/")
+
+
+
+    #if max login attempts exceeded, then block user for 24hrs and display message on page
+    if request.session["login_attempts"] >= 5:
+        tommorow = dt.now() + timedelta(1)
+        request.session["login_retry_date"] = tommorow
+        context.update({"login_message":f"YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES try again on {str(tommorow)}"})
+
+    print("LOGIN ATTEMPTS",request.session["login_attempts"])
+
+
 
     return render(request, "App/login.html", context=context)
 
 
 def join(request):
 
-    context = {
-        "header":"JOIN"
-    }
+    if request.method == 'POST':
+        form = SignupFrom(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            email = form.cleaned_data["email"]
+            password = form.cleaned_data["password"]
+            password_confirmation = form.cleaned_data["password_confirmation"]
+            
+            print(username, password, password_confirmation, email)
+            if password == password_confirmation:
+                if db.check_if_username_or_email_exists(username, email):
+                    db.add_user(username, email, password)
+                    user_id = User.objects.filter(username=username, password=password)
+                    user_id = user_id.values_list("user_id", flat=True)[0]
+                    request.session["user_id"] = user_id
+                    return redirect("http://127.0.0.1:8000/")
+
+    context = {}
 
     return render(request, "App/join.html", context=context)
 
 
 def portfolio(request):
-
-    user_id = 1
+    user_id = request.session["user_id"]
+    
     portfolio_items = db.get_portfolio_items(user_id) 
 
     #format portfolio items into dict for readability in template
@@ -180,9 +253,13 @@ def portfolio(request):
         # "total_quantity":portfolio_item[9], 
     } for portfolio_item in portfolio_items]
 
+    context = {
+        "portfolio_items":portfolio_items,
+    }
     #Add to portfolio
+    print(request.session["user_id"])
     if request.method == "POST":
-        if "item_id" in request.POST:
+        if request.POST.get("form-type") == "add-item-form":
             form = AddItemToPortfolio(request.POST)
             if form.is_valid():
                 item_id = form.cleaned_data["item_id"]
@@ -197,19 +274,17 @@ def portfolio(request):
                         db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
                     else:
                         db.add_to_portfolio(item_id, condition, quantity, user_id)
-
+                    return redirect("http://127.0.0.1:8000/portfolio/")
         #sorting
-        elif "sort_field" in request.POST:
+        elif request.POST.get("form-type") == "sort-form":
             field_order_convert = {"ASC":False, "DESC":True}
             form = PortfolioItemsSort(request.POST)
             if form.is_valid():
                 item_filter = form.cleaned_data["sort_field"][0]
                 field_order = form.cleaned_data["field_order"][0]
-                portfolio_items = sorted(portfolio_items, key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
-        return redirect("http://127.0.0.1:8000/portfolio/")
+                context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+            return render(request, "App/portfolio.html", context=context)
 
-    context = {
-        "portfolio_items":portfolio_items,
-    }    
+        
 
     return render(request, "App/portfolio.html", context=context)
