@@ -8,7 +8,8 @@ from .forms import (
     AddItemToPortfolio, 
     PortfolioItemsSort, 
     LoginForm,
-    SignupFrom
+    SignupFrom,
+    DeletePortfolioItem,
 )
 
 from .models import (
@@ -152,7 +153,8 @@ def trending(request):
 
 def search(request):
     #get theme_path, thumbnail_url for each theme (type = 'S')
-    themes = [theme for theme in db.get_parent_themes()]
+    themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
+    print(themes)
 
     context = {
         "header":"Search",
@@ -164,6 +166,7 @@ def search(request):
 
 def theme(request, themes):
     #theme = "".join([theme + "/" for theme in themes])
+    themes = themes.replace("-", " ")
     theme_items = db.get_theme_items(themes) #return all sets for theme
     sub_themes = db.get_sub_themes(themes) #return of all sub-themes (if any) for theme
 
@@ -277,9 +280,12 @@ def portfolio(request):
 
     context = {
         "portfolio_items":portfolio_items,
+        "item_ids":[item_id[0] for item_id in db.get_item_ids()]
     }
     #Add to portfolio
     if request.method == "POST":
+        print(request.method)
+
         if request.POST.get("form-type") == "add-item-form":
             form = AddItemToPortfolio(request.POST)
             if form.is_valid():
@@ -296,7 +302,8 @@ def portfolio(request):
                     else:
                         db.add_to_portfolio(item_id, condition, quantity, user_id)
                     return redirect("http://127.0.0.1:8000/portfolio/")
-        #sorting
+
+        #SORTING
         elif request.POST.get("form-type") == "sort-form":
             field_order_convert = {"ASC":False, "DESC":True}
             form = PortfolioItemsSort(request.POST)
@@ -306,6 +313,16 @@ def portfolio(request):
                 context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
             return render(request, "App/portfolio.html", context=context)
 
-        
+        #REMOVE ITEM
+        elif request.POST.get("form-type") == "delete-item-form":
+            form = DeletePortfolioItem(request.POST)
+            if form.is_valid():
+                item_id = form.cleaned_data["item_to_delete"].split(",")[0]
+                condition = form.cleaned_data["item_to_delete"].split(",")[1]
+                delete_quantity = form.cleaned_data["delete_quantity"]
+
+                db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
+                return redirect("http://127.0.0.1:8000/portfolio/")
+
 
     return render(request, "App/portfolio.html", context=context)
