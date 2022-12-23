@@ -55,8 +55,12 @@ def index(request):
     if selected_minfig in item_ids:
         return redirect(f"http://127.0.0.1:8000/item/{selected_minfig}")
 
+    if "recently-viewed" not in request.session:
+        request.session["recently-viewed"] = []
+
     context = {
-        "header":"HOME"
+        "header":"HOME",
+        "recently_viewed":request.session["recently-viewed"]
     }
 
     return render(request, "App/home.html", context=context)
@@ -64,6 +68,21 @@ def index(request):
 
 def item(request, item_id):
     context = {}
+
+    #recently viewed items
+    if "recently-viewed" not in request.session:
+        request.session["recently-viewed"] = [item_id]
+    else:
+        if item_id in request.session["recently-viewed"]:
+            request.session["recently-viewed"].remove(item_id)
+
+        request.session["recently-viewed"].insert(0, item_id)
+
+        if len(request.session["recently-viewed"]) > 10:
+            request.session["recently-viewed"].pop()
+
+        request.session.modified = True
+    print(request.session["recently-viewed"])
 
     if item_id != "favicon.ico":
         # supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
@@ -234,7 +253,10 @@ def join(request):
 
 
 def portfolio(request):
-    user_id = request.session["user_id"]
+    if "user_id" not in request.session:
+        user_id = "Null"
+    else:
+        user_id = request.session["user_id"]
     
     portfolio_items = db.get_portfolio_items(user_id) 
 
@@ -257,7 +279,6 @@ def portfolio(request):
         "portfolio_items":portfolio_items,
     }
     #Add to portfolio
-    print(request.session["user_id"])
     if request.method == "POST":
         if request.POST.get("form-type") == "add-item-form":
             form = AddItemToPortfolio(request.POST)
