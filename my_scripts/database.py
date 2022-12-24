@@ -112,10 +112,10 @@ class DatabaseManagment():
 
     def get_parent_themes(self) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT REPLACE(theme_path, '/', '')
+            SELECT REPLACE(REPLACE(theme_path, '/', ''), ' ', '-')
             FROM App_item, App_theme
             WHERE theme_path NOT LIKE '%~%'
-                AND item_type = 'S'
+                AND item_type = 'M'
                 AND App_item.item_id = App_theme.item_id
             GROUP BY theme_path
         """)
@@ -248,6 +248,34 @@ class DatabaseManagment():
                 AND user_id = {user_id}
                 AND condition = '{condition}'
         """)
+
+
+    def decrement_portfolio_item_quantity(self, item_id, user_id, condition, delete_quantity) -> None:
+        self.cursor.execute(f"""
+            UPDATE App_portfolio
+            SET quantity = quantity - {delete_quantity}
+            WHERE item_id = '{item_id}'
+                AND user_id = '{user_id}'
+                AND condition = '{condition}';
+        """)
+        self.con.commit()
+
+        self.cursor.execute("""
+            DELETE FROM App_portfolio
+            WHERE quantity < 1;
+        """)
+        self.con.commit()
+
+
+    def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
+        result = self.cursor.execute(f"""
+            SELECT quantity
+            FROM App_portfolio
+            WHERE item_id = '{item_id}'
+                AND condition = '{condition}'
+                AND user_id = '{user_id}'
+        """)
+        return int(result.fetchall()[0][0])
 
 
     def check_login(self, username, password) -> bool:
