@@ -29,3 +29,8 @@ class SignupFrom(forms.Form):
     username = forms.CharField(max_length=16)
     password = forms.CharField(max_length=22)
     password_confirmation = forms.CharField(max_length=22)
+
+
+class DeletePortfolioItem(forms.Form):
+    item_to_delete = forms.CharField(max_length=700)
+    delete_quantity = forms.IntegerField()

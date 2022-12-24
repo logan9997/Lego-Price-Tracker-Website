@@ -31,7 +31,6 @@
         border:0.2rem orangered solid;
         margin: 0.1rem;
         position: relative;
-        background-color: rgb(37, 34, 34);
 
 
     }
@@ -68,6 +67,21 @@
 
         }
 
+            .item-header .delete-button-container form button {
+                color: white;
+                background-color: red;
+                width: 1.2rem;
+                text-align: center;
+            }
+
+            .item-header .delete-button-container form button:hover {
+                background-color: rgb(207, 35, 35);
+            }
+
+            .item-header .delete-button-container form input[type=number] {
+                width: 2.2rem;
+            }
+
         .item-header h3 {
             font-size: 0.72rem;
         }
@@ -75,13 +89,12 @@
         .item-body {
             margin: 0;
             padding: 0;
-            background-color: rgb(37, 34, 34);
         }
 
         .item-body img {
             height: 100%;
-            border: 0.12rem blueviolet solid ;
-            box-shadow: blueviolet 0.2rem 0.2rem 0.2rem;
+            border: 0.12rem orangered solid ;
+            box-shadow: orangered 0.2rem 0.2rem 0.2rem;
         }
 
         .price-details {
@@ -99,7 +112,6 @@
         }
 
         .price-details tr td, th {
-            color: blueviolet;
             vertical-align: baseline;
             border: 0.05rem black solid;
         }

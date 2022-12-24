@@ -2,82 +2,92 @@
 
 {% block content %}
 
-    <head>
-        {% load static %}
-        <link rel="stylesheet" href="{% static 'App/portfolio.css' %}">
-    </head>
-
-    <section id="left-side-column">
-
-        <section id="add-to-portfolio-container">
-            <h1>Add to Portfolio</h1>
-            <form action="{% url 'portfolio' %}" method="post">
-                <input type="hidden" name="form-type" value="add-item-form">
-                <input type="text" name="item_id">
-                <select name="condition">
-                    <option value="N">New</option>
-                    <option value="U">Used</option>
-                </select>
-                <input type="number" name="quantity">
-                <input type="submit" value="Add">
-            </form>
-        </section>
+{% load static %}
+<link rel="stylesheet" href="{% static 'App/portfolio.css' %}">
 
 
-        <section id="porfolio-item-sort">
-            <h1>Sort</h1>
-            <form action="{% url 'portfolio' %}" method="post">
-                <input type="hidden" name="form-type" value="sort-form">
-                <select name="sort_field">
-                    <option value="item_name">Name</option>
-                    <option value="condition">Condition</option>
-                </select>
+<section id="left-side-column">
 
-                <select name="field_order">
-                    <option value="ASC">ASC</option>
-                    <option value="DESC">DESC</option>
-                </select>
+    <section id="add-to-portfolio-container">
+        <h1>Add to Portfolio</h1>
+        <form action="{% url 'portfolio' %}" method="post">
+            <input type="hidden" name="form-type" value="add-item-form">
+            
+            <div class="ui-widget">
+                <input type="text" name="item_id" id="item_ids">
+            </div>
 
-                <input type="submit" value="Sort">
-            </form>
-        </section>
-
+            <select name="condition">
+                <option value="N">New</option>
+                <option value="U">Used</option>
+            </select>
+            <input min="1" value="1" type="number" name="quantity">
+            <input type="submit" value="Add">
+        </form>
     </section>
 
-    <section id="right-side-columm">
 
-        <section id="portfolio-items-container">
-            {% for item in portfolio_items %}
-                <div class="item">
-                    <div class="item-header">
-                        <h2>({{item.condition}}) {{item.item_name}}</h2>
-                        <h3><a href="{% url 'item' item.item_id %}">{{item.item_id}}</a></h3>
-                    </div>
+    <section id="porfolio-item-sort">
+        <h1>Sort</h1>
+        <form action="{% url 'portfolio' %}" method="post">
+            <input type="hidden" name="form-type" value="sort-form">
+            <select name="sort_field">
+                <option value="item_name">Name</option>
+                <option value="condition">Condition</option>
+            </select>
 
-                    <div class="item-body">
-                        <img src="{% static item.image_path %}" alt="{{item.image_path}}">
-                    </div>
+            <select name="field_order">
+                <option value="ASC">ASC</option>
+                <option value="DESC">DESC</option>
+            </select>
 
-                    <div class="price-details">
-                        <table>
-                            <tr>
-                                <th>Avg</th>
-                                <th>Min</th>
-                                <th>Max</th>
-                                <th>Qty</th>
-                            </tr>
-                            <tr>
-                                <td>£4.56</td>
-                                <td>£2.03</td>
-                                <td>£15.89</td>
-                                <td>112</td>
-                            </tr>
-                        </table>
+            <input type="submit" value="Sort">
+        </form>
+    </section>
+
+</section>
+
+<section id="right-side-columm">
+    <section id="portfolio-items-container">
+        {% for item in portfolio_items %}
+            <div class="item">
+                <div class="item-header">
+                    <h2>({{item.condition}}) {{item.item_name}} ({{item.quantity}})</h2>
+                    <div class="delete-button-container">
+                        <form action="{% url 'portfolio' %}" method="post">
+                            <input type="hidden" name="form-type" value="delete-item-form">
+                            <input min="1" value="1" type="number" name="delete_quantity">
+                            <button type="submit" name="item_to_delete" value="{{item.item_id}},{{item.condition}}">-</button>
+                            
+                        </form>
                     </div>
+                    <h3><a href="{% url 'item' item.item_id %}">{{item.item_id}}</a></h3>
                 </div>
-            {% endfor %}
-        </section>
 
+                <div class="item-body">
+                    <img src="{% static item.image_path %}" alt="{{item.image_path}}">
+                </div>
+
+                <div class="price-details">
+                    <table>
+                        <tr>
+                            <th>Avg</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Qty</th>
+                        </tr>
+                        <tr>
+                            <td>£4.56</td>
+                            <td>£2.03</td>
+                            <td>£15.89</td>
+                            <td>112</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
     </section>
+
+</section>
 
 {% endblock %}

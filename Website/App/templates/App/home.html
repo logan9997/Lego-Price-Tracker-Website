@@ -18,6 +18,12 @@
         <button type="submit">Submit!</button>
 
     </form>
+
+    {% for item in recently_viewed %}
+        <p>{{item}}</p>
+    {% endfor %}
+
+
     {% endblock %}
 
 
