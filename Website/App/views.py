@@ -1,8 +1,8 @@
-import sys
+import sys, math
 from datetime import datetime as dt, timedelta
 
 from django.shortcuts import render, redirect
-from django.core import serializers
+from .App_config import * 
 
 from .forms import (
     AddItemToPortfolio, 
@@ -10,6 +10,7 @@ from .forms import (
     LoginForm,
     SignupFrom,
     DeletePortfolioItem,
+    PortfolioPageNavigation,
 )
 
 from .models import (
@@ -180,7 +181,6 @@ def theme(request, themes):
 
 
 def login(request):
-
     context = {}
     #if not login attempts have been made set to 0
     if "login_attempts" not in request.session:
@@ -190,7 +190,8 @@ def login(request):
     if "login_retry_date" not in request.session:
         login_blocked = False
     else:
-        if dt.today() > request.session["login_retry_date"]: 
+        login_retry_date = datetime.datetime.strptime(request.session["login_retry_date"].strip('"'), '%Y-%m-%d %H:%M:%S')
+        if dt.today() > login_retry_date: 
             login_blocked = False
         else:
             login_blocked = True
@@ -210,25 +211,35 @@ def login(request):
                 del request.session["login_attempts"]
                 return redirect("http://127.0.0.1:8000/")
             else:
-                print("no login")
-
-            #if login not valid
-            request.session["login_attempts"] += 1
-            return redirect("http://127.0.0.1:8000/login/")
+                context.update({"login_message":"Username and Password do not match"})
+                #if login not valid
+                request.session["login_attempts"] += 1
 
 
 
     #if max login attempts exceeded, then block user for 24hrs and display message on page
-    if request.session["login_attempts"] >= 5:
-        tommorow = dt.now() + timedelta(1)
-        request.session["login_retry_date"] = tommorow
-        context.update({"login_message":f"YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES try again on {str(tommorow)}"})
 
-    print("LOGIN ATTEMPTS",request.session["login_attempts"])
+    if request.session["login_attempts"] >= 4:
+        if not login_blocked:
+            tommorow = dt.strptime(str(dt.now() + timedelta(1)).split(".")[0], "%Y-%m-%d %H:%M:%S")
+            request.session["login_retry_date"] = json.dumps(tommorow, default=str)
+        login_retry_date = request.session["login_retry_date"]
+        context.update({"login_message":["YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES:", f"try again on {login_retry_date}"]})
 
-
+    if "user_id" in request.session:
+        user_id = request.session["user_id"]
+        username = User.objects.filter(user_id=user_id).values_list("username", flat=True)[0]
+        context.update({
+            "logged_in":True,
+            "username":username
+        })
 
     return render(request, "App/login.html", context=context)
+
+
+def logout(request):
+    del request.session["user_id"]
+    return redirect("login")
 
 
 def join(request):
@@ -255,74 +266,110 @@ def join(request):
     return render(request, "App/join.html", context=context)
 
 
-def portfolio(request):
+def portfolio(request, view):
+    context = {}
+
     if "user_id" not in request.session:
-        user_id = "Null"
+        user_id = "None"
+        context = {"logged_in":False}
     else:
         user_id = request.session["user_id"]
-    
-    portfolio_items = db.get_portfolio_items(user_id) 
+        context.update({
+            "username":User.objects.filter(user_id=user_id).values_list("username", flat=True)[0],
+            "logged_in":True
+            })
 
-    #format portfolio items into dict for readability in template
-    portfolio_items = [{
-        "image_path":f"App/images/{portfolio_item[0]}.png",
-        "item_id":portfolio_item[0],
-        "condition":portfolio_item[1],
-        "quantity":portfolio_item[2],
-        "item_name":portfolio_item[3],
-        "item_type":portfolio_item[4],
-        "year_released":portfolio_item[5],
-        # "avg_price":portfolio_item[6],
-        # "min_price":portfolio_item[7],
-        # "max_price":portfolio_item[8],
-        # "total_quantity":portfolio_item[9], 
-    } for portfolio_item in portfolio_items]
+        portfolio_items = db.get_portfolio_items(user_id) 
 
-    context = {
-        "portfolio_items":portfolio_items,
-        "item_ids":[item_id[0] for item_id in db.get_item_ids()]
-    }
-    #Add to portfolio
-    if request.method == "POST":
-        print(request.method)
+        #format portfolio items into dict for readability in template
+        portfolio_items = [{
+            "image_path":f"App/images/{portfolio_item[0]}.png",
+            "item_id":portfolio_item[0],
+            "condition":portfolio_item[1],
+            "quantity":portfolio_item[2],
+            "item_name":portfolio_item[3],
+            "item_type":portfolio_item[4],
+            "year_released":portfolio_item[5],
+            # "avg_price":portfolio_item[6],
+            # "min_price":portfolio_item[7],
+            # "max_price":portfolio_item[8],
+            # "total_quantity":portfolio_item[9], 
+        } for portfolio_item in portfolio_items]
 
-        if request.POST.get("form-type") == "add-item-form":
-            form = AddItemToPortfolio(request.POST)
-            if form.is_valid():
-                item_id = form.cleaned_data["item_id"]
-                condition = form.cleaned_data["condition"]
-                quantity = form.cleaned_data["quantity"]
+        context.update({
+            "portfolio_items":portfolio_items[:ITEMS_PER_PAGE],
+            "item_ids":[item_id[0] for item_id in db.get_item_ids()],
+        })
 
-                #if the item ID exists, add to database
-                item_ids = [item_id[0] for item_id in db.get_item_ids()]
-                if item_id in item_ids:
+        #current page
+        page = int(request.GET.get("page", 1)) 
+        #number of pages, ITEMS_PER_PAGE items per page
+        pages = math.ceil(len(portfolio_items) / ITEMS_PER_PAGE) 
+        #boundaries for next and back page
+        back_page = page - 1
+        next_page = page + 1
+        if page == pages: 
+            next_page = page
+        elif page == 1:
+            back_page = page
 
-                    if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
-                        db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
-                    else:
-                        db.add_to_portfolio(item_id, condition, quantity, user_id)
-                    return redirect("http://127.0.0.1:8000/portfolio/")
+        #Add to portfolio
+        if request.method == "POST":
 
-        #SORTING
-        elif request.POST.get("form-type") == "sort-form":
-            field_order_convert = {"ASC":False, "DESC":True}
-            form = PortfolioItemsSort(request.POST)
-            if form.is_valid():
-                item_filter = form.cleaned_data["sort_field"][0]
-                field_order = form.cleaned_data["field_order"][0]
-                context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
-            return render(request, "App/portfolio.html", context=context)
+            if request.POST.get("form-type") == "add-item-form":
+                form = AddItemToPortfolio(request.POST)
+                if form.is_valid():
+                    item_id = form.cleaned_data["item_id"]
+                    condition = form.cleaned_data["condition"]
+                    quantity = form.cleaned_data["quantity"]
 
-        #REMOVE ITEM
-        elif request.POST.get("form-type") == "delete-item-form":
-            form = DeletePortfolioItem(request.POST)
-            if form.is_valid():
-                item_id = form.cleaned_data["item_to_delete"].split(",")[0]
-                condition = form.cleaned_data["item_to_delete"].split(",")[1]
-                delete_quantity = form.cleaned_data["delete_quantity"]
+                    #if the item ID exists, add to database
+                    item_ids = [item_id[0] for item_id in db.get_item_ids()]
+                    if item_id in item_ids:
 
-                db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
-                return redirect("http://127.0.0.1:8000/portfolio/")
+                        if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
+                            db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
+                        else:
+                            db.add_to_portfolio(item_id, condition, quantity, user_id)
+                        return redirect(f"http://127.0.0.1:8000/portfolio/?page={page}")
+
+            #SORTING
+            elif request.POST.get("form-type") == "sort-form":
+                field_order_convert = {"ASC":False, "DESC":True}
+                form = PortfolioItemsSort(request.POST)
+                if form.is_valid():
+                    item_filter = form.cleaned_data["sort_field"][0]
+                    field_order = form.cleaned_data["field_order"][0]
+                    context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+                return render(request, "App/portfolio.html", context=context)
+
+            #REMOVE ITEM
+            elif request.POST.get("form-type") == "delete-item-form":
+                form = DeletePortfolioItem(request.POST)
+                if form.is_valid():
+                    item_id = form.cleaned_data["item_to_delete"].split(",")[0]
+                    condition = form.cleaned_data["item_to_delete"].split(",")[1]
+                    delete_quantity = form.cleaned_data["delete_quantity"]
+
+                    db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
+                    return redirect(f"http://127.0.0.1:8000/portfolio/?page={page}")
+
+        if view == "trends":
+            portfolio_trends = db.total_portfolio_price_trend(user_id)
+            portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
+            portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
+            context.update({
+                "portfolio_trend_dates":portfolio_trend_dates,
+                "portfolio_trend_prices":portfolio_trend_prices,
+                })
+        else:
+            portfolio_items = portfolio_items[ITEMS_PER_PAGE*(page-1):ITEMS_PER_PAGE*page]
+            context.update({"portfolio_items":portfolio_items})
+
+        context.update({
+            "next_page":next_page,
+            "back_page":back_page,      
+        })
 
 
     return render(request, "App/portfolio.html", context=context)
