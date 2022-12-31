@@ -1,8 +1,9 @@
-import sys, math
+import sys, math, random
 from datetime import datetime as dt, timedelta
 
 from django.shortcuts import render, redirect
-from .App_config import * 
+from .config import * 
+from .utils import *
 
 from .forms import (
     AddItemToPortfolio, 
@@ -43,7 +44,6 @@ def update_prices_table():
 
 
 def index(request):
-    
     #print(db.check_for_todays_date())
     # if db.check_for_todays_date() == [(0,)]:
     #     print("UPDATING DB...")
@@ -60,10 +60,34 @@ def index(request):
     if "recently-viewed" not in request.session:
         request.session["recently-viewed"] = []
 
+    recently_viewed_ids = request.session["recently-viewed"]
+    print(recently_viewed_ids)
+    recently_viewed = [{
+        "item_id":db.get_item_info(item_id)[0][0],
+        "item_name":db.get_item_info(item_id)[0][1],
+        "image_path":f"App/images/{db.get_item_info(item_id)[0][0]}.png",
+    } for item_id in recently_viewed_ids]
+
     context = {
-        "header":"HOME",
-        "recently_viewed":request.session["recently-viewed"]
+        "recently_viewed":recently_viewed,
+        "random_item_id":random.choice(item_ids)
     }
+
+    if "user_id" in request.session:
+        biggest_portfolio_changes = [{
+            "image_path":f"App/images/{_item[1]}.png",
+            "item_id":_item[1],
+            "item_name":_item[0],
+            "condition":_item[2],
+            "quantity_owned":_item[3],
+            "change":_item[4],
+            } for _item in db.biggest_portfolio_changes(request.session["user_id"])[:3]]
+        context.update({
+            "biggest_portfolio_changes":biggest_portfolio_changes,
+        })
+
+        context = add_username_to_context_if_loggedIn(request, context, User)
+
 
     return render(request, "App/home.html", context=context)
 
@@ -226,20 +250,15 @@ def login(request):
         login_retry_date = request.session["login_retry_date"]
         context.update({"login_message":["YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES:", f"try again on {login_retry_date}"]})
 
-    if "user_id" in request.session:
-        user_id = request.session["user_id"]
-        username = User.objects.filter(user_id=user_id).values_list("username", flat=True)[0]
-        context.update({
-            "logged_in":True,
-            "username":username
-        })
+    #add the username to context which can only happen if the user is logged in
+    context = add_username_to_context_if_loggedIn(request, context, User)
 
     return render(request, "App/login.html", context=context)
 
 
 def logout(request):
-    del request.session["user_id"]
-    return redirect("login")
+    del request.session
+    return render(request, "App/login.html")
 
 
 def join(request):
@@ -260,8 +279,11 @@ def join(request):
                     user_id = user_id.values_list("user_id", flat=True)[0]
                     request.session["user_id"] = user_id
                     return redirect("http://127.0.0.1:8000/")
+                return render(request, "App/join.html", context={"signup_message":"Username / Email already exists"})
+            return render(request, "App/join.html", context={"signup_message":"Passwords do not Match"})
 
-    context = {}
+    #add the username to context which can only happen if the user is logged in
+    context = add_username_to_context_if_loggedIn(request, {}, User)
 
     return render(request, "App/join.html", context=context)
 
@@ -331,7 +353,7 @@ def portfolio(request, view):
                             db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
                         else:
                             db.add_to_portfolio(item_id, condition, quantity, user_id)
-                        return redirect(f"http://127.0.0.1:8000/portfolio/?page={page}")
+                        return redirect(f"http://127.0.0.1:8000/portfolio/{view}?page={page}")
 
             #SORTING
             elif request.POST.get("form-type") == "sort-form":
