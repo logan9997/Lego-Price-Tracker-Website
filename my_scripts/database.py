@@ -240,7 +240,7 @@ class DatabaseManagment():
         self.con.commit()
 
 
-    def update_portfolio_item_quantity(self, item_id, condition, quantity, user_id):
+    def update_portfolio_item_quantity(self, item_id, condition, quantity, user_id) -> None:
         self.cursor.execute(f"""
             UPDATE App_portfolio
             SET quantity = quantity + {quantity}
@@ -278,6 +278,33 @@ class DatabaseManagment():
         return int(result.fetchall()[0][0])
 
 
+    def biggest_portfolio_changes(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_name, I.item_id, portfolio.condition, quantity, round(avg_price - (
+                SELECT avg_price
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND date = (
+                        SELECT max(date)
+                        FROM App_price
+                    ) 
+            ),2) as [£ change]
+
+            FROM App_price P1, App_item I, App_portfolio portfolio, App_user user
+            WHERE I.item_id = P1.item_id 
+                AND I.item_id = portfolio.item_id
+                AND portfolio.user_id = user.user_id
+                AND user.user_id = {user_id}
+                AND date = (
+                    SELECT min(date)
+                    FROM App_price
+                ) 
+            GROUP BY portfolio.item_id, condition
+            ORDER BY [£ change] DESC
+        """)
+        return result.fetchall()
+
+
     def check_login(self, username, password) -> bool:
         result = self.cursor.execute(f"""
             SELECT *
@@ -308,6 +335,29 @@ class DatabaseManagment():
             VALUES ('{username}', '{email}', '{password}')
         """)
         self.con.commit()
+
+
+    def sample_prices(self, portfolio_items) -> None:
+        from random import randint
+        for p in portfolio_items:
+            self.cursor.execute(f"""
+                INSERT INTO App_price ('date','avg_price','min_price','max_price','total_quantity','item_id')
+                VALUES ('2022-12-26',{randint(1,55)},'{randint(1,55)}','{randint(1,55)}','{randint(1,55)}','{p[0]}')
+            """)
+            self.con.commit()
+
+
+    def total_portfolio_price_trend(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT SUM(max_price), date
+            FROM App_price price, App_portfolio portfolio, App_item item, App_user user
+            WHERE user.user_id = {user_id}
+                AND price.item_id = item.item_id
+                AND item.item_id = portfolio.item_id
+                AND portfolio.user_id = user.user_id
+            GROUP BY date
+        """)
+        return result.fetchall()
 
     #########################################TRANSER##########################
 def get_all(table):
