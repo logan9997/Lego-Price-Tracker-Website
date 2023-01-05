@@ -45,6 +45,12 @@ def update_prices_table():
 
 def index(request):
 
+    if "user_info" not in request.session:
+        print("OVERWRITING SESSION (home)")
+        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
+
+    print("USER INFO HOME", request.session["user_info"])
+
     #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in db.get_item_ids()] 
     
@@ -54,11 +60,11 @@ def index(request):
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
 
     #if the user has no recently viewed items create a new emtpy list to store items in the future
-    if "recently-viewed" not in request.session:
-        request.session["recently-viewed"] = []
+    if "recently-viewed" not in request.session["user_info"]:
+        request.session["user_info"]["recently-viewed"] = []
 
     #get the first x items from recently viewed
-    recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
+    recently_viewed_ids = request.session["user_info"]["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
 
     #create dict for each recently viewed item 
     recently_viewed = [{
@@ -78,7 +84,7 @@ def index(request):
     }
 
     #if user is logged in pass biggest portfolio changes to context 
-    if "user_id" in request.session:
+    if "user_id" in request.session["user_info"]:
         biggest_portfolio_changes = [{
             "image_path":f"App/images/{_item[1]}.png",
             "item_id":_item[1],
@@ -86,7 +92,7 @@ def index(request):
             "condition":_item[2],
             "quantity_owned":_item[3],
             "change":_item[4],
-            } for _item in db.biggest_portfolio_changes(request.session["user_id"])[:9]]
+            } for _item in db.biggest_portfolio_changes(request.session["user_info"]["user_id"])[:9]]
         context.update({ #MIGHT ONLY NEED ONE
             "biggest_portfolio_changes_1":biggest_portfolio_changes[:len(biggest_portfolio_changes)//2],
             "biggest_portfolio_changes_2":biggest_portfolio_changes[len(biggest_portfolio_changes)//2:],
@@ -101,24 +107,25 @@ def index(request):
 def item(request, item_id):
     context = {}
 
+    user_info = request.session["user_info"]
+
     #if no recently viewed items, add item on current page to recently viewed items
     if "recently-viewed" not in request.session:
-        request.session["recently-viewed"] = [item_id]
+        user_info["recently-viewed"] = [item_id]
     else:
         #if item is already in recently viewed then revome it (will be added to i=0)
-        if item_id in request.session["recently-viewed"]:
-            request.session["recently-viewed"].remove(item_id)
+        if item_id in user_info["recently-viewed"]:
+            user_info["recently-viewed"].remove(item_id)
 
         #add the item on the page to i=0
-        request.session["recently-viewed"].insert(0, item_id)
+        user_info["recently-viewed"].insert(0, item_id)
 
         #if more than x recently-viewed items remove last / oldest item
-        if len(request.session["recently-viewed"]) > RECENTLY_VIEWED_ITEMS_NUM:
-            request.session["recently-viewed"].pop()
+        if len(user_info["recently-viewed"]) > RECENTLY_VIEWED_ITEMS_NUM:
+            user_info["recently-viewed"].pop()
 
         #list is mutable, to save the changes to session
         request.session.modified = True
-    print(request.session["recently-viewed"])
 
 
     if item_id != "favicon.ico":
@@ -188,7 +195,6 @@ def trending(request):
 def search(request):
     #get theme_path, thumbnail_url for each theme (type = 'S')
     themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
-    print(themes)
 
     context = {
         "header":"Search",
@@ -198,14 +204,20 @@ def search(request):
     return render(request, "App/search.html", context=context)
 
 
-def theme(request, themes):
-    #theme = "".join([theme + "/" for theme in themes])
-    themes = themes.replace("-", " ")
-    theme_items = db.get_theme_items(themes) #return all sets for theme
-    sub_themes = db.get_sub_themes(themes) #return of all sub-themes (if any) for theme
+def theme(request, theme_path):
+
+    #get all sets and themes that appear in the selected sub theme
+    theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
+    
+    #get all sub themes (if any)
+    sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
+    #split "~" (used to seperate sub themes in database) with 
+    sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
+    #remove duplicates
+    sub_themes = list(dict.fromkeys(sub_themes))
 
     context = {
-        "header":themes,
+        "header":theme_path,
         "theme_items":theme_items,
         "sub_themes":sub_themes,
     }
@@ -215,9 +227,16 @@ def theme(request, themes):
 
 def login(request):
     context = {}
+
+    if "user_info" not in request.session:
+        print("OVERWRITING SESSION (login)")
+        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
+
     #if not login attempts have been made set to 0
     if "login_attempts" not in request.session:
         request.session["login_attempts"] = 0
+    else:
+        print(request.session["login_attempts"])
 
     #check if login block has exipred
     if "login_retry_date" not in request.session:
@@ -246,7 +265,7 @@ def login(request):
                 user_id = user.values_list("user_id", flat=True)[0]
 
                 #set the user_id in session to the user that just logged in, reset login attempts
-                request.session["user_id"] = user_id
+                request.session["user_info"]["user_id"] = user_id
                 request.session["login_attempts"] = 0
 
                 #redirect to home page id login successful
@@ -272,6 +291,7 @@ def login(request):
         context.update({"login_message":["YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES:", f"try again on {login_retry_date}"]})
 
     #add the username to context which can only happen if the user is logged in
+    print("USER INFO LOGIN",request.session["user_info"])
     context = add_username_to_context_if_loggedIn(request, context, User)
 
     return render(request, "App/login.html", context=context)
@@ -285,11 +305,17 @@ def logout(request):
     otherwise recently viewed items still show after logging out
     '''
 
-    del request.session["user_id"]
+    del request.session["user_info"]
     return render(request, "App/login.html")
 
 
 def join(request):
+
+    if "user_info" not in request.session:
+        print("OVERWRITING SESSION (join")
+        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
+    else:
+        print("USER INFO (JOIN)",request.session["user_info"])
 
     if request.method == 'POST':
         form = SignupFrom(request.POST)
@@ -311,13 +337,15 @@ def join(request):
                     #get the new users id to add to session
                     user = User.objects.filter(username=username, password=password)
                     user_id = user.values_list("user_id", flat=True)[0]
-                    request.session["user_id"] = user_id
+                    request.session["user_info"]["user_id"] = user_id
+                    request.session.modified = True
+                    print("REDIRCTING TO HOME",request.session["user_info"])
                     return redirect("http://127.0.0.1:8000/")
 
                 #set error messages depending on what the user did wrong in filling out the form
                 context = {"signup_message":"Username / Email already exists"}
             context = {"signup_message":"Passwords do not Match"}
-            return render(request, "App/join.html", context=context)
+            print("REFRESHING JOIN.html")
 
     #add the username to context which can only happen if the user is logged in
     context = add_username_to_context_if_loggedIn(request, {}, User)
@@ -326,18 +354,18 @@ def join(request):
 
 
 def portfolio(request, view):
+    user_id = request.session["user_info"]["user_id"]
 
     #if user_id not in session, logged in = False
-    if "user_id" not in request.session:
+    if user_id == -1:
         user_id = "None"
         context = {"logged_in":False}
     else:
-        user_id = request.session["user_id"]
-        context.update({
+        context = {
             #filter database to find user_ids username
             "username":User.objects.filter(user_id=user_id).values_list("username", flat=True)[0],
             "logged_in":True
-            })
+            }
 
         #get all items owned by the logged in user
         portfolio_items = db.get_portfolio_items(user_id) 
