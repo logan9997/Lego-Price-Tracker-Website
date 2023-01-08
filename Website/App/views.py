@@ -49,8 +49,6 @@ def index(request):
         print("OVERWRITING SESSION (home)")
         request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
 
-    print("USER INFO HOME", request.session["user_info"])
-
     #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in db.get_item_ids()] 
     
@@ -99,7 +97,7 @@ def index(request):
 
         })
         #adds the users username to context since they are logged in
-        context = add_username_to_context_if_loggedIn(request, context, User)
+        
 
     return render(request, "App/home.html", context=context)
 
@@ -169,6 +167,7 @@ def item(request, item_id):
             # "parts_info":parts_info,
             # "sets_info":sets_info,
         })
+    
 
     return render(request, "App/item.html", context=context)
 
@@ -188,6 +187,7 @@ def trending(request):
         "losers":losers,
         "winners":winners,
         }
+    
 
     return render(request, "App/trending.html", context=context)
 
@@ -200,6 +200,7 @@ def search(request):
         "header":"Search",
         "theme_details":themes,
     }
+    
 
     return render(request, "App/search.html", context=context)
 
@@ -221,7 +222,8 @@ def theme(request, theme_path):
         "theme_items":theme_items,
         "sub_themes":sub_themes,
     }
-
+    
+    
     return render(request, "App/theme.html", context=context)
 
 
@@ -291,8 +293,7 @@ def login(request):
         context.update({"login_message":["YOU HAVE ATTEMPTED LOGIN TOO MANY TIMES:", f"try again on {login_retry_date}"]})
 
     #add the username to context which can only happen if the user is logged in
-    print("USER INFO LOGIN",request.session["user_info"])
-    context = add_username_to_context_if_loggedIn(request, context, User)
+    
 
     return render(request, "App/login.html", context=context)
 
@@ -304,18 +305,18 @@ def logout(request):
     rework sessions for specific user, need to associate recently viewed with a user_id
     otherwise recently viewed items still show after logging out
     '''
-
-    del request.session["user_info"]
-    return render(request, "App/login.html")
+    if "user_info" in request.session:
+        del request.session["user_info"]
+    return redirect("login")
 
 
 def join(request):
 
+    context = {}
+
     if "user_info" not in request.session:
         print("OVERWRITING SESSION (join")
         request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
-    else:
-        print("USER INFO (JOIN)",request.session["user_info"])
 
     if request.method == 'POST':
         form = SignupFrom(request.POST)
@@ -348,25 +349,20 @@ def join(request):
             print("REFRESHING JOIN.html")
 
     #add the username to context which can only happen if the user is logged in
-    context = add_username_to_context_if_loggedIn(request, {}, User)
+    
 
     return render(request, "App/join.html", context=context)
 
 
-def portfolio(request, view):
+def portfolio(request):
+
+    if "items" not in request.GET.get("view", "") and "trends" not in request.GET.get("view", ""):
+        return redirect("http://127.0.0.1:8000/portfolio/?view=items")
+
     user_id = request.session["user_info"]["user_id"]
-
+    context = {}
     #if user_id not in session, logged in = False
-    if user_id == -1:
-        user_id = "None"
-        context = {"logged_in":False}
-    else:
-        context = {
-            #filter database to find user_ids username
-            "username":User.objects.filter(user_id=user_id).values_list("username", flat=True)[0],
-            "logged_in":True
-            }
-
+    if user_id != -1:
         #get all items owned by the logged in user
         portfolio_items = db.get_portfolio_items(user_id) 
 
@@ -424,7 +420,7 @@ def portfolio(request, view):
                         #if item + quantity not in portfolio, add new item entry
                         else:
                             db.add_to_portfolio(item_id, condition, quantity, user_id)
-                        return redirect(f"http://127.0.0.1:8000/portfolio/{view}?page={page}")
+                        return redirect(f"http://127.0.0.1:8000/portfolio/view=items?&page={page}")
 
             #SORTING
             elif request.POST.get("form-type") == "sort-form":
@@ -448,29 +444,31 @@ def portfolio(request, view):
 
                     #decrement quantity of item, if quantity < 1, remove from portfolio
                     db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
-                    return redirect(f"http://127.0.0.1:8000/portfolio/?page={page}")
+                    return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
 
-        #if view is trends (showing graph)
-        if view == "trends":
-            #get prices and dates for trends in portfolio
-            portfolio_trends = db.total_portfolio_price_trend(user_id)
-            portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
-            portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
+    #if view is trends (showing graph)
+    if request.GET.get("view") == "trends":
+        #get prices and dates for trends in portfolio
+        portfolio_trends = db.total_portfolio_price_trend(user_id)
+        portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
+        portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
 
-            #add prices and dates in seperate lists in context
-            context.update({
-                "portfolio_trend_dates":portfolio_trend_dates,
-                "portfolio_trend_prices":portfolio_trend_prices,
-                })
-        else:
-            #if view is items, display items base on what the current page is
-            portfolio_items = portfolio_items[ITEMS_PER_PAGE*(page-1):ITEMS_PER_PAGE*page]
-            context.update({"portfolio_items":portfolio_items})
-
+        #add prices and dates in seperate lists in context
         context.update({
-            "next_page":next_page,
-            "back_page":back_page,      
-        })
+            "portfolio_trend_dates":portfolio_trend_dates,
+            "portfolio_trend_prices":portfolio_trend_prices,
+            })
+    else:
+        print("items")
+        #if view is items, display items base on what the current page is
+        portfolio_items = portfolio_items[ITEMS_PER_PAGE*(page-1):ITEMS_PER_PAGE*page]
+        context.update({"portfolio_items":portfolio_items})
+        print(portfolio_items)
+        
 
+    context.update({
+        "next_page":next_page,
+        "back_page":back_page,      
+    })
 
     return render(request, "App/portfolio.html", context=context)
