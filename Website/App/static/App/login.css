@@ -1,7 +1,9 @@
 
 
 #main-container {
-    left:50%;
+    position: absolute;
+    left: calc(50% - 18rem);
+    margin-left: -10px;
     width: 36rem;
     height: 30rem;
     display: flex;
@@ -47,8 +49,20 @@ input[type=submit] {
     background-color: orangered;
 }
 
+.background-img {
+    border: 0.1rem yellow solid;
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 26rem;
+    height: auto;
+
+}
+
+#portfolio-sample {
+    border-color:blue;
+}
+
 #error-message-container {
-    background-color: red;
     height: 10rem;
 }
 
@@ -56,10 +70,3 @@ p {
     text-align: center;
 }
 
-#logout-container {
-    background-color: green;
-}
-
-#logout-container form input {
-    
-}

@@ -1,0 +1,27 @@
+#tophalf-container {
+    background-color: red;
+}
+
+#item-profile {
+    background-color: white;
+    width: 12rem;
+    border: 0.2rem orangered solid;
+    text-align: center;
+}
+
+    #item-name {
+        font-size: 1rem;
+        background-color: yellow;
+        margin: 0;
+    }
+
+    #item-id {
+        font-size: 0.85rem;
+        background-color: purple;
+        border-bottom : 0.2rem orangered solid;
+
+    }
+
+    #item-image {
+        background-color: aqua;
+    }

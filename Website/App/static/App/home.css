@@ -4,13 +4,14 @@ h1 {
     margin-bottom: 1rem;
     padding: 0.8rem;
     text-align: center;
+    border-bottom: 0.2rem black solid;
 }
 
 #main-container {
     width:88%;
     margin-left: 8%;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     flex-direction: row;
     flex-wrap: wrap;
 }
@@ -24,40 +25,72 @@ h1 {
     width :14%;
     margin-right: 1%;
     background-color: white;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-    #portfolio-growth .item {
-        height: 27.5%;
+    #slider {
+        animation: portfolio-items-scroll linear infinite;
+    }
+
+    .item-and-growth-container {
+        position: relative;
+        height: calc(12rem + 2rem);
+        white-space: wrap;
+        
+    }
+
+    .item {
+        height: 12rem;
         width: calc(88% - 0.1rem);
         text-align: center;
         margin-left: 6%;
         border: 0.1rem orangered solid;
-        margin-bottom: 1rem;
+        position: relative;
+        margin-top: 1rem;
 
     }
 
-    #portfolio-growth .item h2 {
-        padding-top: 0.1rem;
-        background-color: skyblue;
+    .item h3 {
+        padding-bottom: 0.3rem;
+        padding-top: 0.3rem;
         margin: 0;
         margin-bottom: 0.4rem;
-        padding: 0.3rem;
         border-bottom: 0.1rem orangered solid;
+        border-top: 0.1rem orangered solid;
+        background-color: skyblue;
+        font-size: 0.7rem;
     }
 
-    #portfolio-growth .item img {
-        margin-top: 1rem;
+    .item img {
+        margin-top: 0.5rem;
         padding: 0.1rem;
         height: 50%;
+        border: 0.2rem black solid;
     }
 
-    #item-change-container {
-        background-color: skyblue;
+    .growth {
+        height: 2rem;
+        width: calc(88% - 0.1rem);
+        margin-left: 6%;
+        border: 0.1rem orangered solid;
+        border-top: none;
     }
 
-    #item-change-container p {
-        margin-bottom: 0;
+    .growth p {
+        margin: 0;
     }
+
+    @keyframes portfolio-items-scroll {
+        0% {
+            transform: translateY(0);
+        }
+
+        100% {
+            transform: translateY(calc(-250% * 7.5));
+        }
+    } 
 
 #about-section {
     width: 68%;
@@ -100,20 +133,20 @@ h1 {
         text-align: center;
         width: 45%;
         margin: 1.5% 2.5% 2.5% 1.5%;
-        height: 14rem;
+        height: 13rem;
         border: 0.1rem black solid;
         background-color: rgb(245, 245, 245);
+    }
+
+    .about-box:hover {
+        width: 47%;
+        height: 14rem;
+        margin: 0.75% 1.5% 1.5% 0.75%;
     }
 
     .about-box img {
         width: 90%;
         height: 68%;
-    }
-
-    .about-box:hover {
-        width: 47%;
-        height: 15rem;
-        margin: 0.75% 1.5% 1.5% 0.75%;
     }
 
     .about-box h2 {
@@ -128,58 +161,60 @@ h1 {
 }
 
 #recently-viewed {
-    height: 16.4rem;
+    height: 20rem;
     text-align: center;
     margin-top:1rem;
-    width: 100%;
-    background-color: yellow;
+    width: calc(100% - 0.8rem);
+    background-color: white;
+    border: 0.2rem black solid;
 }
-
-    #recently-viewed h1 {
-        margin: 0;
-        align-items: center;
-        padding: 1rem 0 1rem 0;
-        background-color: red;
-    }
 
     #item-flex-container {
         display: flex;
-        height: 13rem;
+        height: 16rem;
         flex-direction: row;
-        justify-content: start;
         align-items: center;
         overflow-x: auto;
+        overflow-y: hidden;
     }
 
     #recently-viewed .item {
         margin: 1rem 1rem 1rem 1rem;
-        background-color: orange;
-        height: 88%;
-        width: 10rem;
+        min-width: 10rem; max-width: 10rem;
+        height: 14rem;
+        border: 0.1rem orangered solid;
 
     }
 
-    .item h3 {
-        margin: 0.7rem;
+    .item h2 {
         font-size: 0.85rem;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
+
+        height: 1rem;
     }
 
-    .item h2 {
-        font-size: 0.7rem;
+    #recently-viewed .item {
+        margin-top: 1rem;
     }
 
-    .item img {
-        width: 44%;
+     .item img {
+        height: 40%;
     }
+
+.bottom-row-sections {
+    margin-top: 1.5rem;
+    height: 28rem;
+    width: 48%;
+    border: 0.2rem black solid;
+}
 
 #popular-items {
-    margin-top: 1.5rem;
-    height: 20rem;
-    background-color: blueviolet;
-    width: 100%;
+    margin-right: 1%;
+}
+
+#trending {
 }
