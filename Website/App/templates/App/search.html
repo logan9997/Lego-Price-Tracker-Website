@@ -1,14 +1,19 @@
 {% extends 'App/base.html' %}
 
 {% block content %}
- 
+    {% load tags %}
     <section id="all-themes-container">
-        {% for theme in theme_details %}
+        {% for theme in sub_themes %}
         <div class="theme-container">
-            {{theme}}
-            <p><a href="{% url 'theme' theme %}">{{theme}}</a></p>
-            <img src="{{theme}}" alt="{{theme.1}}_url">
+            <p><a href="{% url 'search' theme %}">{{theme|replace_underscore}}</a></p>
+            <!-- <img src="{{theme}}" alt="{{theme}}_url"> -->
         </div>
+        {% endfor %}
+    </section>
+
+    <section id="theme-items">
+        {% for item in theme_items %}
+            {{item.0}} {{item.1}}
         {% endfor %}
     </section>
 

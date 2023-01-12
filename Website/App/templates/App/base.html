@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     {% load static %}
+    
+
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,25 +25,32 @@
 
 </head>
 <body>
-
+    {% load tags %}
+    {% check_login_status request %}
+    {% add_username_email_to_context request %}
     <nav>
-        <h1>{{header}}</h1>
         <ul>
             <li><a href="{% url 'index' %}">Home</a></li>
-            <li><a href="{% url 'search' %}">Search</a></li>
+            <li><a href="{% url 'search' 'all' %}">Search</a></li>
             <li><a href="{% url 'portfolio' %}">Portfolio</a></li>
             <li><a href="{% url 'trending' %}">Trending</a></li>
+            {% if logged_in  == False %}
             <li><a href="{% url 'login' %}">Login</a></li>
             <li><a href="{% url 'join' %}">Join Now</a></li>
+            {% else %}
+            <li id="logout-tab"><a onclick="logout_popup(event)" href="{% url 'logout' %}">Logout</a></li>
+            {% endif %}
         </ul>
     </nav>
 
+    
+
     {% block content%}
-
+    
     {% endblock %}
-
+<!-- 
     <footer>
         <p>Page Created By: Logan Baxter</p>
-    </footer>
+    </footer> -->
 </body>
 </html>

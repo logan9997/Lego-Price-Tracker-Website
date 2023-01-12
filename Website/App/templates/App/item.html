@@ -3,20 +3,21 @@
 <head>
     {% extends 'App/base.html' %}
     {% load static %}
-    <title>Document</title>
+    
 </head>
 <body>
     {% block content %}
+    <link rel="stylesheet" href="{% static 'App/item.css' now 'U' %}">
+
     <section id="tophalf-container">
         <section id="item-profile">
-            <h1 id="item-name">{{ general_info.1 }}</h1>
+            <h1 id="item-name">{{ general_info.name }}</h1>
             <p id="item-id">{{ general_info.item_id }}</p>
-            {{image_path}}
             <img id="item-image" src="{% static image_path %}" alt="{{item_id}}">
-            <p>Year Released: {{ general_info.year_released }}</p>  
+            <p>Year Released: 1999</p>  {{ general_info.year_released }}
         </section>
 
-        <section id="general-info">
+        <!-- <section id="general-info">
 
             <div id="test" class="general-info-tabs">
                 <h1>OWNERSHIP</h1>
@@ -86,7 +87,7 @@
         Plotly.newPlot("price-date-graph", data, layout);
     </script>
     
-
+ -->
 
     {% endblock %}
 </body>
