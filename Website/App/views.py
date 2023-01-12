@@ -22,7 +22,6 @@ from .models import (
     Theme
 )
 
-sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API")
 
 from my_scripts.responses import * 
 from my_scripts.database import *
@@ -46,7 +45,6 @@ def update_prices_table():
 def index(request):
 
     if "user_info" not in request.session:
-        print("OVERWRITING SESSION (home)")
         request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
 
     #get a list of all item ids that exist inside the database 
@@ -192,53 +190,38 @@ def trending(request):
     return render(request, "App/trending.html", context=context)
 
 
-def search(request):
-    #get theme_path, thumbnail_url for each theme (type = 'S')
-    themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
+def search(request, theme_path="all"):
+
+    if theme_path == "all":
+        sub_themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
+        theme_items = [] 
+    else:
+        theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
+        #get all sub themes (if any)
+        sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
+        #split "~" (used to seperate sub themes in database) with 
+        sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
+        #remove duplicates
+        sub_themes = list(dict.fromkeys(sub_themes))
 
     context = {
-        "header":"Search",
-        "theme_details":themes,
+        "sub_themes":sub_themes,
+        "theme_items":theme_items,
     }
     
 
     return render(request, "App/search.html", context=context)
 
 
-def theme(request, theme_path):
-
-    #get all sets and themes that appear in the selected sub theme
-    theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
-    
-    #get all sub themes (if any)
-    sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
-    #split "~" (used to seperate sub themes in database) with 
-    sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
-    #remove duplicates
-    sub_themes = list(dict.fromkeys(sub_themes))
-
-    context = {
-        "header":theme_path,
-        "theme_items":theme_items,
-        "sub_themes":sub_themes,
-    }
-    
-    
-    return render(request, "App/theme.html", context=context)
-
-
 def login(request):
     context = {}
 
     if "user_info" not in request.session:
-        print("OVERWRITING SESSION (login)")
         request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
 
     #if not login attempts have been made set to 0
     if "login_attempts" not in request.session:
         request.session["login_attempts"] = 0
-    else:
-        print(request.session["login_attempts"])
 
     #check if login block has exipred
     if "login_retry_date" not in request.session:
@@ -315,7 +298,6 @@ def join(request):
     context = {}
 
     if "user_info" not in request.session:
-        print("OVERWRITING SESSION (join")
         request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
 
     if request.method == 'POST':
@@ -340,13 +322,11 @@ def join(request):
                     user_id = user.values_list("user_id", flat=True)[0]
                     request.session["user_info"]["user_id"] = user_id
                     request.session.modified = True
-                    print("REDIRCTING TO HOME",request.session["user_info"])
                     return redirect("http://127.0.0.1:8000/")
 
                 #set error messages depending on what the user did wrong in filling out the form
                 context = {"signup_message":"Username / Email already exists"}
             context = {"signup_message":"Passwords do not Match"}
-            print("REFRESHING JOIN.html")
 
     #add the username to context which can only happen if the user is logged in
     
@@ -356,36 +336,18 @@ def join(request):
 
 def portfolio(request):
 
+    #if no view is selected, default to view=items, page=1
     if "items" not in request.GET.get("view", "") and "trends" not in request.GET.get("view", ""):
-        return redirect("http://127.0.0.1:8000/portfolio/?view=items")
+        page = int(request.GET.get("page", 1))
+        return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
 
     user_id = request.session["user_info"]["user_id"]
+
     context = {}
     #if user_id not in session, logged in = False
     if user_id != -1:
         #get all items owned by the logged in user
-        portfolio_items = db.get_portfolio_items(user_id) 
-
-        #format portfolio items into dict for readability in template
-        portfolio_items = [{
-            "image_path":f"App/images/{portfolio_item[0]}.png",
-            "item_id":portfolio_item[0],
-            "condition":portfolio_item[1],
-            "quantity":portfolio_item[2],
-            "item_name":portfolio_item[3],
-            "item_type":portfolio_item[4],
-            "year_released":portfolio_item[5],
-            # "avg_price":portfolio_item[6],
-            # "min_price":portfolio_item[7],
-            # "max_price":portfolio_item[8],
-            # "total_quantity":portfolio_item[9], 
-        } for portfolio_item in portfolio_items]
-
-        #add all portfolio items. Add all existing items_ids for adding to portfolio
-        context.update({
-            "portfolio_items":portfolio_items[:ITEMS_PER_PAGE],
-            "item_ids":[item_id[0] for item_id in db.get_item_ids()],
-        })
+        portfolio_items = get_portfolio_items(user_id)
 
         #current page
         page = int(request.GET.get("page", 1)) 
@@ -399,76 +361,104 @@ def portfolio(request):
         elif page == 1:
             back_page = page
 
-        #Add to portfolio
-        if request.method == "POST":
-
-            if request.POST.get("form-type") == "add-item-form":
-                form = AddItemToPortfolio(request.POST)
-                if form.is_valid():
-                    item_id = form.cleaned_data["item_id"]
-                    condition = form.cleaned_data["condition"]
-                    quantity = form.cleaned_data["quantity"]
-
-                    #if the item ID exists, add to database
-                    item_ids = [item_id[0] for item_id in db.get_item_ids()]
-                    if item_id in item_ids:
-                        
-                        #if the item_id with the same condition ('N' / 'U') in portfolio increment quantity
-                        if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
-                            db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
-                        
-                        #if item + quantity not in portfolio, add new item entry
-                        else:
-                            db.add_to_portfolio(item_id, condition, quantity, user_id)
-                        return redirect(f"http://127.0.0.1:8000/portfolio/view=items?&page={page}")
-
-            #SORTING
-            elif request.POST.get("form-type") == "sort-form":
-                field_order_convert = {"ASC":False, "DESC":True}
-                form = PortfolioItemsSort(request.POST)
-                if form.is_valid():
-                    item_filter = form.cleaned_data["sort_field"][0]
-                    field_order = form.cleaned_data["field_order"][0]
-
-                    #update portfolio items order dependant on the sort field from the form
-                    context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
-                return render(request, "App/portfolio.html", context=context)
-
-            #REMOVE ITEM
-            elif request.POST.get("form-type") == "delete-item-form":
-                form = DeletePortfolioItem(request.POST)
-                if form.is_valid():
-                    item_id = form.cleaned_data["item_to_delete"].split(",")[0]
-                    condition = form.cleaned_data["item_to_delete"].split(",")[1]
-                    delete_quantity = form.cleaned_data["delete_quantity"]
-
-                    #decrement quantity of item, if quantity < 1, remove from portfolio
-                    db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
-                    return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
-
-    #if view is trends (showing graph)
-    if request.GET.get("view") == "trends":
-        #get prices and dates for trends in portfolio
-        portfolio_trends = db.total_portfolio_price_trend(user_id)
-        portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
-        portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
-
-        #add prices and dates in seperate lists in context
-        context.update({
-            "portfolio_trend_dates":portfolio_trend_dates,
-            "portfolio_trend_prices":portfolio_trend_prices,
-            })
-    else:
-        print("items")
-        #if view is items, display items base on what the current page is
+        #pass items for specific page
         portfolio_items = portfolio_items[ITEMS_PER_PAGE*(page-1):ITEMS_PER_PAGE*page]
-        context.update({"portfolio_items":portfolio_items})
-        print(portfolio_items)
-        
 
-    context.update({
-        "next_page":next_page,
-        "back_page":back_page,      
-    })
+        #add all portfolio items. Add all existing items_ids for adding to portfolio
+        context.update({
+            "portfolio_items":portfolio_items[:ITEMS_PER_PAGE],
+            "item_ids":[item_id[0] for item_id in db.get_item_ids()],
+        })
+
+        print(context["portfolio_items"])
+
+        #if view is trends (showing graph)
+        if request.GET.get("view") == "trends":
+            #get prices and dates for trends in portfolio
+            portfolio_trends = db.total_portfolio_price_trend(user_id)
+            portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
+            portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
+
+            #add prices and dates in seperate lists in context
+            context.update({
+                "portfolio_trend_dates":portfolio_trend_dates,
+                "portfolio_trend_prices":portfolio_trend_prices,
+                })
+        
+        context = {
+            "next_page":next_page,
+            "back_page":back_page,  
+            "current_page":page    
+        }
+
 
     return render(request, "App/portfolio.html", context=context)
+
+
+def portfolio_POST(request, page):
+    page -= 1
+    print(page)
+    #Add to portfolio
+    context = {}
+    user_id = request.session["user_info"]["user_id"]
+    portfolio_items = get_portfolio_items(user_id)
+    
+
+    if request.method == "POST":
+
+        if request.POST.get("form-type") == "add-item-form":
+            form = AddItemToPortfolio(request.POST)
+            if form.is_valid():
+                item_id = form.cleaned_data["item_id"]
+                condition = form.cleaned_data["condition"]
+                quantity = form.cleaned_data["quantity"]
+                #if the item ID exists, add to database
+                item_ids = [item_id[0] for item_id in db.get_item_ids()]
+                if item_id in item_ids:
+                    
+                    #if the item_id with the same condition ('N' / 'U') in portfolio increment quantity
+                    if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
+                        db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
+                    
+                    #if item + quantity not in portfolio, add new item entry
+                    else:
+                        db.add_to_portfolio(item_id, condition, quantity, user_id)
+                    return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
+            else:
+                print(form.errors)
+
+        #SORTING
+        elif request.POST.get("form-type") == "sort-form":
+            field_order_convert = {"ASC":False, "DESC":True}
+            form = PortfolioItemsSort(request.POST)
+            if form.is_valid():
+                item_filter = form.cleaned_data["sort_field"][0]
+                field_order = form.cleaned_data["field_order"][0]
+
+                #update portfolio items order dependant on the sort field from the form
+                context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+            #return render(request, "App/portfolio.html", context=context)
+            return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
+
+        #REMOVE ITEM
+        elif request.POST.get("form-type") == "delete-item-form":
+            form = DeletePortfolioItem(request.POST)
+            if form.is_valid():
+                item_id = form.cleaned_data["item_to_delete"].split(",")[0]
+                condition = form.cleaned_data["item_to_delete"].split(",")[1]
+                delete_quantity = form.cleaned_data["delete_quantity"]
+
+                #decrement quantity of item, if quantity < 1, remove from portfolio
+                db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
+                return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
+
+    return redirect("portfolio")
+
+
+def watchlist(request):
+
+    user_id = request.session["user_info"]["user_id"]
+
+    context = {}
+
+    return render(request, "App/watchlist.html", context=context)
