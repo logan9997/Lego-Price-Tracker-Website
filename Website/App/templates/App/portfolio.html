@@ -5,7 +5,8 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'App/portfolio.css' %}">
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-{{portfolio_items}}
+
+
 {% if logged_in %}
 <section id="left-side-column">
 
@@ -25,7 +26,6 @@
             <p>Most expensive item - sw0001a</p>
             <p>Highest Quantity - sw0001a (42)</p>
             <p>Sets: 13</p>
-            <p>{{portfolio_items}}</p>
             <p>Minifigures: 70</p>
             <p>New : 88 | Used : 7</p>
         </div>
@@ -33,7 +33,7 @@
 
     <section id="add-to-portfolio-container">
         <h1 class="header-container">Add to Portfolio</h1>
-        <form action="{% url 'portfolio_POST' next_page %}" method="post">
+        <form action="{% url 'portfolio_POST' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="form-type" value="add-item-form">
 
@@ -64,7 +64,7 @@
 
     <section id="porfolio-item-sort">
         <h1 class="header-container">Sort</h1>
-        <form action="{% url 'portfolio_POST' current_page %}" method="post">
+        <form action="{% url 'portfolio_POST' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="form-type" value="sort-form">
             <select name="sort_field">
@@ -90,21 +90,18 @@
     {% if logged_in %}
     <section id="portfolio-items-header">
         <h1>{{username}}'s Collection:</h1>
-        {% if "trends" not in request.GET.view %}
+        {% if view != "trends" %}
         <div id="page-form-container">
-            <form id="page-form" action="{% url 'portfolio' %}" method="get">
-                <input type="submit" name="page" value="{{back_page}}">
-                <input type="submit" name="page" value="{{next_page}}">
+            <form id="page-form" action="{% url 'portfolio' 'items' %}" method="get">
+                <input min="1" type="submit" name="page" value="{{back_page}}">
+                <input min="1" type="submit" name="page" value="{{next_page}}">
             </form>
         </div>
         {% endif %}
 
         <div id="view-options-container">
-            <form action="{% url 'portfolio' %}" method="get">
-
-                <input type="submit" name="view" value="items">
-                <input type="submit" name="view" value="trends">
-            </form>
+            <a href="{% url 'portfolio' 'items' %}">items</a>
+            <a href="{% url 'portfolio' 'trends' %}">trends</a>
         </div>
     </section>
 
@@ -116,7 +113,7 @@
         </section>
     {% endif %}
 
-    {% if "items" in request.GET.view %}
+    {% if view == "items" %}
     <section id="portfolio-items-container">
         {% for item in portfolio_items %}
             <div class="item">
@@ -131,7 +128,7 @@
                     </div>
                     <img src="{% static item.image_path %}" alt="{{item.image_path}}">
                     <div class="delete-button-container">
-                        <form action="{% url 'portfolio_POST' next_page %}" method="post">
+                        <form action="{% url 'portfolio_POST' %}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="form-type" value="delete-item-form">
                             <input min="1" value="1" type="number" name="delete_quantity">

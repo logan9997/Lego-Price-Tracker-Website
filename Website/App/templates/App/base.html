@@ -32,7 +32,7 @@
         <ul>
             <li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'search' 'all' %}">Search</a></li>
-            <li><a href="{% url 'portfolio' %}">Portfolio</a></li>
+            <li><a href="{% url 'portfolio' 'items' %}">Portfolio</a></li>
             <li><a href="{% url 'trending' %}">Trending</a></li>
             {% if logged_in  == False %}
             <li><a href="{% url 'login' %}">Login</a></li>
