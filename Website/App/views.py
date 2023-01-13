@@ -334,84 +334,83 @@ def join(request):
     return render(request, "App/join.html", context=context)
 
 
-def portfolio(request):
-
-    #if no view is selected, default to view=items, page=1
-    if "items" not in request.GET.get("view", "") and "trends" not in request.GET.get("view", ""):
-        page = int(request.GET.get("page", 1))
-        return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
-
-    user_id = request.session["user_info"]["user_id"]
+def portfolio(request, view):
 
     context = {}
-    #if user_id not in session, logged in = False
-    if user_id != -1:
+
+    user_id = request.session["user_info"]["user_id"]
+    #id no user is logged in redirect, so that code for logged in user is not run
+    if user_id == -1:
+        return render(request, "App/portfolio.html", context=context)
+
+    if view == "items":
+
         #get all items owned by the logged in user
         portfolio_items = get_portfolio_items(user_id)
 
-        #current page
-        page = int(request.GET.get("page", 1)) 
-        #number of pages, ITEMS_PER_PAGE items per page
-        pages = math.ceil(len(portfolio_items) / ITEMS_PER_PAGE) 
-        #boundaries for next and back page
-        back_page = page - 1
-        next_page = page + 1
-        if page == pages: 
-            next_page = page
-        elif page == 1:
-            back_page = page
+        #overwrite portfolio_items if it is present in session from being sorted in portfolio_POST()
+        if "portfolio_items" in request.session:
+            portfolio_items = request.session["portfolio_items"]
+
+            #delete once stored in varaible
+            del request.session["portfolio_items"]
+
+        #get the next and back page for nagivating through items
+        back_page, page, next_page = get_current_page(request, portfolio_items)
+
+        #add current_page to session to be accessed in portfolio_POST()
+        request.session["current_page"] = page
 
         #pass items for specific page
         portfolio_items = portfolio_items[ITEMS_PER_PAGE*(page-1):ITEMS_PER_PAGE*page]
-
-        #add all portfolio items. Add all existing items_ids for adding to portfolio
-        context.update({
-            "portfolio_items":portfolio_items[:ITEMS_PER_PAGE],
-            "item_ids":[item_id[0] for item_id in db.get_item_ids()],
-        })
-
-        print(context["portfolio_items"])
-
-        #if view is trends (showing graph)
-        if request.GET.get("view") == "trends":
-            #get prices and dates for trends in portfolio
-            portfolio_trends = db.total_portfolio_price_trend(user_id)
-            portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
-            portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
-
-            #add prices and dates in seperate lists in context
-            context.update({
-                "portfolio_trend_dates":portfolio_trend_dates,
-                "portfolio_trend_prices":portfolio_trend_prices,
-                })
         
         context = {
-            "next_page":next_page,
-            "back_page":back_page,  
-            "current_page":page    
+            "portfolio_items":portfolio_items,
+            "view":view,
+            "back_page":back_page,
+            "current_page":page,
+            "next_page":next_page
         }
+
+        #render, with context refering to 'items' view
+        return render(request, "App/portfolio.html", context=context)
+
+    #get prices and dates for trends in portfolio
+    portfolio_trends = db.total_portfolio_price_trend(user_id)
+    portfolio_trend_dates = [portfolio_item[1] for portfolio_item in portfolio_trends]
+    portfolio_trend_prices = [portfolio_item[0] for portfolio_item in portfolio_trends]
+
+    #add prices and dates in seperate lists in context
+    context.update({
+        "portfolio_trend_dates":portfolio_trend_dates,
+        "portfolio_trend_prices":portfolio_trend_prices,
+        })
+    print(context["portfolio_trend_dates"])
+
+
 
 
     return render(request, "App/portfolio.html", context=context)
 
 
-def portfolio_POST(request, page):
-    page -= 1
-    print(page)
-    #Add to portfolio
-    context = {}
+def portfolio_POST(request):
+
     user_id = request.session["user_info"]["user_id"]
+
+    page = request.session["current_page"]
+
     portfolio_items = get_portfolio_items(user_id)
-    
 
+    #post methods
     if request.method == "POST":
-
+        #ADD ITEM TO PORTFOLIO
         if request.POST.get("form-type") == "add-item-form":
             form = AddItemToPortfolio(request.POST)
             if form.is_valid():
                 item_id = form.cleaned_data["item_id"]
                 condition = form.cleaned_data["condition"]
                 quantity = form.cleaned_data["quantity"]
+
                 #if the item ID exists, add to database
                 item_ids = [item_id[0] for item_id in db.get_item_ids()]
                 if item_id in item_ids:
@@ -423,9 +422,7 @@ def portfolio_POST(request, page):
                     #if item + quantity not in portfolio, add new item entry
                     else:
                         db.add_to_portfolio(item_id, condition, quantity, user_id)
-                    return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
-            else:
-                print(form.errors)
+                    return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
 
         #SORTING
         elif request.POST.get("form-type") == "sort-form":
@@ -434,11 +431,10 @@ def portfolio_POST(request, page):
             if form.is_valid():
                 item_filter = form.cleaned_data["sort_field"][0]
                 field_order = form.cleaned_data["field_order"][0]
-
                 #update portfolio items order dependant on the sort field from the form
-                context["portfolio_items"] = sorted(context["portfolio_items"], key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
-            #return render(request, "App/portfolio.html", context=context)
-            return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
+                portfolio_items = sorted(portfolio_items, key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+                request.session["portfolio_items"] = portfolio_items                
+            return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
 
         #REMOVE ITEM
         elif request.POST.get("form-type") == "delete-item-form":
@@ -450,9 +446,11 @@ def portfolio_POST(request, page):
 
                 #decrement quantity of item, if quantity < 1, remove from portfolio
                 db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
-                return redirect(f"http://127.0.0.1:8000/portfolio/?view=items&page={page}")
+                return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
+    context = {}
 
-    return redirect("portfolio")
+    return render(request, "App/portfolio.html", context=context)
+
 
 
 def watchlist(request):
