@@ -12,6 +12,7 @@ from .forms import (
     SignupFrom,
     DeletePortfolioItem,
     PortfolioPageNavigation,
+    ChangePassword,
 )
 
 from .models import (
@@ -407,6 +408,8 @@ def portfolio_POST(request):
         if request.POST.get("form-type") == "add-item-form":
             form = AddItemToPortfolio(request.POST)
             if form.is_valid():
+
+                #get values from form
                 item_id = form.cleaned_data["item_id"]
                 condition = form.cleaned_data["condition"]
                 quantity = form.cleaned_data["quantity"]
@@ -419,7 +422,7 @@ def portfolio_POST(request):
                     if (item_id, condition) in [(portfolio_item["item_id"], portfolio_item["condition"]) for portfolio_item in portfolio_items]:
                         db.update_portfolio_item_quantity(item_id, condition, quantity, user_id)
                     
-                    #if item + quantity not in portfolio, add new item entry
+                    #if (item, condition) not in portfolio, add new item entry
                     else:
                         db.add_to_portfolio(item_id, condition, quantity, user_id)
                     return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
@@ -429,10 +432,15 @@ def portfolio_POST(request):
             field_order_convert = {"ASC":False, "DESC":True}
             form = PortfolioItemsSort(request.POST)
             if form.is_valid():
+
+                #get values from form
                 item_filter = form.cleaned_data["sort_field"][0]
                 field_order = form.cleaned_data["field_order"][0]
+
                 #update portfolio items order dependant on the sort field from the form
                 portfolio_items = sorted(portfolio_items, key=lambda field:field[item_filter], reverse=field_order_convert[field_order])
+                
+                #add the sorted portfolio items to session to be accessed in main view 'portfolio'
                 request.session["portfolio_items"] = portfolio_items                
             return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
 
@@ -440,6 +448,8 @@ def portfolio_POST(request):
         elif request.POST.get("form-type") == "delete-item-form":
             form = DeletePortfolioItem(request.POST)
             if form.is_valid():
+
+                #get values from form
                 item_id = form.cleaned_data["item_to_delete"].split(",")[0]
                 condition = form.cleaned_data["item_to_delete"].split(",")[1]
                 delete_quantity = form.cleaned_data["delete_quantity"]
@@ -447,9 +457,8 @@ def portfolio_POST(request):
                 #decrement quantity of item, if quantity < 1, remove from portfolio
                 db.decrement_portfolio_item_quantity(item_id, user_id, condition, delete_quantity)
                 return redirect(f"http://127.0.0.1:8000/portfolio/items/?page={page}")
-    context = {}
 
-    return render(request, "App/portfolio.html", context=context)
+    return render(request, "App/portfolio.html")
 
 
 
@@ -460,3 +469,52 @@ def watchlist(request):
     context = {}
 
     return render(request, "App/watchlist.html", context=context)
+
+
+def add_to_watchlist(request, item_id):
+
+    #add to watchlist db.func, wait till db is fully populated!!
+
+    return redirect(f"http://127.0.0.1:8000/item/{item_id}")
+
+
+def profile(request):
+
+    context = {}
+
+    user_id = request.session["user_info"]["user_id"]
+
+    #SETTINGS
+    if request.method == "POST":
+        form = ChangePassword(request.POST)
+        if form.is_valid():
+            old_password = form.cleaned_data["old_password"]
+            new_password = form.cleaned_data["new_password"]
+            confirm_password = form.cleaned_data["confirm_password"]
+    
+            #list of rules that must all return True for the password to be updated, with corrisponding error messages
+            #to be displayed to the user.
+            rules:list[dict] = [ 
+                {db.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
+                {new_password == confirm_password:"'New password' and 'Confirm password' do not match"},
+            ]
+
+            #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
+            if all([all(rule) for rule in rules]):
+                db.update_password(user_id, old_password, new_password)
+                return render(request, "App/profile.html", context=context)
+            else:
+                #pass an error message to context, based on what condition was not satisfied
+                change_password_error_message = check_update_password_rules(rules)
+                context["change_password_error_message"] = change_password_error_message
+
+    
+    #PORTFOLIO
+
+    #WATCHLIST
+
+    #USER INFO
+
+    #MEMBERSHIP 
+
+    return render(request, "App/profile.html", context=context)
