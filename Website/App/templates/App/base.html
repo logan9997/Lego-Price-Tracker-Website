@@ -38,6 +38,7 @@
             <li><a href="{% url 'login' %}">Login</a></li>
             <li><a href="{% url 'join' %}">Join Now</a></li>
             {% else %}
+            <li><a href="{% url 'profile' %}">Profile</a></li>
             <li id="logout-tab"><a onclick="logout_popup(event)" href="{% url 'logout' %}">Logout</a></li>
             {% endif %}
         </ul>

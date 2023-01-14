@@ -1,0 +1,68 @@
+{% extends 'App/base.html' %}
+
+{% block content %}
+
+{% load static %}
+
+<section id="change-password" class="profile-change-section">
+    <h2>Change Password</h2>
+    <form action="{% url 'profile' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="form-type" value="change-password-form">
+
+        <label for="old_password">Old Password</label>
+        <input type="text" name="old_password">
+
+        <label for="new_password">New Password</label>
+        <input type="text" name="new_password">
+
+        <label for="confirm_password">Confirm Password</label>
+        <input type="text" name="confirm_password">
+
+        <input type="submit" value="Change!">
+    </form>
+</section>
+
+<br><br>
+
+<section id="email-preferences" class="profile-change-section">
+    <h2>Email Preferences</h2>
+    <form action="{% url 'profile' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="form-type" value="email-preference-form">
+
+        <label for="email">Email</label>
+        <input type="text" name="email">
+        
+        <input type="radio" name="preference" value="Never">
+        <label for="Never">Never</label>
+        <input type="radio" name="preference" value="Occasional">
+        <label for="Occasional">Occasional</label>
+        <input type="radio" name="preference" value="All">
+        <label for="All">All</label>
+
+        <input type="submit" value="Updated!">
+    </form>
+</section>
+
+<br><br>    
+
+<section id="personal-details" class="profile-change-section">
+    <h2>Personal Details</h2>
+    <form action="{% url 'profile' %}">
+        <input type="hidden" name="form-type" value="personal-details-form">
+
+        <!-- <input type="text" name="name">
+        <label for="name">Name</label> -->
+
+        <label for="username">Username</label>
+        <input type="text" name="username">
+
+        <input type="submit" value="Update!">
+        
+        <!-- Country, region -->
+    </form>
+</section>
+
+{% endblock %}
+
