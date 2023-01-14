@@ -1,5 +1,9 @@
-import sys, math, random
-from datetime import datetime as dt, timedelta
+import random
+
+from datetime import (
+    datetime as dt, 
+    timedelta
+)
 
 from django.shortcuts import render, redirect
 from .config import * 
@@ -11,16 +15,13 @@ from .forms import (
     LoginForm,
     SignupFrom,
     DeletePortfolioItem,
-    PortfolioPageNavigation,
     ChangePassword,
+    EmailPreferences,
+    PersonalInfo,
 )
 
 from .models import (
-    Price,
-    Portfolio,
-    Item,
     User,
-    Theme
 )
 
 
@@ -485,33 +486,48 @@ def profile(request):
     user_id = request.session["user_info"]["user_id"]
 
     #SETTINGS
+    
     if request.method == "POST":
-        form = ChangePassword(request.POST)
-        if form.is_valid():
-            old_password = form.cleaned_data["old_password"]
-            new_password = form.cleaned_data["new_password"]
-            confirm_password = form.cleaned_data["confirm_password"]
-    
-            #list of rules that must all return True for the password to be updated, with corrisponding error messages
-            #to be displayed to the user.
-            rules:list[dict] = [ 
-                {db.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
-                {new_password == confirm_password:"'New password' and 'Confirm password' do not match"},
-            ]
+        #-Change password
+        if request.POST.get("form-type") == "change-password-form":
+            form = ChangePassword(request.POST)
+            if form.is_valid():
+                old_password = form.cleaned_data["old_password"]
+                new_password = form.cleaned_data["new_password"]
+                confirm_password = form.cleaned_data["confirm_password"]
+        
+                #list of rules that must all return True for the password to be updated, with corrisponding error messages
+                #to be displayed to the user.
+                rules:list[dict] = [ 
+                    {db.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
+                    {new_password == confirm_password:"'New password' and 'Confirm password' do not match"},
+                ]
 
-            #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
-            if all([all(rule) for rule in rules]):
-                db.update_password(user_id, old_password, new_password)
-                return render(request, "App/profile.html", context=context)
-            else:
-                #pass an error message to context, based on what condition was not satisfied
-                change_password_error_message = check_update_password_rules(rules)
-                context["change_password_error_message"] = change_password_error_message
+                #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
+                if all([all(rule) for rule in rules]):
+                    db.update_password(user_id, old_password, new_password)
+                    return render(request, "App/profile.html", context=context)
+                else:
+                    #pass an error message to context, based on what condition was not satisfied
+                    
+                    context["change_password_error_message"] = get_change_password_error_message(rules)
 
-    
-    #PORTFOLIO
+        #-Email preferences
+        elif request.POST.get("form-type") == "email-preferences-form":
+            form = EmailPreferences(request.POST)
+            if form.is_valid():
+                email = form.cleaned_data["email"]
+                preference = form.cleaned_data["preference"]
+                #no fields in database
 
-    #WATCHLIST
+        #-Change personal info
+        elif request.POST.get("form-type") == "personal-details-form":
+            form = PersonalInfo(request.POST)
+            if form.is_valid():
+                username = form.cleaned_data["username"]
+
+                #update username is database
+                db.change_username(user_id, username)
 
     #USER INFO
 
