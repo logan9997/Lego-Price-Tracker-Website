@@ -46,8 +46,11 @@ def update_prices_table():
 
 def index(request):
 
-    if "user_info" not in request.session:
-        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
+    #set user_id if no user is logged in, get user_id from session
+    if "user_id" not in request.session:
+        request.session["user_id"] = -1
+    user_id = request.session["user_id"]
+
 
     #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in db.get_item_ids()] 
@@ -58,11 +61,11 @@ def index(request):
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
 
     #if the user has no recently viewed items create a new emtpy list to store items in the future
-    if "recently-viewed" not in request.session["user_info"]:
-        request.session["user_info"]["recently-viewed"] = []
+    if "recently-viewed" not in request.session and user_id == -1:
+        request.session["recently-viewed"] = []
 
     #get the first x items from recently viewed
-    recently_viewed_ids = request.session["user_info"]["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
+    recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
 
     #create dict for each recently viewed item 
     recently_viewed = [{
@@ -82,7 +85,7 @@ def index(request):
     }
 
     #if user is logged in pass biggest portfolio changes to context 
-    if "user_id" in request.session["user_info"]:
+    if "user_id" in request.session:
         biggest_portfolio_changes = [{
             "image_path":f"App/images/{_item[1]}.png",
             "item_id":_item[1],
@@ -90,7 +93,7 @@ def index(request):
             "condition":_item[2],
             "quantity_owned":_item[3],
             "change":_item[4],
-            } for _item in db.biggest_portfolio_changes(request.session["user_info"]["user_id"])[:9]]
+            } for _item in db.biggest_portfolio_changes(user_id)[:9]]
         context.update({ #MIGHT ONLY NEED ONE
             "biggest_portfolio_changes_1":biggest_portfolio_changes[:len(biggest_portfolio_changes)//2],
             "biggest_portfolio_changes_2":biggest_portfolio_changes[len(biggest_portfolio_changes)//2:],
@@ -105,22 +108,24 @@ def index(request):
 def item(request, item_id):
     context = {}
 
-    user_info = request.session["user_info"]
+    '''
+    CHANGE IF USER IS LOGGED IN!!
+    '''
 
     #if no recently viewed items, add item on current page to recently viewed items
     if "recently-viewed" not in request.session:
-        user_info["recently-viewed"] = [item_id]
+        request.session["recently-viewed"] = [item_id]
     else:
         #if item is already in recently viewed then revome it (will be added to i=0)
-        if item_id in user_info["recently-viewed"]:
-            user_info["recently-viewed"].remove(item_id)
+        if item_id in request.session["recently-viewed"]:
+            request.session["recently-viewed"].remove(item_id)
 
         #add the item on the page to i=0
-        user_info["recently-viewed"].insert(0, item_id)
+        request.session["recently-viewed"].insert(0, item_id)
 
         #if more than x recently-viewed items remove last / oldest item
-        if len(user_info["recently-viewed"]) > RECENTLY_VIEWED_ITEMS_NUM:
-            user_info["recently-viewed"].pop()
+        if len(request.session["recently-viewed"]) > RECENTLY_VIEWED_ITEMS_NUM:
+            request.session["recently-viewed"].pop()
 
         #list is mutable, to save the changes to session
         request.session.modified = True
@@ -218,9 +223,6 @@ def search(request, theme_path="all"):
 def login(request):
     context = {}
 
-    if "user_info" not in request.session:
-        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
-
     #if not login attempts have been made set to 0
     if "login_attempts" not in request.session:
         request.session["login_attempts"] = 0
@@ -252,7 +254,7 @@ def login(request):
                 user_id = user.values_list("user_id", flat=True)[0]
 
                 #set the user_id in session to the user that just logged in, reset login attempts
-                request.session["user_info"]["user_id"] = user_id
+                request.session["user_id"] = user_id
                 request.session["login_attempts"] = 0
 
                 #redirect to home page id login successful
@@ -290,17 +292,13 @@ def logout(request):
     rework sessions for specific user, need to associate recently viewed with a user_id
     otherwise recently viewed items still show after logging out
     '''
-    if "user_info" in request.session:
-        del request.session["user_info"]
+    del request.session["user_id"]
     return redirect("login")
 
 
 def join(request):
 
     context = {}
-
-    if "user_info" not in request.session:
-        request.session["user_info"] = {"user_id":-1, "recently-viewed":[]}
 
     if request.method == 'POST':
         form = SignupFrom(request.POST)
@@ -322,7 +320,7 @@ def join(request):
                     #get the new users id to add to session
                     user = User.objects.filter(username=username, password=password)
                     user_id = user.values_list("user_id", flat=True)[0]
-                    request.session["user_info"]["user_id"] = user_id
+                    request.session["user_id"] = user_id
                     request.session.modified = True
                     return redirect("http://127.0.0.1:8000/")
 
@@ -340,7 +338,7 @@ def portfolio(request, view):
 
     context = {}
 
-    user_id = request.session["user_info"]["user_id"]
+    user_id = request.session["user_id"]
     #id no user is logged in redirect, so that code for logged in user is not run
     if user_id == -1:
         return render(request, "App/portfolio.html", context=context)
@@ -397,7 +395,7 @@ def portfolio(request, view):
 
 def portfolio_POST(request):
 
-    user_id = request.session["user_info"]["user_id"]
+    user_id = request.session["user_id"]
 
     page = request.session["current_page"]
 
@@ -465,7 +463,7 @@ def portfolio_POST(request):
 
 def watchlist(request):
 
-    user_id = request.session["user_info"]["user_id"]
+    user_id = request.session["user_id"]
 
     context = {}
 
@@ -483,7 +481,7 @@ def profile(request):
 
     context = {}
 
-    user_id = request.session["user_info"]["user_id"]
+    user_id = request.session["user_id"]
 
     #SETTINGS
     
@@ -506,10 +504,8 @@ def profile(request):
                 #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
                 if all([all(rule) for rule in rules]):
                     db.update_password(user_id, old_password, new_password)
-                    return render(request, "App/profile.html", context=context)
                 else:
                     #pass an error message to context, based on what condition was not satisfied
-                    
                     context["change_password_error_message"] = get_change_password_error_message(rules)
 
         #-Email preferences
