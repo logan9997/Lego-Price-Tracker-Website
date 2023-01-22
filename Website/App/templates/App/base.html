@@ -28,29 +28,58 @@
     {% load tags %}
     {% check_login_status request %}
     {% add_username_email_to_context request %}
+    
     <nav>
         <ul>
-            <li><a href="{% url 'index' %}">Home</a></li>
-            <li><a href="{% url 'search' 'all' %}">Search</a></li>
-            <li><a href="{% url 'portfolio' 'items' %}">Portfolio</a></li>
-            <li><a href="{% url 'trending' %}">Trending</a></li>
-            {% if logged_in  == False %}
-            <li><a href="{% url 'login' %}">Login</a></li>
-            <li><a href="{% url 'join' %}">Join Now</a></li>
+            <li>
+                <button><a href="{% url 'index' %}">Home</a></button>
+            </li>
+
+            <li>
+                <button><a href="{% url 'search' 'all' %}">Search</a></button>
+            </li>
+
+            <li>
+                <button><a href="{% url 'trending' %}">Trending</a></button>
+            </li>
+
+            {% if logged_in %}
+
+            <li>
+                <button>Profile</button>
+                <div class="dropdown-content">
+                    <a href="{% url 'profile' %}">Profile</a>
+                    <a href="{% url 'portfolio' view='items' %}">Portfolio</a>
+                    <a href="{% url 'watchlist' %}">Watchlist</a>
+                </div>
+            </li>
+
             {% else %}
-            <li><a href="{% url 'profile' %}">Profile</a></li>
-            <li id="logout-tab"><a onclick="logout_popup(event)" href="{% url 'logout' %}">Logout</a></li>
+
+            <li>
+                <button><a href="{% url 'login' %}">Join</a></button>
+            </li>
+
+            <li>
+                <button><a href="{% url 'join' %}">Join</a></button>
+            </li>
+
             {% endif %}
+
         </ul>
+
+        {% if logged_in %}
+            <a id="logout" href="{% url 'logout' %}"><img onclick="logout_popup(event)" src="{% static 'App/styling-images/logout_button.png' %}" alt="logout"></a>
+        {% endif %}
+
     </nav>
 
-    
+        {% block content%}
+        
+        {% endblock %}
 
-    {% block content%}
-    
-    {% endblock %}
-<!-- 
-    <footer>
+
+    <!-- <footer>
         <p>Page Created By: Logan Baxter</p>
     </footer> -->
 </body>
