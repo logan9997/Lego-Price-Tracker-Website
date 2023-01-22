@@ -4,64 +4,98 @@
 
 {% load static %}
 
-<section id="change-password" class="profile-change-section">
-    <h2>Change Password</h2>
-    <form action="{% url 'profile' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="form-type" value="change-password-form">
+<link rel="stylesheet" href="{% static 'App/profile.css' %}">
 
-        <label for="old_password">Old Password</label>
-        <input type="text" name="old_password">
+<section id="main-container">
 
-        <label for="new_password">New Password</label>
-        <input type="text" name="new_password">
+    <section id="personal-details" class="profile-change-section">
+        <h2>Personal Details</h2>
+        <form action="{% url 'profile' %}">
+            <input type="hidden" name="form-type" value="personal-details-form">
 
-        <label for="confirm_password">Confirm Password</label>
-        <input type="text" name="confirm_password">
+            <div class="input-label-container">
+                <label for="name">Name:</label>
+                <input type="text" name="name" placeholder="{{ name }}">
+            </div>
 
-        <input type="submit" value="Change!">
-    </form>
-</section>
+            <div class="input-label-container">
+                <label for="username">Username:</label>
+                <input type="text" name="username" placeholder="{{ username }}">
+            </div>
 
-<br><br>
+            <input type="submit" value="Update!">
+            
+            <!-- Country, region -->
+        </form>
+    </section>
 
-<section id="email-preferences" class="profile-change-section">
-    <h2>Email Preferences</h2>
-    <form action="{% url 'profile' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="form-type" value="email-preference-form">
+    <section id="change-password" class="profile-change-section">
+        <h2>Change Password</h2>
+        <form action="{% url 'profile' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form-type" value="change-password-form">
 
-        <label for="email">Email</label>
-        <input type="text" name="email">
-        
-        <input type="radio" name="preference" value="Never">
-        <label for="Never">Never</label>
-        <input type="radio" name="preference" value="Occasional">
-        <label for="Occasional">Occasional</label>
-        <input type="radio" name="preference" value="All">
-        <label for="All">All</label>
+            <div class="input-label-container">
+                <label for="old_password">Old Password:</label>
+                <input type="text" name="old_password">
+            </div>
 
-        <input type="submit" value="Updated!">
-    </form>
-</section>
+            <div class="input-label-container">
+                <label for="new_password">New Password:</label>
+                <input type="text" name="new_password">
+            </div>
 
-<br><br>    
+            <div class="input-label-container">
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="text" name="confirm_password">
+            </div>
+            <input type="submit" value="Update!">
+        </form>
 
-<section id="personal-details" class="profile-change-section">
-    <h2>Personal Details</h2>
-    <form action="{% url 'profile' %}">
-        <input type="hidden" name="form-type" value="personal-details-form">
+        <p id="change-password-error-message">{{ change_password_error_message }}</p>
 
-        <!-- <input type="text" name="name">
-        <label for="name">Name</label> -->
+    </section>
 
-        <label for="username">Username</label>
-        <input type="text" name="username">
+    <section id="email-preferences" class="profile-change-section">
+        <h2>Email Preferences</h2>
+        <form action="{% url 'profile' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form-type" value="email-preference-form">
 
-        <input type="submit" value="Update!">
-        
-        <!-- Country, region -->
-    </form>
+            <div class="input-label-container">
+                <label for="email">Email:</label>
+                <input type="email" name="email" placeholder="{{ email }}">
+            </div>
+
+            <div class="input-label-container">            
+                <label for="preference">Frequency:</label>
+
+                <div id="radio-buttons">
+                    <div class="input-label-container">
+                        <input type="radio" name="preference" value="Never">
+                        <label for="Never">Never</label>
+                    </div>
+
+                    <div class="input-label-container">
+                        <input type="radio" name="preference" value="Occasional">
+                        <label for="Occasional">Occasional</label>
+                    </div>
+                    
+                    <div class="input-label-container">
+                        <input type="radio" name="preference" value="All">
+                        <label for="All">All</label>
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" value="Update!">
+        </form>
+    </section>
+
+    <section id="member-since-panel">
+        <p>Member since 2023</p>
+    </section>
+
 </section>
 
 {% endblock %}

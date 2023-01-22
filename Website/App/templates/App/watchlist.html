@@ -2,10 +2,35 @@
 
 {% block content %}
 
+<!-- <p>Price change since added to watchlist</p> -->
+
 {% load static %}
+<link rel="stylesheet" href="{% static 'App/watchlist.css' %}">
 
+    <section id="main-container">
 
+        <section id="tool-bar">
 
+        </section>
 
+        <section id="items-container">
+            <div id="items">
+                {% for item in watchlist_items %}
+                    <div class="item-container">
+                        <h3>{{item.item_name}}</h3>
+                        <div class="item-info">
+                            <p>{{item.item_id}}</p>
+                            <p>{{item.year_released}}</p>
+                        </div>
+
+                        <div class="price-info">
+                            {{item.avg_price}}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </section>
 {% endblock %}
 

@@ -1,21 +1,76 @@
 {% extends 'App/base.html' %}
 
 {% block content %}
-    {% load tags %}
-    <section id="all-themes-container">
-        {% for theme in sub_themes %}
-        <div class="theme-container">
-            <p><a href="{% url 'search' theme %}">{{theme|replace_underscore}}</a></p>
-            <!-- <img src="{{theme}}" alt="{{theme}}_url"> -->
-        </div>
-        {% endfor %}
-    </section>
 
-    <section id="theme-items">
-        {% for item in theme_items %}
-            {{item.0}} {{item.1}}
-        {% endfor %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'App/search.css' %}">
+
+    {% load tags %}
+
+    {% if sub_themes|length > 0 %}
+
+    <section id="search-themes-container">
+
+        <section id="sort-themes">
+            <h2>Sort</h2>
+            <form action="{% url 'search' theme_path %}" method="get">
+                <div class="input-label-container">
+                    <label for="name">Theme Name</label>
+                    <input type="radio" name="sort_field" value="theme_name">
+                </div>
+
+                <div class="input-label-container">
+                    <label for="popularity">Popularity</label>
+                    <input type="radio" name="sort_field" value="popularity">
+                </div>
+
+                <div class="input-label-container">
+                    <label for="avg_growth">Average Growth</label>
+                    <input type="radio" name="sort_field" value="avg_growth">
+                </div>
+
+                <div class="input-label-container">
+                    <label for="num_items">Number of Items</label>
+                    <input type="radio" name="sort_field" value="num_items">
+                </div>
+
+                <div class="input-label-container">
+                    <label for="order">Sort Order</label>                    
+                    <select name="order">
+                        <option value="ASC">ASC</option>
+                        <option value="DESC">DESC</option>
+                    </select>
+                </div>
+
+                <input type="submit" value="Sort!">
+            </form>
+        </section>
+
+        <section id="all-themes-container">
+            {% for theme in sub_themes %}
+            <div class="theme-container">
+                <a href="{% url 'search' theme %}">{{theme|replace_underscore}}</a>
+                <!-- <img src="{{theme}}" alt="{{theme}}_url"> -->
+            </div>
+            {% endfor %}
+        </section>
+
     </section>
+    
+    {% endif %}
+
+    {% if theme_items|length > 0 %}
+        <section id="theme-items">
+            {% for item in theme_items %}
+                {{item.0}} {{item.1}}
+            {% endfor %}
+        </section>
+
+    {% else %}
+        <section id="">
+
+        </section>
+    {% endif %}
 
 {% endblock %}
 

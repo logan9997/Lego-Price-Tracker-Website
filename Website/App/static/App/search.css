@@ -1,0 +1,38 @@
+#search-themes-container {
+    display: flex;
+    justify-content: row;
+}
+
+#sort-themes {
+    background-color: yellow;
+    width: 16%;
+    margin-left: 1%;
+}
+
+#all-themes-container {
+    background-color: red;
+    display: flex;
+    flex-wrap:wrap;
+    justify-content:space-evenly;
+    flex-direction: column-reverse;
+    overflow-y: scroll;
+    height: 14rem;
+    width: 81%;
+    margin-left: 1%;
+    overflow-y:hidden;
+}
+
+.theme-container {
+    background-color: green;
+    width: 12%;
+    height: 90%;
+    display: inline-block;
+    margin: 0.7rem;
+    text-align: center;
+
+}
+
+.theme-container a {
+    text-decoration: none;
+}
+

@@ -12,3 +12,22 @@ window.onload = function() {
 function display_item_delete_quantity() {
     form = document.getElementsByClassName("")
 }
+
+function logout_popup(e) {
+    if (confirm("Are you sure?")) {
+        window.location.reload()
+    } else {
+        e.preventDefault()
+    }
+}
+
+
+function show_dropdown_content() {
+    var element_style = document.getElementById("dropdown-content").style.display;
+    console.log(element_style)
+    if (element_style == "flex") {
+        document.getElementById("dropdown-content").style.display = "none";
+    } else {
+        document.getElementById("dropdown-content").style.display = "flex";
+    }
+}

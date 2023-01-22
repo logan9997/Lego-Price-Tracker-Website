@@ -1,0 +1,52 @@
+#main-container {
+    display: flex;
+    justify-content: space-evenly;
+    flex-direction: row;
+}
+
+#tool-bar {
+    width: 25vw;
+    height: 100rem;
+    background-color: gainsboro;
+}
+
+#items-container {
+    font-size:0.85rem;
+    background-color: gainsboro;
+    width: 70vw;
+    height: 100rem;
+
+}
+
+#items {
+    padding-top: 1rem;
+    display: flex;
+    flex-direction:row ;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.item-container {
+    background-color: white;
+    width: 32%;
+    height: 16rem;
+    margin-top: 0.5rem;
+}
+
+.item-container h3 {
+    padding: 0.4rem 0 0;
+    margin: 0;
+    height: 2.6rem;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media only screen and (min-width:80rem) {
+    .item-container {
+        width: 24%;
+    }
+}
