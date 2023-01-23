@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import threading
 
 
 class DatabaseManagment():
@@ -7,15 +8,18 @@ class DatabaseManagment():
     def __init__(self) -> None:
         self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
+        self.lock = threading.Lock()
 
 
     def add_price_info(self, item) -> None:
-        #add all prices for current day
         today = datetime.date.today().strftime('%Y-%m-%d')
-        print(item["item"]["no"])
         try:
             self.cursor.execute(f"""
-                INSERT INTO App_price VALUES
+                INSERT INTO App_price (
+                    'item_id','date','avg_price',
+                    'min_price','max_price','total_quantity'
+                )
+                VALUES
                 (
                     '{item["item"]["no"]}', '{today}', '{round(float(item["avg_price"]), 2)}',
                     '{round(float(item["min_price"]),2)}', '{round(float(item["max_price"]),2)}',
@@ -28,7 +32,6 @@ class DatabaseManagment():
 
 
     def get_all_items(self) -> list[str]:
-        #return a list of all items inside 'Price' table
         result = self.cursor.execute(f"""
             SELECT item_id
             FROM App_price
@@ -123,14 +126,17 @@ class DatabaseManagment():
 
 
     def get_theme_items(self, theme_path) -> list[str]:
-        result = self.cursor.execute(f"""
-            SELECT App_item.item_id, item_type
-            FROM App_item, App_theme
-            WHERE App_item.item_id = App_theme.item_id
-                AND theme_path = '{theme_path}'
-        """)
-        return result.fetchall()      
-
+        try:
+            self.lock.acquire(True)
+            result = self.cursor.execute(f"""
+                SELECT App_item.item_id, item_type
+                FROM App_item, App_theme
+                WHERE App_item.item_id = App_theme.item_id
+                    AND theme_path = '{theme_path}'
+            """)
+            return result.fetchall()      
+        finally:
+            self.lock.release()
 
     def get_item_ids(self) -> list[str]:
         result = self.cursor.execute(f"""
@@ -193,7 +199,7 @@ class DatabaseManagment():
                 AND theme_path LIKE '{parent_theme}_%'
             GROUP BY theme_path
         """)
-        return result.fetchall()  
+        return result.fetchall()
 
 
     def get_starwars_ids(self) -> list[str]:
@@ -317,7 +323,7 @@ class DatabaseManagment():
         return False
 
     
-    def check_if_username_or_email_exists(self, username, email) -> bool:
+    def if_username_or_email_already_exists(self, username, email) -> bool:
         result = self.cursor.execute(f"""
             SELECT username, email
             FROM App_user
@@ -325,8 +331,8 @@ class DatabaseManagment():
                 OR email = '{email}'
         """)
         if len(result.fetchall()) > 0:
-            return False
-        return True
+            return True
+        return False
 
 
     def add_user(self, username, email, password) -> None:
@@ -359,46 +365,92 @@ class DatabaseManagment():
         """)
         return result.fetchall()
 
-    #########################################TRANSER##########################
-def get_all(table):
-    con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\database.db")
-    cursor = con.cursor()        
-    result = cursor.execute(f"""
-        SELECT *
-        FROM {table}
-    """)
-    return result.fetchall()
 
-
-def insert(table, info):
-    con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3")
-    cursor = con.cursor()
-    for row in info:
-        
-        print(f"""INSERT INTO App_{table} VALUES {row}""")
-        cursor.execute(f"""
-            INSERT INTO App_{table} ('item_id','item_name')
-            VALUES ('{row[0]}', '{row[1]}')
+    def get_all_itemIDs(self) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id
+            FROM App_item
+            WHERE item_id LIKE 'sw%' 
+                AND item_type = 'M'
         """)
-        con.commit()
+        return result.fetchall()
+
+    def insert_item_info(self, item_info) -> None:
+        type_convert = {"MINIFIG":"M", "SET":"S"}
+        self.cursor.execute(f"""
+            INSERT INTO App_item
+            ('item_id', 'item_name', 'year_released', 'item_type')
+            VALUES ('{item_info["no"]}', '{item_info["name"].replace("'", "")}', '{item_info["year_released"]}', '{type_convert[item_info["type"]]}')
+        """)
+        self.con.commit()
 
 
-#update database without calling a view
-def main():
-    db = DatabaseManagment()
-
-    tables = ['item']
-    
-    for table in tables:
-        info = get_all(table)
-        print(info)
-        insert(table, info)
-
-    
-if __name__ == "__main__":
-    main()
+    def update_password(self, user_id, old_password, new_password) -> None:
+        self.cursor.execute(f"""
+            UPDATE App_user
+            SET password = '{new_password}'
+            WHERE password = '{old_password}'
+                AND user_id = {user_id}
+        """)
+        self.con.commit()
 
 
+    def check_password_id_match(self, user_id, old_password) -> bool:
+        result = self.cursor.execute(f"""
+            SELECT *
+            FROM App_user
+            WHERE user_id = {user_id}
+                AND password = '{old_password}'
+        """)
+        if len(result.fetchall()) > 0:
+            return True
+        return False
+
+
+    def change_username(self, user_id, username) -> None:
+        self.cursor.execute(f"""
+            UPDATE App_user
+            SET username = '{username}'
+            WHERE user_id = {user_id}
+        """)
+
+
+    def get_watchlist_items(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT I.*, P.avg_price, P.min_price, P.max_price, P.total_quantity
+            FROM App_item I, App_price P, App_watchlist W
+            WHERE W.user_id = {user_id}
+                AND I.item_id = W.item_id
+                AND P.item_id = I.item_id
+                AND P.date = (
+                    SELECT max(date)
+                    FROM App_price    
+                )
+            GROUP BY I.item_id
+        """)
+        return result.fetchall()
+
+
+    def add_to_watchlist(self, user_id, item_id) -> None:
+        date = datetime.datetime.today().strftime('%Y-%m-%d')
+        print(date)
+        self.cursor.execute(f"""
+            INSERT INTO App_watchlist ('user_id', 'item_id', 'date_added')
+            VALUES ('{user_id}', '{item_id}', {date})
+        """)
+        self.con.commit()
+
+
+    def get_watchlist_items_prices(self, user_id, item_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT avg_price, date
+            FROM App_price, App_watchlist, App_item
+            WHERE user_id = {user_id}
+                AND App_item.item_id = '{item_id}'
+                AND App_price.item_id = App_item.item_id
+                AND App_item.item_id = App_watchlist.item_id
+        """)
+        return result.fetchall()
 
     # from responses import Response
     # db = DatabaseManagment()
