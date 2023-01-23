@@ -6,6 +6,9 @@
 
 {% load static %}
 <link rel="stylesheet" href="{% static 'App/watchlist.css' %}">
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+</script>
 
     <section id="main-container">
 
@@ -17,14 +20,70 @@
             <div id="items">
                 {% for item in watchlist_items %}
                     <div class="item-container">
-                        <h3>{{item.item_name}}</h3>
-                        <div class="item-info">
-                            <p>{{item.item_id}}</p>
-                            <p>{{item.year_released}}</p>
+                        <div class="item-img-and-title">
+                            <h3>{{item.item_name}}</h3>
+                            <h4>{{item.item_id}}</h4>
+                            <img src="{% static item.img_path  %}" alt="{{item.item_id}}">
+                            
                         </div>
 
                         <div class="price-info">
-                            {{item.avg_price}}
+                            <table>
+                                <tr>
+                                    <th>Avg</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                    <th>Qty</th>
+                                </tr>
+
+                                <tr>
+                                    <td>{{item.avg_price}}</td>
+                                    <td>{{item.min_price}}</td>
+                                    <td>{{item.max_price}}</td>
+                                    <td>{{item.total_quantity}}</td>
+                                </tr>
+                            </table>
+                        </div> 
+
+                        <div class="price-trend">
+                            <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
+                            
+                            {{ item.prices|json_script:"prices" }}
+                            {{ item.dates|json_script:"dates" }}
+                            <script>
+                                var prices = JSON.parse(document.getElementById('dates').textContent);
+                                var dates = JSON.parse(document.getElementById('prices').textContent);
+
+                                var data = [];
+                                for (let i = 0; i < prices.length; i++) {
+                                    data.push({x:prices[i], y:dates[i]});
+                                }
+
+                                console.log(data)
+
+                                new Chart("myChart", {
+                                type: "line",
+                                data: {
+                                    labels: dates,
+                                    datasets: [{
+                                    fill: false,
+                                    backgroundColor: "rgba(0,0,255,1.0)",
+                                    borderColor: "rgba(0,0,255,0.1)",
+                                    data: data
+                                    }]
+                                },
+                                options: {
+                                    legend: {display: false},
+                                    scales: {
+                                        x : {
+                                            type:"time",
+                                            time: {unit:"day"}
+                                        }
+                                    }
+                                }
+                                });
+                            </script>
+
                         </div>
                     </div>
                 {% endfor %}
@@ -32,5 +91,6 @@
         </section>
 
     </section>
+
 {% endblock %}
 
