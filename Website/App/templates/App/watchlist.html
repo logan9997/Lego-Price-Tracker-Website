@@ -18,75 +18,83 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 
         <section id="items-container">
             <div id="items">
-                {% for item in watchlist_items %}
-                    <div class="item-container">
-                        <div class="item-img-and-title">
-                            <h3>{{item.item_name}}</h3>
-                            <h4>{{item.item_id}}</h4>
-                            <img src="{% static item.img_path  %}" alt="{{item.item_id}}">
-                            
-                        </div>
+            {% for item in watchlist_items %}
+            <div class="item-container">
+                <div class="item-img-and-title">
+                    <h3>{{item.item_name}}</h3>
+                    <h4>{{item.item_id}}</h4>
+                    <img src="{% static item.img_path  %}" alt="{{item.item_id}}">
+                    
+                    <div class="price-info">
+                        <table>
+                            <tr>
+                                <th>Avg</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Qty</th>
+                            </tr>
 
-                        <div class="price-info">
-                            <table>
-                                <tr>
-                                    <th>Avg</th>
-                                    <th>Min</th>
-                                    <th>Max</th>
-                                    <th>Qty</th>
-                                </tr>
+                            <tr>
+                                <td>{{item.avg_price}}</td>
+                                <td>{{item.min_price}}</td>
+                                <td>{{item.max_price}}</td>
+                                <td>{{item.total_quantity}}</td>
+                            </tr>
+                        </table>
+                    </div> 
 
-                                <tr>
-                                    <td>{{item.avg_price}}</td>
-                                    <td>{{item.min_price}}</td>
-                                    <td>{{item.max_price}}</td>
-                                    <td>{{item.total_quantity}}</td>
-                                </tr>
-                            </table>
-                        </div> 
+                </div>
 
-                        <div class="price-trend">
-                            <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
-                            
-                            {{ item.prices|json_script:"prices" }}
-                            {{ item.dates|json_script:"dates" }}
-                            <script>
-                                var prices = JSON.parse(document.getElementById('dates').textContent);
-                                var dates = JSON.parse(document.getElementById('prices').textContent);
+                <div class="price-trend">
+                    <canvas id="chart_{{item.item_id}}"></canvas>
 
-                                var data = [];
-                                for (let i = 0; i < prices.length; i++) {
-                                    data.push({x:prices[i], y:dates[i]});
-                                }
+                    {% with item.item_id|add:"_prices" as prices %}
+                        {{ item.prices|json_script:prices }}
 
-                                console.log(data)
 
-                                new Chart("myChart", {
-                                type: "line",
-                                data: {
-                                    labels: dates,
-                                    datasets: [{
-                                    fill: false,
-                                    backgroundColor: "rgba(0,0,255,1.0)",
-                                    borderColor: "rgba(0,0,255,0.1)",
-                                    data: data
-                                    }]
-                                },
-                                options: {
-                                    legend: {display: false},
-                                    scales: {
-                                        x : {
-                                            type:"time",
-                                            time: {unit:"day"}
-                                        }
+                    {% with item.item_id|add:"_dates" as dates %}
+                        {{ item.dates|json_script:dates }}
+
+                    <script>
+
+                        var prices = JSON.parse(document.getElementById('{{item.item_id}}_prices').textContent);
+
+                        var dates = JSON.parse(document.getElementById('{{item.item_id}}_dates').textContent);
+                        var data = [];
+                        
+                        for (let i = 0; i < prices.length; i++) {
+                            data.push({y:prices[i], x:dates[i]});
+                        }
+
+                        console.log(`chart_{{item.item_id}} - `, "prices:",prices, "dates:", dates)
+                        
+                        new Chart(`chart_{{item.item_id}}`, {
+                            type: "line",
+                            data: {
+                                labels: dates,
+                                datasets: [{
+                                fill: false,
+                                backgroundColor: "orangered",
+                                borderColor: "orangered",
+                                data: data
+                                }]
+                            },
+                            options: {
+                                legend: {display: false},
+                                scales: {
+                                    x : {
+                                        type:"time",
+                                        time: {unit:"day"}
                                     }
                                 }
-                                });
-                            </script>
-
-                        </div>
-                    </div>
-                {% endfor %}
+                            }
+                            });
+                    </script>
+                </div>
+            </div>
+            {% endwith %}
+            {% endwith %}
+            {% endfor %}
             </div>
         </section>
 
