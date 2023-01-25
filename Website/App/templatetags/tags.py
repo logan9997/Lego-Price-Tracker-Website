@@ -32,3 +32,10 @@ def add_username_email_to_context(context, request):
 @register.filter
 def replace_underscore(string):
     return string.replace("_", " ")
+
+@register.filter
+def replace_forward_slash(string):
+    if string == "/":
+        return "index"
+
+    return string.replace("/", "")
