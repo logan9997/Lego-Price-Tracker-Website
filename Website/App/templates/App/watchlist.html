@@ -10,6 +10,35 @@
 src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 </script>
 
+    <section id="header">
+        <div id="tool-bar-header" class="headers">
+            <h2>Tool Bar</h2>
+
+            <div id="stats">
+                <p></p>
+            </div>
+        </div>
+
+        <div id="items-header" class="headers">
+            <form id="page-buttons-form" action="{% url 'watchlist' %}" method="GET">
+                {% for page_button in num_pages %}
+                    <input name="page" type="submit" value="{{page_button}}">
+                {% endfor %}
+            </form>
+
+            <form id="sort-form" action="{% url 'watchlist' %}" method="GET">
+                <div class="input-label-container">
+                    <label for="sort-field">Sort:</label>
+                    <select onchange="this.form.submit()" name="sort-field">
+                        {% for sort in sort_options %}
+                            <option value="{{sort.value}}">{{sort.text}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </section>
+
     <section id="main-container">
 
         <section id="tool-bar">
@@ -58,15 +87,12 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
                     <script>
 
                         var prices = JSON.parse(document.getElementById('{{item.item_id}}_prices').textContent);
-
                         var dates = JSON.parse(document.getElementById('{{item.item_id}}_dates').textContent);
+
                         var data = [];
-                        
                         for (let i = 0; i < prices.length; i++) {
                             data.push({y:prices[i], x:dates[i]});
                         }
-
-                        console.log(`chart_{{item.item_id}} - `, "prices:",prices, "dates:", dates)
                         
                         new Chart(`chart_{{item.item_id}}`, {
                             type: "line",
