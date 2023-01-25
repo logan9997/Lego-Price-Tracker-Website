@@ -18,6 +18,7 @@ from .forms import (
     ChangePassword,
     EmailPreferences,
     PersonalInfo,
+    SearchSort,
 )
 
 from .models import (
@@ -44,6 +45,18 @@ def update_prices_table():
         db.add_price_info(item_info)
 
 
+def search_item(request, current_view):
+    #get a list of all item ids that exist inside the database 
+    item_ids = [item_id[0] for item_id in db.get_item_ids()] 
+    
+    #get item from the search bar, if it exists redirect to that items info page
+    selected_item = request.POST.get("item_id")
+    print(current_view)
+    print(selected_item)
+    if selected_item in item_ids:
+        return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
+    return redirect(current_view)
+
 def index(request):
 
     #set user_id if no user is logged in, get user_id from session
@@ -51,14 +64,8 @@ def index(request):
         request.session["user_id"] = -1
     user_id = request.session["user_id"]
 
-
     #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in db.get_item_ids()] 
-    
-    #get item from the search bar, if it exists redirect to that items info page
-    selected_item = request.POST.get("minifig_id")
-    if selected_item in item_ids:
-        return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
 
     #if the user has no recently viewed items create a new emtpy list to store items in the future
     if "recently-viewed" not in request.session and user_id == -1:
@@ -132,6 +139,8 @@ def item(request, item_id):
 
 
     if item_id != "favicon.ico":
+
+        #STORE THIS IN DATABASE!
         # supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
         # subsets = resp.get_response_data(f"items/MINIFIG/{item_id}/subsets")
 
@@ -211,7 +220,17 @@ def search(request, theme_path="all"):
         #remove duplicates
         sub_themes = list(dict.fromkeys(sub_themes))
 
+    if request.method == "GET":
+        form = SearchSort(request.GET)
+        if form.is_valid():
+            sort_field = form.cleaned_data["sort_field"]
+            order = form.cleaned_data["order"]
+
+            #sort list
+            sub_themes = sort_themes(sort_field, order, sub_themes)
+
     context = {
+        "theme_path":theme_path,
         "sub_themes":sub_themes,
         "theme_items":theme_items,
     }
@@ -465,23 +484,42 @@ def watchlist(request):
 
     user_id = request.session["user_id"]
 
-    context = {}
+    watchlist_items = get_watchlist_items(user_id)
+
+
+
+    for item in watchlist_items:
+        item["prices"] = [] ; item["dates"] = []
+        for price_date_info in db.get_watchlist_items_prices(user_id, item["item_id"]):
+            item["prices"].append(price_date_info[0])
+            item["dates"].append(price_date_info[1])
+            
+    context = {
+        "watchlist_items":watchlist_items,
+    }
 
     return render(request, "App/watchlist.html", context=context)
 
 
 def add_to_watchlist(request, item_id):
 
-    #add to watchlist db.func, wait till db is fully populated!!
+    user_id = request.session["user_id"]
+
+    if item_id not in db.get_watchlist_items(user_id):
+        db.add_to_watchlist(user_id, item_id)
 
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 
 
 def profile(request):
 
-    context = {}
-
     user_id = request.session["user_id"]
+
+    context = {
+        "username":User.objects.filter(user_id=user_id).values_list("username", flat=True)[0],
+        "name":"NO NAME FIELD IN DATABASE",
+        "email":User.objects.filter(user_id=user_id).values_list("email", flat=True)[0],
+    }
 
     #SETTINGS
     
