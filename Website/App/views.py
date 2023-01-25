@@ -82,7 +82,7 @@ def index(request):
     } for item_id in recently_viewed_ids]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
-    recently_viewed.extend(recently_viewed)
+    '''recently_viewed.extend(recently_viewed)'''
 
     #set context. random_item_id used when user clicks 'view item info' in middle / about section
     context = {
@@ -486,16 +486,41 @@ def watchlist(request):
 
     watchlist_items = get_watchlist_items(user_id)
 
-
-
     for item in watchlist_items:
         item["prices"] = [] ; item["dates"] = []
         for price_date_info in db.get_watchlist_items_prices(user_id, item["item_id"]):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
+
+    num_pages = [i+1 for i in range((len(watchlist_items) // WATCHLIST_ITEMS_PER_PAGE ) + 1)]
+
+    #GET requests
+    page = int(request.GET.get("page", 1))
+    sort_field = request.GET.get("sort-field", None)
+
+    sort_options = [
+        {"value":"avg_price-desc", "text":"Average Price High to Low"},
+        {"value":"avg_price-asc", "text":"Average Price Low to High"},
+        {"value":"min_price-desc", "text":"Min Price High to Low"},
+        {"value":"min_price-asc", "text":"Min Price Low to High"},
+        {"value":"max_price-desc", "text":"Max Price High to Low"},
+        {"value":"max_price-asc", "text":"Max Price Low to High"},
+        {"value":"total_quantity-desc", "text":"Quantity High to Low"},
+        {"value":"total_quantity-asc", "text":"Quantity Low to High"},
+    ]    
+
+    if sort_field != None:
+        watchlist_items = sort_watchlist_items(watchlist_items, sort_field)
+        #keep selected sort field option as first <option> tag
+        sort_options = sort_sort_field_options(sort_options ,sort_field)
+
+
+    watchlist_items = watchlist_items[(page - 1) * WATCHLIST_ITEMS_PER_PAGE : page * WATCHLIST_ITEMS_PER_PAGE]
             
     context = {
         "watchlist_items":watchlist_items,
+        "num_pages":num_pages,
+        "sort_options":sort_options
     }
 
     return render(request, "App/watchlist.html", context=context)
