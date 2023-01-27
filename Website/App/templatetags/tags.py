@@ -1,5 +1,6 @@
 from django import template
 from ..models import User
+from ..utils import recursive_get_sub_themes
 
 register = template.Library()
 
@@ -39,3 +40,13 @@ def replace_forward_slash(string):
         return "index"
 
     return string.replace("/", "")
+
+@register.filter
+def count_theme_indent(theme_path:str):
+    indent = theme_path.count("~")
+    parent_theme = theme_path.split("~")[0]
+    desire_indent = 2
+
+    if indent <= desire_indent and parent_theme in theme_path:
+        return "-"*(indent*3) + theme_path.split("~")[-1].replace("_", " ").replace("~", " ")
+    return ''

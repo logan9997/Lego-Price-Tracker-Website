@@ -5,6 +5,7 @@
 <!-- <p>Price change since added to watchlist</p> -->
 
 {% load static %}
+{% load tags %}
 <link rel="stylesheet" href="{% static 'App/watchlist.css' %}">
 <script
 src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
@@ -13,10 +14,6 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     <section id="header">
         <div id="tool-bar-header" class="headers">
             <h2>Tool Bar</h2>
-
-            <div id="stats">
-                <p></p>
-            </div>
         </div>
 
         <div id="items-header" class="headers">
@@ -42,7 +39,17 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     <section id="main-container">
 
         <section id="tool-bar">
+            <div id="stats">
 
+                <p>Total of {{ total_items }} items in watchlist.</p>
+
+                {% for theme in themes %}
+                    <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.total_price}}</p>
+                {% endfor %}
+                <div id="theme-count-container">
+                
+                </div>
+            </div>
         </section>
 
         <section id="items-container">

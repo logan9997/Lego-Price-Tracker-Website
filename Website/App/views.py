@@ -1,12 +1,14 @@
 import random
 
+from pprint import pprint
+
 from datetime import (
     datetime as dt, 
     timedelta
 )
 
 from django.shortcuts import render, redirect
-from .config import * 
+from .config import *
 from .utils import *
 
 from .forms import (
@@ -498,33 +500,36 @@ def watchlist(request):
     page = int(request.GET.get("page", 1))
     sort_field = request.GET.get("sort-field", None)
 
-    sort_options = [
-        {"value":"avg_price-desc", "text":"Average Price High to Low"},
-        {"value":"avg_price-asc", "text":"Average Price Low to High"},
-        {"value":"min_price-desc", "text":"Min Price High to Low"},
-        {"value":"min_price-asc", "text":"Min Price Low to High"},
-        {"value":"max_price-desc", "text":"Max Price High to Low"},
-        {"value":"max_price-asc", "text":"Max Price Low to High"},
-        {"value":"total_quantity-desc", "text":"Quantity High to Low"},
-        {"value":"total_quantity-asc", "text":"Quantity Low to High"},
-    ]    
+    sort_options = get_sort_options()
 
     if sort_field != None:
         watchlist_items = sort_watchlist_items(watchlist_items, sort_field)
         #keep selected sort field option as first <option> tag
         sort_options = sort_sort_field_options(sort_options ,sort_field)
 
+    total_items = len(watchlist_items)
 
     watchlist_items = watchlist_items[(page - 1) * WATCHLIST_ITEMS_PER_PAGE : page * WATCHLIST_ITEMS_PER_PAGE]
-            
+
+    parent_themes = db.watchlist_parent_themes(user_id)
+
+    themes = recursive_get_sub_themes(user_id, parent_themes, [], -1)
+    #[print(theme, "\n") for theme in themes]
+
     context = {
         "watchlist_items":watchlist_items,
         "num_pages":num_pages,
-        "sort_options":sort_options
+        "sort_options":sort_options,
+        "themes":themes,
+        "total_items":total_items
     }
 
     return render(request, "App/watchlist.html", context=context)
 
+
+def watchlist_POST(request, theme_path:str):
+
+    return redirect("watchlist")
 
 def add_to_watchlist(request, item_id):
 
