@@ -6,7 +6,7 @@ import threading
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\api's\BL_API\website\db.sqlite3", check_same_thread=False)
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\website\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
         self.lock = threading.Lock()
 
@@ -192,6 +192,7 @@ class DatabaseManagment():
 
 
     def get_sub_themes(self, parent_theme) -> list[str]:
+        print(parent_theme)
         result = self.cursor.execute(f"""
             SELECT REPLACE(theme_path, '{parent_theme}~', '')
             FROM App_theme, App_item
@@ -422,10 +423,6 @@ class DatabaseManagment():
             WHERE W.user_id = {user_id}
                 AND I.item_id = W.item_id
                 AND P.item_id = I.item_id
-                AND P.date = (
-                    SELECT max(date)
-                    FROM App_price    
-                )
             GROUP BY I.item_id
         """)
         return result.fetchall()
@@ -449,23 +446,40 @@ class DatabaseManagment():
                 AND App_item.item_id = '{item_id}'
                 AND App_price.item_id = App_item.item_id
                 AND App_item.item_id = App_watchlist.item_id
+            GROUP BY App_item.item_id, App_price.date
         """)
         return result.fetchall()
 
-    # from responses import Response
-    # db = DatabaseManagment()
-    # resp = Response()
-    # #insert prices for today
 
-    # items = db.get_item_ids()
-    # items_recorded = [item[0] for item in db.check_if_price_recorded()]
+    def watchlist_parent_themes(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
+            FROM App_price P, App_theme T, App_watchlist W, App_item I
+            WHERE user_id = {user_id}
+                AND theme_path NOT LIKE '%~%'
+                AND (date, P.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
+                AND I.item_id = P.item_id
+                AND I.item_id = W.item_id
+                AND I.item_id = T.item_id
+            GROUP BY theme_path
 
-    # type_convert = {"M":"MINIFIG", "S":"SET"}
+        """)
+        return result.fetchall()
 
-    # print(items_recorded)
 
-    # for item in items:
-    #     if item[0] in items_recorded:
-    #         continue
-    #     item = resp.get_response_data(f'items/{type_convert[item[1]]}/{item[0]}/price')
-    #     db.add_price_info(item)
+    def watchlist_sub_themes(self, user_id:int, theme_path:str, indent:int) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
+            FROM App_price P, App_theme T, App_watchlist W, App_item I
+            WHERE user_id = {user_id}
+                AND theme_path LIKE '{theme_path}%'
+                AND theme_path != '{theme_path}'
+                AND (date, P.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
+                AND I.item_id = P.item_id
+                AND I.item_id = W.item_id
+                AND I.item_id = T.item_id
+            GROUP BY theme_path
+        """)
+        return result.fetchall()
+
+        #, count(), ROUND(SUM(P.avg_price),2)
