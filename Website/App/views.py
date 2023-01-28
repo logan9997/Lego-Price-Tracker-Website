@@ -488,40 +488,43 @@ def watchlist(request):
 
     watchlist_items = get_watchlist_items(user_id)
 
+    graph_options = get_graph_options()
+    sort_options = get_sort_options
+
+    #get requests
+    graph_metric = request.GET.get("graph-data-options", "avg_price")
+    page = int(request.GET.get("page", 1))
+    sort_field = request.GET.get("sort-field", None)
+
     for item in watchlist_items:
         item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_watchlist_items_prices(user_id, item["item_id"]):
+        for price_date_info in db.get_watchlist_items_prices(user_id, item["item_id"], graph_metric):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
 
     num_pages = [i+1 for i in range((len(watchlist_items) // WATCHLIST_ITEMS_PER_PAGE ) + 1)]
-
-    #GET requests
-    page = int(request.GET.get("page", 1))
-    sort_field = request.GET.get("sort-field", None)
-
-    sort_options = get_sort_options()
 
     if sort_field != None:
         watchlist_items = sort_watchlist_items(watchlist_items, sort_field)
         #keep selected sort field option as first <option> tag
         sort_options = sort_sort_field_options(sort_options ,sort_field)
 
+    graph_options = sort_graph_options(graph_options, graph_metric)
+
     total_items = len(watchlist_items)
 
     watchlist_items = watchlist_items[(page - 1) * WATCHLIST_ITEMS_PER_PAGE : page * WATCHLIST_ITEMS_PER_PAGE]
 
     parent_themes = db.watchlist_parent_themes(user_id)
-
     themes = recursive_get_sub_themes(user_id, parent_themes, [], -1)
-    #[print(theme, "\n") for theme in themes]
 
     context = {
         "watchlist_items":watchlist_items,
         "num_pages":num_pages,
         "sort_options":sort_options,
         "themes":themes,
-        "total_items":total_items
+        "total_items":total_items,
+        "graph_options":graph_options,
     }
 
     return render(request, "App/watchlist.html", context=context)
