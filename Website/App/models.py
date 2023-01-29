@@ -37,7 +37,7 @@ class User(models.Model):
         ("Never", "Never"), ("Occasional", "Occasional"),
         ("All", "All")
     ))
-    date_joined = models.DateField(DATE_FORMAT, blank=True, null=True, default=DATE_DEFAULT)
+    date_joined = models.DateField(auto_now=True)
     region = models.CharField(max_length=60, default='None')
 
 
@@ -49,11 +49,11 @@ class Portfolio(models.Model):
         ("U", "used"), ("N", "new")
     ))
     quantity = models.IntegerField()
-    date_added = models.DateField(DATE_FORMAT, blank=True, null=True, default=DATE_DEFAULT)
-    view_count = models.IntegerField(default=0)
+    date_added = models.DateField(auto_now=True)
 
 
 class Watchlist(models.Model):
     entry = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    date_added = models.DateField(DATE_FORMAT)
