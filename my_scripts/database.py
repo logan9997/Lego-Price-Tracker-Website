@@ -228,42 +228,58 @@ class DatabaseManagment():
             self.con.commit()
 
 
-    def get_portfolio_items(self, user_id) -> list[str]:
+    def get_user_items(self, user_id, view) -> list[str]:
+
+        sql_select = "SELECT I.*,avg_price, min_price, max_price, total_quantity"
+        if view == "portfolio":
+            sql_select += ", condition, quantity"
+
         result = self.cursor.execute(f"""
-            SELECT PO.item_id, condition, quantity, item_name, item_type, year_released
-            FROM App_portfolio PO, App_user U, App_item I
-            WHERE U.user_id = {user_id}
-                AND I.item_id = PO.item_id 
-                AND PO.user_id = U.user_id 
+            {sql_select}
+            FROM App_{view} _view, App_item I, App_price P
+            WHERE user_id = {user_id}
+                AND (date, I.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
+                AND I.item_id = _view.item_id 
+                AND I.item_id = P.item_id
+            GROUP BY I.item_id
         """)
         return result.fetchall()
 
 
+    def user_items_total_price(self, user_id, metric, view) -> list[str]:
+        if view == "portfolio":
+            select_string = f"SELECT ROUND(SUM({metric} * quantity), 2)"
+        else:
+            select_string = f"SELECT ROUND(SUM({metric}), 2)"
+
+        result = self.cursor.execute(f"""
+        {select_string}
+        FROM App_{view} _view, App_item I, App_price P
+        WHERE user_id = {user_id}
+            AND (date, I.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
+            AND I.item_id = _view.item_id 
+            AND I.item_id = P.item_id
+        """)
+
+        return result.fetchall()[0][0]
+
+
     def add_to_portfolio(self, item_id, condition, quantity, user_id) -> None:
+        date = datetime.datetime.today().strftime('%Y-%m-%d')
         self.cursor.execute(f"""
-            INSERT INTO App_portfolio ('item_id', 'condition', 'quantity', 'user_id')
-            VALUES ('{item_id}','{condition}','{quantity}','{user_id}')
+            INSERT INTO App_portfolio ('item_id', 'condition', 'quantity', 'user_id', 'date_added')
+            VALUES ('{item_id}','{condition}','{quantity}','{user_id}', {date})
         """)
         self.con.commit()
 
 
-    def update_portfolio_item_quantity(self, item_id, condition, quantity, user_id) -> None:
+    def update_portfolio_item_quantity(self, user_id, item_id, condition, quantity) -> None:
         self.cursor.execute(f"""
             UPDATE App_portfolio
             SET quantity = quantity + {quantity}
             WHERE item_id = '{item_id}'
                 AND user_id = {user_id}
                 AND condition = '{condition}'
-        """)
-
-
-    def decrement_portfolio_item_quantity(self, item_id, user_id, condition, delete_quantity) -> None:
-        self.cursor.execute(f"""
-            UPDATE App_portfolio
-            SET quantity = quantity - {delete_quantity}
-            WHERE item_id = '{item_id}'
-                AND user_id = '{user_id}'
-                AND condition = '{condition}';
         """)
         self.con.commit()
 
@@ -272,6 +288,7 @@ class DatabaseManagment():
             WHERE quantity < 1;
         """)
         self.con.commit()
+
 
 
     def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
@@ -283,6 +300,18 @@ class DatabaseManagment():
                 AND user_id = '{user_id}'
         """)
         return int(result.fetchall()[0][0])
+
+
+    def get_portfolio_price_trends(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT date, ROUND(SUM(avg_price * quantity) ,2)
+            FROM App_portfolio PO, App_price PR, App_item I
+            WHERE user_id = {user_id}
+                AND PO.item_id = I.item_id
+                AND PR.item_id = I.item_id
+            GROUP BY date
+        """)
+        return result.fetchall()
 
 
     def biggest_portfolio_changes(self, user_id) -> list[str]:
@@ -415,19 +444,6 @@ class DatabaseManagment():
             WHERE user_id = {user_id}
         """)
 
-
-    def get_watchlist_items(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
-            SELECT I.*, P.avg_price, P.min_price, P.max_price, P.total_quantity
-            FROM App_item I, App_price P, App_watchlist W
-            WHERE W.user_id = {user_id}
-                AND I.item_id = W.item_id
-                AND P.item_id = I.item_id
-            GROUP BY I.item_id
-        """)
-        return result.fetchall()
-
-
     def add_to_watchlist(self, user_id, item_id) -> None:
         date = datetime.datetime.today().strftime('%Y-%m-%d')
         print(date)
@@ -438,28 +454,34 @@ class DatabaseManagment():
         self.con.commit()
 
 
-    def get_watchlist_items_prices(self, user_id, item_id) -> list[str]:
+    def get_user_item_graph_info(self, user_id, item_id, metric, view) -> list[str]:
         result = self.cursor.execute(f"""
-            SELECT avg_price, date
-            FROM App_price, App_watchlist, App_item
+            SELECT {metric}, date
+            FROM App_price P, App_{view} View, App_item I
             WHERE user_id = {user_id}
-                AND App_item.item_id = '{item_id}'
-                AND App_price.item_id = App_item.item_id
-                AND App_item.item_id = App_watchlist.item_id
-            GROUP BY App_item.item_id, App_price.date
+                AND I.item_id = '{item_id}'
+                AND P.item_id = I.item_id
+                AND I.item_id = View.item_id
+            GROUP BY I.item_id, P.date
         """)
         return result.fetchall()
 
 
-    def watchlist_parent_themes(self, user_id) -> list[str]:
+    def parent_themes(self, user_id:int, view:str) -> list[str]:
+        if view == "portfolio":
+            select_string = "SELECT theme_path, COUNT(), ROUND(SUM(avg_price * quantity),2), P.item_id"
+        else:
+            select_string = "SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id"
+           
+
         result = self.cursor.execute(f"""
-            SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
-            FROM App_price P, App_theme T, App_watchlist W, App_item I
+            {select_string}
+            FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
                 AND theme_path NOT LIKE '%~%'
                 AND (date, P.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
                 AND I.item_id = P.item_id
-                AND I.item_id = W.item_id
+                AND I.item_id = _view.item_id
                 AND I.item_id = T.item_id
             GROUP BY theme_path
 
@@ -467,19 +489,17 @@ class DatabaseManagment():
         return result.fetchall()
 
 
-    def watchlist_sub_themes(self, user_id:int, theme_path:str, indent:int) -> list[str]:
+    def sub_themes(self, user_id:int, theme_path:str, view:str) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
-            FROM App_price P, App_theme T, App_watchlist W, App_item I
+            FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
                 AND theme_path LIKE '{theme_path}%'
                 AND theme_path != '{theme_path}'
                 AND (date, P.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
                 AND I.item_id = P.item_id
-                AND I.item_id = W.item_id
+                AND I.item_id = _view.item_id
                 AND I.item_id = T.item_id
             GROUP BY theme_path
         """)
         return result.fetchall()
-
-        #, count(), ROUND(SUM(P.avg_price),2)

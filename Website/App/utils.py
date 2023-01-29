@@ -2,6 +2,8 @@
 import sys
 import math
 
+from django.shortcuts import redirect
+
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API")
 
 from my_scripts.database import *
@@ -9,26 +11,31 @@ from .config import *
 
 db = DatabaseManagment()
 
-def get_portfolio_items(user_id) -> list[str]:
-    portfolio_items = db.get_portfolio_items(user_id) 
+def get_user_items(user_id, view):
+    items = db.get_user_items(user_id, view)
+    item_dicts = []
+    for item in items:
+        item_dict = {
+        "item_id":item[0],
+        "item_name":item[1],
+        "year_released":item[2],
+        "Item_type":item[3],
+        "avg_price":item[4],
+        "min_price":item[5],
+        "max_price":item[6],
+        "total_quantity":item[7],
+        "img_path":f"App/images/{item[0]}.png",
+        }
 
-    #format portfolio items into dict for readability in template
-    portfolio_items = [{
-        "image_path":f"App/images/{portfolio_item[0]}.png",
-        "item_id":portfolio_item[0],
-        "condition":portfolio_item[1],
-        "quantity":portfolio_item[2],
-        "item_name":portfolio_item[3],
-        "item_type":portfolio_item[4],
-        "year_released":portfolio_item[5],
-        # "avg_price":portfolio_item[6],
-        # "min_price":portfolio_item[7],
-        # "max_price":portfolio_item[8],
-        # "total_quantity":portfolio_item[9], 
-    } for portfolio_item in portfolio_items]
+        if view == "portfolio":
+            item_dict.update({
+                "condition":item[8],
+                "owned_quantity":item[9]
+            })
 
-    return portfolio_items
+        item_dicts.append(item_dict)
 
+    return item_dicts
 
 def get_current_page(request, portfolio_items:list) -> int:
     #current page
@@ -46,8 +53,6 @@ def get_current_page(request, portfolio_items:list) -> int:
     if back_page <= 0:
         back_page = 1
 
-    print(back_page, page, next_page)
-
     return back_page, page, next_page
 
 
@@ -63,7 +68,6 @@ def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
 
     order_convert = {"ASC":False, "DESC":True}
     order = order_convert[order[0]]
-    print(order)
     if field[0] == "theme_name":
         return sorted(sub_themes, reverse=order)
     return sub_themes
@@ -72,54 +76,32 @@ def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
     #elif field == "avg_growth":
     #else:
 
-def get_watchlist_items(user_id) -> list[str]:
-    items = db.get_watchlist_items(user_id)
 
-    items = [{
-        "item_id":item[0],
-        "item_name":item[1],
-        "year_released":item[2],
-        "Item_type":item[3],
-        "avg_price":item[4],
-        "min_price":item[5],
-        "max_price":item[6],
-        "total_quantity":item[7],
-        "img_path":f"App/images/{item[0]}.png",
-    } for item in items]
+def sort_items(items, sort) -> list[str]:
+    sort_field = sort.split("-")[0]
+    order = {"asc":False, "desc":True}[sort.split("-")[1]]
+    items = sorted(items, key=lambda field:field[sort_field], reverse=order)
+    
     return items
 
 
-def sort_watchlist_items(watchlist_items, sort) -> list[str]:
+def sort_dropdown_options(options:list[dict[str,str]], field:str) -> list[dict[str,str]]:
 
-    sort_field = sort.split("-")[0]
-    order = {"asc":False, "desc":True}[sort.split("-")[1]]
+    #loop through all options. If options["value"] matches to desired sort field, assign to variable
+    selected_field = [option for option in options if option["value"] == field][0]
+
+    #push selected element to front of list, remove its old position
+    options.insert(0, options.pop(options.index(selected_field)))
     
+    return options
 
-    watchlist_items = sorted(watchlist_items, key=lambda field:field[sort_field], reverse=order)
-    return watchlist_items
-
-
-def sort_sort_field_options(sort_options:list, sort_field:str) -> list[str]:
-
-    selected_sort = [option for option in sort_options if option["value"] == sort_field][0]
-    sort_options.insert(0, sort_options.pop(sort_options.index(selected_sort)))
-
-    return sort_options
-
-def sort_graph_options(graph_options:list[dict[str,str]], selected_field:str):
-
-    selected_field = [option for option in graph_options if option["value"] == selected_field][0]
-    graph_options.insert(0, graph_options.pop(graph_options.index(selected_field)))
-    
-    return graph_options
-
-def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent) -> list[str]:
+def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent:int, view:str) -> list[str]:
 
     indent += 1
     for theme in parent_themes:
-        sub_themes = db.watchlist_sub_themes(user_id, theme[0])
+        sub_themes = db.sub_themes(user_id, theme[0], view)
         sub_themes = [t for t in sub_themes if t.count("~") == indent]
-        print(theme)
+
         themes.append({
             "theme_path":theme[0],
             "count":theme[1],
@@ -127,7 +109,63 @@ def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[d
             "sub_themes":sub_themes,
         })
 
-        recursive_get_sub_themes(user_id, sub_themes, themes, indent)
+        recursive_get_sub_themes(user_id, sub_themes, themes, indent, view)
 
     return themes
 
+def user_items_get_requests(request) -> tuple[str, int, str]:
+    #get requests
+    graph_metric = request.GET.get("graph-metric", "avg_price")
+    page = int(request.GET.get("page", 1))
+    sort_field = request.GET.get("sort-field", "avg_price-desc")
+
+    return graph_metric, page, sort_field
+
+
+def user_items(request, view, user_id):
+
+    context = {}
+    
+    items = get_user_items(user_id, view)
+
+    graph_options = get_graph_options()
+    sort_options = get_sort_options()
+
+    graph_metric, page, sort_field = user_items_get_requests(request)
+
+    for item in items:
+        item["prices"] = [] ; item["dates"] = []
+        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], graph_metric, view):
+            item["prices"].append(price_date_info[0])
+            item["dates"].append(price_date_info[1])
+
+    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
+
+    if sort_field != None:
+        items = sort_items(items, sort_field)
+        #keep selected sort field option as first <option> tag
+        sort_options = sort_dropdown_options(sort_options, sort_field)
+
+    graph_options = sort_dropdown_options(graph_options, graph_metric)
+
+    total_items = len(items)
+
+    items = items[(page - 1) * ITEMS_PER_PAGE : page * ITEMS_PER_PAGE]
+
+    parent_themes = db.parent_themes(user_id, view)
+    themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
+
+    total_price = db.user_items_total_price(user_id, graph_metric, view)
+
+    context.update({
+        "items":items,
+        "num_pages":num_pages,
+        "sort_options":sort_options,
+        "graph_options":graph_options,
+        "themes":themes,
+        "total_items":total_items,
+        "total_price":total_price,
+        "view":view,
+    })
+
+    return context
