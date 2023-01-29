@@ -49,7 +49,7 @@
                 <button>Profile</button>
                 <div class="dropdown-content">
                     <a href="{% url 'profile' %}">Profile</a>
-                    <a href="{% url 'portfolio' view='items' %}">Portfolio</a>
+                    <a href="{% url 'portfolio' %}?view=items">Portfolio</a>
                     <a href="{% url 'watchlist' %}">Watchlist</a>
                 </div>
             </li>
@@ -68,10 +68,27 @@
 
         </ul>
 
-        {% if logged_in %}
-            <a id="logout" href="{% url 'logout' %}"><img onclick="logout_popup(event)" src="{% static 'App/styling-images/logout_button.png' %}" alt="logout"></a>
-        {% endif %}
+        <div id="flex-container">
+            <div id="RHS-nav-content">  
+                <div>
+                    <form id="search-form" action="{% url 'search_item' request.path_info|replace_forward_slash %}" method="post">
+                        {% csrf_token %}
+                        <div id="input-submit-container">
+                            <input placeholder="Enter item ID / name" type="text" name="item_id">
+                            <button type="submit"></button>
+                        </div>
+                    </form>
+                </div>
 
+            <div>
+                {% if logged_in %}
+                    <a id="logout" href="{% url 'logout' %}"><img onclick="logout_popup(event)" src="{% static 'App/styling-images/logout_button.png' %}" alt="logout"></a>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
     </nav>
 
         {% block content%}

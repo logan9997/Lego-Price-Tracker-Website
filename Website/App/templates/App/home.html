@@ -41,17 +41,11 @@
             {% else %}
                 <h1>Brick Economy</h1>
             {% endif %}
-            <div id="search-container">
-                <form action="{% url 'index' %}" method="post">
-                    {% csrf_token %}
-                    <input type="text" name="minifig_id">
-                    <button type="submit">Search</button>
-                </form>                 
-            </div>
+
 
             <div id="about-boxes-container">
                 <div class="about-box" id="create-your-portfolio">
-                    <a href="{% url 'portfolio' 'items' %}">
+                    <a href="{% url 'portfolio' %}?view=items">
                     <h2>Create Your Portfolio</h2>
                     <img src="{% static 'App/styling-images/portfolio-sample.jpg'%}" alt="">
                     </a>

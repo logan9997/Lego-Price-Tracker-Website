@@ -83,9 +83,73 @@ nav ul li:hover .dropdown-content {
     display: flex;
 }
 
-#logout img {
+#flex-container {
+    margin-left: 76%;
+    width: 24rem;
+
+}
+
+#RHS-nav-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#search-form {
+    width: 16rem;
+    height: 2rem;
+}
+
+#input-submit-container {
+    display: inline-block;
+
+}
+
+#search-form {
+    width: 12rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    
+}
+
+#input-submit-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+}
+
+#search-form input {
+    width: 8rem;
+    height: 1.8rem;
+    width: 12rem;
+    border-radius: 0.4rem;
+    background: url("static/app/styling-images/search_button.png");
+}
+
+#search-form button {
     width: 2rem;
-    float: right;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    border: none;
+}
+
+#search-button {
+    height: 1.6rem;
+}
+
+#logout {
+    width: 1rem;
+    height: 2rem;
+    position: relative;
+    bottom: 0.15rem;
+
+}
+
+#logout img {
+    height: 2rem;
     margin-right: 3rem;
 }
 
