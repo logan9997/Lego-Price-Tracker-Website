@@ -1,6 +1,5 @@
 ITEMS_PER_PAGE = 16
 RECENTLY_VIEWED_ITEMS_NUM = 15
-WATCHLIST_ITEMS_PER_PAGE = 12
 
 
 def get_sort_options() -> list[dict[str, str]]:
