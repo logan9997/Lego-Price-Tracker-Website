@@ -125,7 +125,19 @@ def user_items_get_requests(request) -> tuple[str, int, str]:
 def user_items(request, view, user_id):
 
     context = {}
-    
+
+    if "url_params" in request.session:
+        for k, v in request.GET.items():
+            request.session["url_params"][k] = v
+    else:
+        request.session["url_params"] = {}
+
+    request.session.modified = True
+
+    url_param_string = "?" + "".join([f"{k}={v}&" for k, v in request.session["url_params"].items()])[:-1]
+
+    print("\n",url_param_string,"\n")
+
     items = get_user_items(user_id, view)
 
     graph_options = get_graph_options()
@@ -148,7 +160,7 @@ def user_items(request, view, user_id):
 
     graph_options = sort_dropdown_options(graph_options, graph_metric)
 
-    total_items = len(items)
+    total_unique_items = len(items)
 
     items = items[(page - 1) * ITEMS_PER_PAGE : page * ITEMS_PER_PAGE]
 
@@ -163,9 +175,10 @@ def user_items(request, view, user_id):
         "sort_options":sort_options,
         "graph_options":graph_options,
         "themes":themes,
-        "total_items":total_items,
+        "total_unique_items":total_unique_items,
         "total_price":total_price,
         "view":view,
+        "url_param_string":url_param_string
     })
 
     return context
