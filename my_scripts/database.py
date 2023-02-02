@@ -246,6 +246,26 @@ class DatabaseManagment():
         return result.fetchall()
 
 
+    def portfolio_total_item_price(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT ROUND(avg_price * PO.quantity, 2), I.item_id, condition
+            FROM App_portfolio PO, App_price PR, App_item I
+            WHERE PO.user_id = {user_id}
+                AND PO.item_id = I.item_id
+                AND I.item_id = PR.item_id
+            GROUP BY I.item_id, condition
+        """)
+        return result.fetchall()
+
+
+    def total_portfolio_items(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT SUM(quantity)
+            FROM App_portfolio 
+            WHERE user_id = {user_id}
+        """)
+        return result.fetchall()[0][0]
+
     def user_items_total_price(self, user_id, metric, view) -> list[str]:
         if view == "portfolio":
             select_string = f"SELECT ROUND(SUM({metric} * quantity), 2)"
