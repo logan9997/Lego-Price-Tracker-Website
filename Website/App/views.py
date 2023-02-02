@@ -363,6 +363,8 @@ def portfolio(request):
 
     context = user_items(request, "portfolio", user_id)
 
+    context["total_items"] = db.total_portfolio_items(user_id)
+
     if portfolio_view == "trend":
         trends_graph_data = db.get_portfolio_price_trends(user_id)
 
@@ -390,9 +392,6 @@ def portfolio_POST(request):
             remove_or_add = form.cleaned_data["remove_or_add"]
             condition = form.cleaned_data["condition"][0]
             quantity = int(form.cleaned_data["quantity"])
-            print(item_id, remove_or_add, condition, quantity)
-
-            print([(_item["item_id"], _item["condition"]) for _item in portfolio_items])
 
             if remove_or_add == "-":
                 quantity *= -1
@@ -422,7 +421,7 @@ def add_to_watchlist(request, item_id):
 
     user_id = request.session["user_id"]
 
-    if item_id not in db.get_watchlist_items(user_id):
+    if item_id not in [_item[0] for _item in db.get_user_items(user_id, "watchlist")]:
         db.add_to_watchlist(user_id, item_id)
 
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
