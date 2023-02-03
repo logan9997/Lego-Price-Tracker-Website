@@ -50,3 +50,8 @@ def count_theme_indent(theme_path:str):
     if indent <= desire_indent and parent_theme in theme_path:
         return "-"*(indent*3) + theme_path.split("~")[-1].replace("_", " ").replace("~", " ")
     return ''
+
+
+@register.filter
+def capitalise(string:str):
+    return string.capitalize()

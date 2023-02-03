@@ -359,13 +359,14 @@ def portfolio(request):
 
     user_id = request.session["user_id"]
 
-    portfolio_view = request.GET.get("view")
+    view = request.GET.get("view")
 
     context = user_items(request, "portfolio", user_id)
 
     context["total_items"] = db.total_portfolio_items(user_id)
+    context["view_param"] = f"/?view=items"
 
-    if portfolio_view == "trend":
+    if view == "trend":
         trends_graph_data = db.get_portfolio_price_trends(user_id)
 
         trends_graph_dates = [data[0] for data in trends_graph_data]
@@ -375,11 +376,10 @@ def portfolio(request):
         context["trends_graph_prices"] = trends_graph_prices
 
         print(context)
-
     return render(request, "App/portfolio.html", context=context)
 
 
-def portfolio_POST(request):
+def view_POST(request, view):
 
     user_id = request.session["user_id"]
 
@@ -401,7 +401,17 @@ def portfolio_POST(request):
             else:
                 db.add_to_portfolio(item_id, condition, quantity, user_id)
 
-    return redirect("http://127.0.0.1:8000/portfolio/?view=items")
+    if "url_params" in request.session:
+        for k, v in request.POST.items():
+            request.session["url_params"][k] = v
+    else:
+        request.session["url_params"] = {}
+
+    request.session.modified = True
+
+    redirect_str = f"http://127.0.0.1:8000/{view}/"
+
+    return redirect(redirect_str)
 
 
 def watchlist(request):

@@ -126,48 +126,37 @@ def user_items(request, view, user_id):
 
     context = {}
 
-    if "url_params" in request.session:
-        for k, v in request.GET.items():
-            request.session["url_params"][k] = v
-    else:
-        request.session["url_params"] = {}
-
-    request.session.modified = True
-
-    url_param_string = "?" + "".join([f"{k}={v}&" for k, v in request.session["url_params"].items()])[:-1]
-
-    print("\n",url_param_string,"\n")
-
     items = get_user_items(user_id, view)
 
     graph_options = get_graph_options()
     sort_options = get_sort_options()
 
-    graph_metric, page, sort_field = user_items_get_requests(request)
+    #graph_metric, page, sort_field
+    options = request.session["url_params"]
 
     for item in items:
         item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], graph_metric, view):
+        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], options["graph-metric"], view):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
 
     num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
 
-    if sort_field != None:
-        items = sort_items(items, sort_field)
+    if options["sort-field"] != None:
+        items = sort_items(items, options["sort-field"])
         #keep selected sort field option as first <option> tag
-        sort_options = sort_dropdown_options(sort_options, sort_field)
+        sort_options = sort_dropdown_options(sort_options, options["sort-field"])
 
-    graph_options = sort_dropdown_options(graph_options, graph_metric)
+    graph_options = sort_dropdown_options(graph_options, options["graph-metric"])
 
     total_unique_items = len(items)
 
-    items = items[(page - 1) * ITEMS_PER_PAGE : page * ITEMS_PER_PAGE]
+    items = items[(int(options["page"]) - 1) * ITEMS_PER_PAGE : int(options["page"]) * ITEMS_PER_PAGE]
 
     parent_themes = db.parent_themes(user_id, view)
     themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
 
-    total_price = db.user_items_total_price(user_id, graph_metric, view)
+    total_price = db.user_items_total_price(user_id, options["graph-metric"], view)
 
     context.update({
         "items":items,
@@ -178,7 +167,6 @@ def user_items(request, view, user_id):
         "total_unique_items":total_unique_items,
         "total_price":total_price,
         "view":view,
-        "url_param_string":url_param_string
     })
 
     return context

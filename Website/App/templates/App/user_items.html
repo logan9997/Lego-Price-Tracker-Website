@@ -5,7 +5,7 @@
 {% load tags %}
 <link rel="stylesheet" href="{% static 'App/user_items.css' %}">
 
-<h1>{{view}}</h1>
+<h1>{{view|capitalise}}</h1>
 
 <section id="header">
     <div id="tool-bar-header" class="headers">
@@ -14,14 +14,16 @@
     
     <div id="items-header" class="headers">
         {% if request.GET.view == "items" or request.path == "/watchlist/" %}
-        <form id="page-buttons-form" action="{% url view %}">
+        <form id="page-buttons-form" action="{% url 'view_POST' view %}" method="POST">
+            {% csrf_token %}
             {% for page_button in num_pages %}
                 <input name="page" type="submit" value="{{page_button}}">
             {% endfor %}
         </form>
 
         <div id="dropdown-forms">
-            <form id="sort-form" action="{% url view %}" method="GET">
+            <form id="sort-form" action="{% url 'view_POST' view %}" method="POST">
+                {% csrf_token %}
                 <div class="input-label-container">
                     <label for="sort-field">Sort</label>
                     <select onchange="this.form.submit()" name="sort-field">
@@ -32,7 +34,8 @@
                 </div>
             </form>
 
-            <form action="{% url view %}" method="GET">
+            <form action="{% url 'view_POST' view %}" method="POST">
+                {% csrf_token %}
                 <label for="graph-data-form">Graph Data</label>
                 <select onchange="this.form.submit()" name="graph-metric">
                     {% for graph_option in graph_options %}
@@ -50,15 +53,20 @@
 
     <section id="tool-bar">
         <div id="stats">
+            <h3>Stats</h3>
+            {% if request.path == "/portfolio/" %}
+                <p>Total of {{ total_items }} items in your portfolio.</p>
+            {% endif %}
 
-            <p>Total of {{ total_items }} items in {{ view }}. Total £{{total_price}}</p>
+            <p>Total of {{ total_unique_items }} unique items in your {{ view }}.</p>
+            <p>Total Value £{{total_price}}</p>
+        </div>
 
+        <div id="themes-container">
+            <h3>Themes</h3>
             {% for theme in themes %}
                 <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.total_price}}</p>
             {% endfor %}
-            <div id="theme-count-container">
-            
-            </div>
         </div>
     </section>
 
@@ -70,15 +78,27 @@
         <div class="item-and-side-bar-container">
             {% if request.path == "/portfolio/" %}
             <div class="portfolio-items-options">
-                <form action="{% url 'portfolio_POST' %}" method="post">
+                <div class="qty-condition-container">
+                    <p>{{item.owned_quantity}}</p>
+                    <p>({{item.condition}})</p>
+                </div>
+
+                <form action="{% url 'view_POST' view %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="form-type" value="remove-or-add-portfolio-item">
                     <input type="hidden" name="condition" value="{{item.condition}}">
                     <input type="hidden" name="item_id" value="{{item.item_id}}">
-                    <input name="remove_or_add" type="submit" value="+">
-                    <input name="remove_or_add" type="submit" value="-">
-                    <input min="1" type="number" name="quantity" value="1">
+                    
+                    <div class="label-input-container">
+                        <input min="1" type="number" name="quantity" value="1">
+                    </div>
+                    
+                    <input class="add-item" name="remove_or_add" type="submit" value="+">
+                    <input class="remove-item" name="remove_or_add" type="submit" value="-">
+
                 </form>
+
+
             </div>
             {% endif %}
 
