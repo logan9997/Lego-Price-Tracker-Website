@@ -121,6 +121,21 @@ def user_items_get_requests(request) -> tuple[str, int, str]:
     return graph_metric, page, sort_field
 
 
+def slice_num_pages(num_pages, current_page):
+    a = current_page - (PAGE_NUM_LIMIT // 2)
+    b = current_page - (PAGE_NUM_LIMIT // 2) + (PAGE_NUM_LIMIT)
+
+    if a < 0:
+        b -= a
+        a = 0
+    if b > len(num_pages):
+        b = len(num_pages)
+        a = b - PAGE_NUM_LIMIT
+
+    num_pages = num_pages[a:b]
+    return num_pages
+
+
 def user_items(request, view, user_id):
 
     context = {}
@@ -139,7 +154,13 @@ def user_items(request, view, user_id):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
 
+    current_page = int(options["page"])
+
+    print(current_page)
+
     num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
+
+    num_pages = slice_num_pages(num_pages, current_page)
 
     if options["sort-field"] != None:
         items = sort_items(items, options["sort-field"])
@@ -150,7 +171,7 @@ def user_items(request, view, user_id):
 
     total_unique_items = len(items)
 
-    items = items[(int(options["page"]) - 1) * ITEMS_PER_PAGE : int(options["page"]) * ITEMS_PER_PAGE]
+    items = items[(current_page - 1) * ITEMS_PER_PAGE : int(current_page) * ITEMS_PER_PAGE]
 
     parent_themes = db.parent_themes(user_id, view)
     themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)

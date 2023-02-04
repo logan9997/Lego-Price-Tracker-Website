@@ -1,5 +1,6 @@
-ITEMS_PER_PAGE = 16
+ITEMS_PER_PAGE = 1
 RECENTLY_VIEWED_ITEMS_NUM = 15
+PAGE_NUM_LIMIT = 8
 
 
 def get_sort_options() -> list[dict[str, str]]:
@@ -23,3 +24,16 @@ def get_graph_options() -> list[dict[str, str]]:
         {"value":"total_quantity","text":"Quantity Avialble"},
     ]
     return GRAPH_OPTIONS
+
+def get_search_sort_options() -> list[dict[str,str]]:
+    SORT_OPTIONS = [
+        {"value":"theme_name-asc", "text":"Theme name Asc"},
+        {"value":"theme_name-desc", "text":"Theme name Desc"},
+        {"value":"popularity-asc", "text":"popularity Asc"},
+        {"value":"popularity-desc", "text":"popularity Desc"},
+        {"value":"avg_growth-asc", "text":"Average Growth Asc"},
+        {"value":"avg_growth-desc", "text":"Average Growth Desc"},
+        {"value":"num_items-asc", "text":"Number of Items Asc"},
+        {"value":"num_items-desc", "text":"Number of Items Desc"},
+    ]
+    return SORT_OPTIONS
