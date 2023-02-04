@@ -13,6 +13,11 @@
     </div>
     
     <div id="items-header" class="headers">
+        {% if request.path == "/portfolio/" %}
+            <a href="{% url 'portfolio' %}?view=items">items</a>
+            <a href="{% url 'portfolio' %}?view=trends">trends</a>
+        {% endif %}
+
         {% if request.GET.view == "items" or request.path == "/watchlist/" %}
         <form id="page-buttons-form" action="{% url 'view_POST' view %}" method="POST">
             {% csrf_token %}

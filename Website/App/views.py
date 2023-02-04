@@ -361,6 +361,8 @@ def portfolio(request):
 
     view = request.GET.get("view")
 
+    request.session["portfolio_view"] = view
+
     context = user_items(request, "portfolio", user_id)
 
     context["total_items"] = db.total_portfolio_items(user_id)
@@ -409,9 +411,9 @@ def view_POST(request, view):
 
     request.session.modified = True
 
-    redirect_str = f"http://127.0.0.1:8000/{view}/"
-
-    return redirect(redirect_str)
+    portfolio_view = request.session.get("portfolio_view", "")
+    return redirect(f"http://127.0.0.1:8000/{view}/?view={portfolio_view}"
+)
 
 
 def watchlist(request):
