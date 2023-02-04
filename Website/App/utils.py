@@ -1,8 +1,5 @@
-#miscellaneous functions.
 import sys
 import math
-
-from django.shortcuts import redirect
 
 sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API")
 
@@ -64,7 +61,6 @@ def get_change_password_error_message(rules:list[dict]) -> str:
 
 
 def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
-
     order_convert = {"asc":False, "desc":True}
     order = order_convert[order]
     if field == "theme_name":
@@ -80,7 +76,6 @@ def sort_items(items, sort) -> list[str]:
     sort_field = sort.split("-")[0]
     order = {"asc":False, "desc":True}[sort.split("-")[1]]
     items = sorted(items, key=lambda field:field[sort_field], reverse=order)
-    
     return items
 
 
@@ -113,24 +108,22 @@ def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[d
     return themes
 
 def user_items_get_requests(request) -> tuple[str, int, str]:
-    #get requests
     graph_metric = request.GET.get("graph-metric", "avg_price")
     page = int(request.GET.get("page", 1))
     sort_field = request.GET.get("sort-field", "avg_price-desc")
-
     return graph_metric, page, sort_field
 
 
 def slice_num_pages(num_pages, current_page):
     a = current_page - (PAGE_NUM_LIMIT // 2)
-    b = current_page - (PAGE_NUM_LIMIT // 2) + (PAGE_NUM_LIMIT)
+    b = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT  
 
-    if a < 0:
+    if b > len(num_pages):
+        b = len(num_pages) -1
+        a = b - PAGE_NUM_LIMIT
+    if a < 0 :
         b -= a
         a = 0
-    if b > len(num_pages):
-        b = len(num_pages)
-        a = b - PAGE_NUM_LIMIT
 
     num_pages = num_pages[a:b]
     return num_pages
@@ -156,10 +149,7 @@ def user_items(request, view, user_id):
 
     current_page = int(options["page"])
 
-    print(current_page)
-
     num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
-
     num_pages = slice_num_pages(num_pages, current_page)
 
     if options["sort-field"] != None:
@@ -170,13 +160,12 @@ def user_items(request, view, user_id):
     graph_options = sort_dropdown_options(graph_options, options["graph-metric"])
 
     total_unique_items = len(items)
+    total_price = db.user_items_total_price(user_id, options["graph-metric"], view)
 
     items = items[(current_page - 1) * ITEMS_PER_PAGE : int(current_page) * ITEMS_PER_PAGE]
 
     parent_themes = db.parent_themes(user_id, view)
     themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
-
-    total_price = db.user_items_total_price(user_id, options["graph-metric"], view)
 
     context.update({
         "items":items,
@@ -187,6 +176,7 @@ def user_items(request, view, user_id):
         "total_unique_items":total_unique_items,
         "total_price":total_price,
         "view":view,
+        "current_page":current_page
     })
 
     return context

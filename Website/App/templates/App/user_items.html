@@ -22,7 +22,11 @@
         <form id="page-buttons-form" action="{% url 'view_POST' view %}" method="POST">
             {% csrf_token %}
             {% for page_button in num_pages %}
-                <input name="page" type="submit" value="{{page_button}}">
+                {% if page_button == current_page %}
+                    <input style="background-color: green;" name="page" type="submit" value="{{page_button}}">
+                {% else %}
+                    <input name="page" type="submit" value="{{page_button}}">
+                {% endif %}
             {% endfor %}
         </form>
 
