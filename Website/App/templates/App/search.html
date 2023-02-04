@@ -13,36 +13,13 @@
 
         <section id="sort-themes">
             <h2>Sort</h2>
-            <form action="{% url 'search' theme_path %}" method="get">
-                <div class="input-label-container">
-                    <label for="name">Theme Name</label>
-                    <input type="radio" name="sort_field" value="theme_name">
-                </div>
-
-                <div class="input-label-container">
-                    <label for="popularity">Popularity</label>
-                    <input type="radio" name="sort_field" value="popularity">
-                </div>
-
-                <div class="input-label-container">
-                    <label for="avg_growth">Average Growth</label>
-                    <input type="radio" name="sort_field" value="avg_growth">
-                </div>
-
-                <div class="input-label-container">
-                    <label for="num_items">Number of Items</label>
-                    <input type="radio" name="sort_field" value="num_items">
-                </div>
-
-                <div class="input-label-container">
-                    <label for="order">Sort Order</label>                    
-                    <select name="order">
-                        <option value="ASC">ASC</option>
-                        <option value="DESC">DESC</option>
+            <form action="{% url 'search' theme_path %}" method="POST">
+                {% csrf_token %}
+                <select onchange="this.form.submit()" name="sort-order">
+                    {% for option in sort_options %}
+                        <option value="{{option.value}}">{{option.text}}</option>
+                    {% endfor %}
                     </select>
-                </div>
-
-                <input type="submit" value="Sort!">
             </form>
         </section>
 

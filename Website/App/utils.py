@@ -65,10 +65,9 @@ def get_change_password_error_message(rules:list[dict]) -> str:
 
 def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
 
-
-    order_convert = {"ASC":False, "DESC":True}
-    order = order_convert[order[0]]
-    if field[0] == "theme_name":
+    order_convert = {"asc":False, "desc":True}
+    order = order_convert[order]
+    if field == "theme_name":
         return sorted(sub_themes, reverse=order)
     return sub_themes
 

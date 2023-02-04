@@ -222,22 +222,24 @@ def search(request, theme_path="all"):
         #remove duplicates
         sub_themes = list(dict.fromkeys(sub_themes))
 
-    if request.method == "GET":
-        form = SearchSort(request.GET)
-        if form.is_valid():
-            sort_field = form.cleaned_data["sort_field"]
-            order = form.cleaned_data["order"]
+    sort_option = request.POST.get("sort-order")
+    sort_options = get_search_sort_options()
+    print(sort_option)
+    if sort_option != None:
+        sort_options = sort_dropdown_options(sort_options, sort_option)
 
-            #sort list
-            sub_themes = sort_themes(sort_field, order, sub_themes)
+    if request.method == "POST":            
+        order = sort_option.split("-")[1]
+        field = sort_option.split("-")[0]
+        sub_themes = sort_themes(field, order, sub_themes)
 
     context = {
         "theme_path":theme_path,
         "sub_themes":sub_themes,
         "theme_items":theme_items,
+        "sort_options":sort_options,
     }
     
-
     return render(request, "App/search.html", context=context)
 
 
@@ -346,8 +348,8 @@ def join(request):
                     return redirect("http://127.0.0.1:8000/")
 
                 #set error messages depending on what the user did wrong in filling out the form
-                context = {"signup_message":"Username / Email already exists"}
-            context = {"signup_message":"Passwords do not Match"}
+                context["signup_message"] = "Username / Email already exists"
+            context["signup_message"] = "Passwords do not Match"
 
     #add the username to context which can only happen if the user is logged in
     
