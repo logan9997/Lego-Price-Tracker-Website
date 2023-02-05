@@ -284,15 +284,6 @@ class DatabaseManagment():
         return result.fetchall()[0][0]
 
 
-    def add_to_portfolio(self, item_id, condition, quantity, user_id) -> None:
-        date = datetime.datetime.today().strftime('%Y-%m-%d')
-        self.cursor.execute(f"""
-            INSERT INTO App_portfolio ('item_id', 'condition', 'quantity', 'user_id', 'date_added')
-            VALUES ('{item_id}','{condition}','{quantity}','{user_id}', {date})
-        """)
-        self.con.commit()
-
-
     def update_portfolio_item_quantity(self, user_id, item_id, condition, quantity) -> None:
         self.cursor.execute(f"""
             UPDATE App_portfolio
@@ -403,6 +394,15 @@ class DatabaseManagment():
             self.con.commit()
 
 
+    def get_portfolio_items_condition(self, user_id) -> list[str]:
+        result = self.cursor.execute(f"""
+            SELECT item_id, condition
+            FROM App_portfolio
+            WHERE user_id = {user_id}
+        """)
+        return result.fetchall()
+
+
     def total_portfolio_price_trend(self, user_id) -> list[str]:
         result = self.cursor.execute(f"""
             SELECT SUM(max_price), date
@@ -464,12 +464,30 @@ class DatabaseManagment():
             WHERE user_id = {user_id}
         """)
 
-    def add_to_watchlist(self, user_id, item_id) -> None:
+    def add_to_user_items(self, user_id, item_id, view, **kwargs) -> None:
         date = datetime.datetime.today().strftime('%Y-%m-%d')
-        print(date)
+        
+        sql_fields = "('user_id', 'item_id', 'date_added'"
+        sql_values = f"VALUES ({user_id},'{item_id}','{date}'"
+
+        print(kwargs)
+
+        if view == "portfolio":
+            condition = kwargs["condition"]
+            quantity = kwargs["quantity"]
+
+            sql_fields += ",'condition', 'quantity')"
+            sql_values += f",'{condition}', {quantity})"
+        else:
+            sql_fields += ")"
+            sql_values += ")"
+
+        print(sql_fields, "\n", sql_values)
+
         self.cursor.execute(f"""
-            INSERT INTO App_watchlist ('user_id', 'item_id', 'date_added')
-            VALUES ('{user_id}', '{item_id}', {date})
+            INSERT INTO App_{view}
+            {sql_fields}
+            {sql_values}
         """)
         self.con.commit()
 

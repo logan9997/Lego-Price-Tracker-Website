@@ -5,7 +5,6 @@ class ItemSelect(forms.Form):
 
 
 class AddItemToPortfolio(forms.Form):
-    item_id = forms.CharField(max_length=20)
     condition = forms.CharField(max_length=1)
     quantity = forms.IntegerField()
 

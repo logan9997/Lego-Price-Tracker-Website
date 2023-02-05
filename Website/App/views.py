@@ -120,7 +120,6 @@ def item(request, item_id):
     '''
     CHANGE IF USER IS LOGGED IN!!
     '''
-
     #if no recently viewed items, add item on current page to recently viewed items
     if "recently-viewed" not in request.session:
         request.session["recently-viewed"] = [item_id]
@@ -174,16 +173,21 @@ def item(request, item_id):
             "year_released":db.get_item_info(item_id)[0][2],
         }
 
+        add_error_msg = request.session.get("add_to_user_items_error_msg", "")
+
         context.update({
             "general_info":general_info,
             "image_path":f"App/images/{item_id}.png",
             "prices": prices,
             "dates":dates,
             "avg_prices":[price[1] for price in prices],
+            "add_error_msg":add_error_msg
             # "parts_info":parts_info,
             # "sets_info":sets_info,
         })
     
+        if "add_to_user_items_error_msg" in request.session:
+            del request.session["add_to_user_items_error_msg"]
 
     return render(request, "App/item.html", context=context)
 
@@ -403,7 +407,7 @@ def view_POST(request, view):
             if (item_id, condition) in [(_item["item_id"], _item["condition"]) for _item in portfolio_items]:
                 db.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
             else:
-                db.add_to_portfolio(item_id, condition, quantity, user_id)
+                db.add_to_user_items(item_id, user_id, view, condition=condition, quantity=quantity)
 
     if "url_params" in request.session:
         for k, v in request.POST.items():
@@ -413,9 +417,12 @@ def view_POST(request, view):
 
     request.session.modified = True
 
-    portfolio_view = request.session.get("portfolio_view", "")
-    return redirect(f"http://127.0.0.1:8000/{view}/?view={portfolio_view}"
-)
+    portfolio_view = ""
+    if view == "portfolio":
+        portfolio_view = "?view=" + request.session.get("portfolio_view", "items")
+    print("portfolio_view", portfolio_view)
+    return redirect(f"http://127.0.0.1:8000/{view}/" + portfolio_view)
+
 
 
 def watchlist(request):
@@ -431,12 +438,35 @@ def watchlist_POST(request, theme_path:str):
 
     return redirect("watchlist")
 
-def add_to_watchlist(request, item_id):
+def add_to_user_items(request, item_id):
+
+    view = request.POST.get("view-type")
+    print(view)
+
+    #view = request.session["view-type"]
+
+    if view == "portfolio":
+        form = AddItemToPortfolio(request.POST)
+        if form.is_valid():
+            condition = form.cleaned_data["condition"]
+            quantity = form.cleaned_data["quantity"]
+        else:print(form.errors)
 
     user_id = request.session["user_id"]
 
-    if item_id not in [_item[0] for _item in db.get_user_items(user_id, "watchlist")]:
-        db.add_to_watchlist(user_id, item_id)
+    user_item_ids = [_item[0] for _item in db.get_user_items(user_id, view)]
+    portfolio_items_and_condition = db.get_portfolio_items_condition(user_id)
+
+    if view == "portfolio":
+        if (item_id, condition) not in portfolio_items_and_condition:
+            db.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
+        else:
+            request.session["add_to_user_items_error_msg"] = f"{item_id}, {condition} is already in your portfolio"
+    else:
+        if item_id not in user_item_ids:
+            db.add_to_user_items(user_id, item_id, view)
+        else:
+            request.session["add_to_user_items_error_msg"] = f"{item_id} is already in your watchlist"
 
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 
