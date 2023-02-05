@@ -482,6 +482,7 @@ def profile(request):
     }
 
     #SETTINGS
+    print(request.POST.get("form-type"))
     
     if request.method == "POST":
         #-Change password
@@ -507,12 +508,14 @@ def profile(request):
                     context["change_password_error_message"] = get_change_password_error_message(rules)
 
         #-Email preferences
-        elif request.POST.get("form-type") == "email-preferences-form":
+        elif request.POST.get("form-type") == "email-preference-form":
             form = EmailPreferences(request.POST)
             if form.is_valid():
                 email = form.cleaned_data["email"]
-                preference = form.cleaned_data["preference"]
-                #no fields in database
+                preference = form.cleaned_data["preference"][0]
+                db.update_email_preferences(user_id, email, preference)
+                print(email, preference)
+            else:print(form.errors)
 
         #-Change personal info
         elif request.POST.get("form-type") == "personal-details-form":
