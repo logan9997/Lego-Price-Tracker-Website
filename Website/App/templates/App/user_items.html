@@ -61,7 +61,7 @@
 <section id="main-container">
 
     <section id="tool-bar">
-        <div id="stats">
+        <div class="tool-bar-div" id="stats">
             <h3>Stats</h3>
             {% if request.path == "/portfolio/" %}
                 <p>Total of {{ total_items }} items in your portfolio.</p>
@@ -71,7 +71,7 @@
             <p>Total Value £{{total_price}}</p>
         </div>
 
-        <div id="themes-container">
+        <div class="tool-bar-div" id="themes-container">
             <h3>Themes</h3>
             {% for theme in themes %}
                 <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.total_price}}</p>
@@ -199,7 +199,8 @@
 
             var prices = JSON.parse(document.getElementById('prices').textContent);
             var dates = JSON.parse(document.getElementById('dates').textContent);
-            var prices1 = [1405, 1402,1408,1405,1417,1415,]
+
+            console.log(prices)
 
             var data = [];
             for (let i = 0; i < prices.length; i++) {

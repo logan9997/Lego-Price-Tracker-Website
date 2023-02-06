@@ -19,14 +19,15 @@
                     {% for option in sort_options %}
                         <option value="{{option.value}}">{{option.text}}</option>
                     {% endfor %}
-                    </select>
+                </select>
             </form>
         </section>
+
 
         <section id="all-themes-container">
             {% for theme in sub_themes %}
             <div class="theme-container">
-                <a href="{% url 'search' theme %}">{{theme|replace_underscore}}</a>
+                <a href="{% url 'search' theme_path %}{{theme}}">{{theme|replace_underscore}}</a>
                 <!-- <img src="{{theme}}" alt="{{theme}}_url"> -->
             </div>
             {% endfor %}

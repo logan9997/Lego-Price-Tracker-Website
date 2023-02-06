@@ -212,14 +212,22 @@ def trending(request):
     return render(request, "App/trending.html", context=context)
 
 
-def search(request, theme_path="all"):
+def search(request, theme_path='all'):
 
-    if theme_path == "all":
+    if theme_path != "all":
+        redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
+        theme_path = theme_path.replace("all/", "")
+
+    if theme_path == 'all':
         sub_themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
         theme_items = [] 
     else:
         theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
         #get all sub themes (if any)
+
+        if len(theme_items) == 0:
+            return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
+
         sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
         #split "~" (used to seperate sub themes in database) with 
         sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
@@ -228,7 +236,6 @@ def search(request, theme_path="all"):
 
     sort_option = request.POST.get("sort-order")
     sort_options = get_search_sort_options()
-    print(sort_option)
     if sort_option != None:
         sort_options = sort_dropdown_options(sort_options, sort_option)
 
@@ -374,7 +381,7 @@ def portfolio(request):
     context["total_items"] = db.total_portfolio_items(user_id)
     context["view_param"] = f"/?view=items"
 
-    if view == "trend":
+    if view == "trends":
         trends_graph_data = db.get_portfolio_price_trends(user_id)
 
         trends_graph_dates = [data[0] for data in trends_graph_data]
@@ -383,7 +390,6 @@ def portfolio(request):
         context["trends_graph_dates"] = trends_graph_dates
         context["trends_graph_prices"] = trends_graph_prices
 
-        print(context)
     return render(request, "App/portfolio.html", context=context)
 
 
@@ -433,10 +439,6 @@ def watchlist(request):
 
     return render(request, "App/watchlist.html", context=context)
 
-
-def watchlist_POST(request, theme_path:str):
-
-    return redirect("watchlist")
 
 def add_to_user_items(request, item_id):
 
