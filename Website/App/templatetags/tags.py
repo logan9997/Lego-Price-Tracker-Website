@@ -31,27 +31,40 @@ def add_username_email_to_context(context, request):
 
 
 @register.filter
-def replace_underscore(string):
+def replace_underscore(string:str):
     return string.replace("_", " ")
 
+
 @register.filter
-def replace_forward_slash(string):
+def replace_forward_slash(string:str):
     if string == "/":
         return "index"
 
     return string.replace("/", "")
 
+
+@register.filter
+def replace_space_substitute(string:str):
+    return string.replace("~", ",  ").replace("_", " ")
+
+
 @register.filter
 def count_theme_indent(theme_path:str):
     indent = theme_path.count("~")
     parent_theme = theme_path.split("~")[0]
-    desire_indent = 2
+    desired_indent = 2
 
-    if indent <= desire_indent and parent_theme in theme_path:
+    if indent <= desired_indent and parent_theme in theme_path:
         return "-"*(indent*3) + theme_path.split("~")[-1].replace("_", " ").replace("~", " ")
     return ''
 
 
 @register.filter
+def absolute_value(num):
+    return abs(num)
+
+
+@register.filter
 def capitalise(string:str):
     return string.capitalize()
+

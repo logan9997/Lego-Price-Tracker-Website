@@ -1,7 +1,7 @@
-ITEMS_PER_PAGE = 1
+ITEMS_PER_PAGE = 6
 RECENTLY_VIEWED_ITEMS_NUM = 15
 PAGE_NUM_LIMIT = 8
-
+SEARCH_ITEMS_PER_PAGE = 20
 
 def get_sort_options() -> list[dict[str, str]]:
     SORT_OPTIONS = [
