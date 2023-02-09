@@ -99,7 +99,7 @@ class DatabaseManagment():
         result = self.cursor.execute(f"""
             SELECT item_id
             FROM App_price
-            WHERE date = '{datetime.datetime.today().strftime('%Y-%m-%d')}'
+            WHERE date = '{datetime.date.today().strftime('%Y-%m-%d')}'
         """)
         return result.fetchall()
 
@@ -129,10 +129,13 @@ class DatabaseManagment():
         try:
             self.lock.acquire(True)
             result = self.cursor.execute(f"""
-                SELECT App_item.item_id, item_type
-                FROM App_item, App_theme
-                WHERE App_item.item_id = App_theme.item_id
+                SELECT I.*,avg_price, min_price, max_price, total_quantity
+                FROM App_item I, App_theme T, App_price P
+                WHERE T.item_id = I.item_id
+                    AND I.item_id = P.item_id
                     AND theme_path = '{theme_path}'
+                    and item_type = 'M'
+                GROUP BY I.item_id
             """)
             return result.fetchall()      
         finally:
@@ -192,7 +195,6 @@ class DatabaseManagment():
 
 
     def get_sub_themes(self, parent_theme) -> list[str]:
-        print(parent_theme)
         result = self.cursor.execute(f"""
             SELECT REPLACE(theme_path, '{parent_theme}~', '')
             FROM App_theme, App_item
@@ -244,6 +246,18 @@ class DatabaseManagment():
             GROUP BY I.item_id
         """)
         return result.fetchall()
+
+
+    def is_item_in_user_items(self, user_id, view) -> bool:
+        result = self.cursor.execute(f"""
+            SELECT item_id
+            FROM App_{view}
+            WHERE user_id = {user_id}
+            GROUP BY item_id
+        """)
+        item_ids = [item[0] for item in result.fetchall()]
+        return item_ids
+
 
 
     def portfolio_total_item_price(self, user_id) -> list[str]:
@@ -352,6 +366,32 @@ class DatabaseManagment():
         return result.fetchall()
 
 
+    def biggest_theme_trends(self) -> list[str]:
+        result = self.cursor.execute("""
+            SELECT theme_path, round(avg_price - (
+                SELECT avg_price
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND date = (
+                        SELECT max(date)
+                        FROM App_price
+                    ) 
+            ),2) as [£ change]
+
+            FROM App_price P1, App_item I, App_theme T
+            WHERE I.item_id = P1.item_id 
+                AND P1.item_id = I.item_id
+                AND I.item_id = T.item_id
+                AND date = (
+                    SELECT min(date)
+                    FROM App_price
+                ) 
+            GROUP BY theme_path
+            ORDER BY [£ change] DESC
+        """)
+        return result.fetchall()
+
+
     def check_login(self, username, password) -> bool:
         result = self.cursor.execute(f"""
             SELECT *
@@ -377,9 +417,10 @@ class DatabaseManagment():
 
 
     def add_user(self, username, email, password) -> None:
+        date = datetime.date.today().strftime('%Y-%m-%d')
         self.cursor.execute(f"""
-            INSERT INTO App_user ('username','email','password')
-            VALUES ('{username}', '{email}', '{password}')
+            INSERT INTO App_user ('username','email','password', 'email_preference', 'region', 'date_joined')
+            VALUES ('{username}', '{email}', '{password}', 'All', 'None', {date})
         """)
         self.con.commit()
 
@@ -464,25 +505,31 @@ class DatabaseManagment():
             WHERE user_id = {user_id}
         """)
 
-    def add_to_user_items(self, user_id, item_id, view, **kwargs) -> None:
-        date = datetime.datetime.today().strftime('%Y-%m-%d')
+    def update_email_preferences(self, user_id, email, preference) -> None:
+        self.cursor.execute(f"""
+            UPDATE App_user
+            SET email_preference = '{preference}'
+            WHERE user_id = {user_id}
+                AND email = '{email}'
+        """)
+        self.con.commit()
+
+
+    def add_to_user_items(self, user_id, item_id, view, **portfolio_args) -> None:
+        date = datetime.date.today().strftime('%Y-%m-%d')
         
         sql_fields = "('user_id', 'item_id', 'date_added'"
         sql_values = f"VALUES ({user_id},'{item_id}','{date}'"
 
-        print(kwargs)
-
         if view == "portfolio":
-            condition = kwargs["condition"]
-            quantity = kwargs["quantity"]
+            condition = portfolio_args["condition"]
+            quantity = portfolio_args["quantity"]
 
             sql_fields += ",'condition', 'quantity')"
             sql_values += f",'{condition}', {quantity})"
         else:
             sql_fields += ")"
             sql_values += ")"
-
-        print(sql_fields, "\n", sql_values)
 
         self.cursor.execute(f"""
             INSERT INTO App_{view}
@@ -492,16 +539,25 @@ class DatabaseManagment():
         self.con.commit()
 
 
-    def get_user_item_graph_info(self, user_id, item_id, metric, view) -> list[str]:
-        result = self.cursor.execute(f"""
-            SELECT {metric}, date
-            FROM App_price P, App_{view} View, App_item I
-            WHERE user_id = {user_id}
-                AND I.item_id = '{item_id}'
-                AND P.item_id = I.item_id
-                AND I.item_id = View.item_id
-            GROUP BY I.item_id, P.date
-        """)
+    def get_item_graph_info(self,item_id, metric, **kwargs) -> list[str]:
+        if kwargs.get("user_id") != None and kwargs.get("view") != None:
+            result = self.cursor.execute(f"""
+                SELECT {metric}, date
+                FROM App_price P, App_{kwargs.get("view")} View, App_item I
+                WHERE user_id = {kwargs.get("user_id")}
+                    AND I.item_id = '{item_id}'
+                    AND P.item_id = I.item_id
+                    AND I.item_id = View.item_id
+                GROUP BY I.item_id, P.date
+            """)
+        else:
+            result = self.cursor.execute(f"""
+                SELECT {metric}, date
+                FROM App_price P, App_item I
+                WHERE I.item_id = '{item_id}'
+                    AND P.item_id = I.item_id
+                GROUP BY I.item_id, P.date
+            """)          
         return result.fetchall()
 
 
