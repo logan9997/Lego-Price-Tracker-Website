@@ -214,6 +214,13 @@ def trending(request):
 
 def search(request, theme_path='all'):
 
+    if "user_id" in request.session:
+        user_id = request.session["user_id"]
+    else:
+        user_id = -1
+
+    page = 0
+
     if theme_path != "all":
         redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
         theme_path = theme_path.replace("all/", "")
@@ -223,7 +230,7 @@ def search(request, theme_path='all'):
         theme_items = [] 
     else:
         theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
-        print(theme_items[:5])
+        theme_items = format_item_info(theme_items, view="search", user_id=user_id)[page * SEARCH_ITEMS_PER_PAGE : (page+1) * SEARCH_ITEMS_PER_PAGE]
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
@@ -233,6 +240,14 @@ def search(request, theme_path='all'):
         sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
         #remove duplicates
         sub_themes = list(dict.fromkeys(sub_themes))
+
+    graph_metric = "avg_price"
+
+    for item in theme_items:
+        item["prices"] = [] ; item["dates"] = []
+        for price_date_info in db.get_item_graph_info(item["item_id"], graph_metric):
+            item["prices"].append(price_date_info[0])
+            item["dates"].append(price_date_info[1])
 
     sort_option = request.POST.get("sort-order")
     sort_options = get_search_sort_options()
@@ -245,12 +260,10 @@ def search(request, theme_path='all'):
             field = sort_option.split("-")[0]
             sub_themes = sort_themes(field, order, sub_themes)
 
-    page = 0
-
     context = {
         "theme_path":theme_path,
         "sub_themes":sub_themes,
-        "theme_items":format_item_info(theme_items)[page * SEARCH_ITEMS_PER_PAGE : (page+1) * SEARCH_ITEMS_PER_PAGE],
+        "theme_items":theme_items,
         "sort_options":sort_options,
         "biggest_theme_trends":biggest_theme_trends()
     }
@@ -390,21 +403,16 @@ def user_items(request, view, user_id):
     current_page = int(options.get("page", 1))
     sort_field = options.get("sort-field", "avg_price-desc")
 
-    if current_page > math.ceil(len(items) / ITEMS_PER_PAGE):
-        current_page = 1
+    current_page = check_page_boundaries(current_page, items)
 
     for item in items:
         item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], graph_metric, view):
+        for price_date_info in db.get_item_graph_info(item["item_id"], graph_metric, view=view, user_id=user_id):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
 
-    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
-    num_pages = slice_num_pages(num_pages, current_page)
-
-    #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
-    if len(items) % ITEMS_PER_PAGE == 0:
-        num_pages.pop(-1)
+    
+    num_pages = slice_num_pages(items, current_page)
 
     items = sort_items(items, sort_field)
     #keep selected sort field option as first <option> tag
@@ -468,9 +476,9 @@ def view_POST(request, view):
         return redirect("index")
     user_id = request.session["user_id"]
 
-    items = db.get_user_items(items, view=view)
+    items = db.get_user_items(user_id, view=view)
 
-    portfolio_items = format_item_info(items, view="portfolio")
+    portfolio_items = format_item_info(items, view=view)
 
     if request.POST.get("form-type") == "remove-or-add-portfolio-item":
         form = AddOrRemovePortfolioItem(request.POST)
