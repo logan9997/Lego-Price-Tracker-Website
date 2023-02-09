@@ -8,13 +8,29 @@ from .config import *
 
 db = DatabaseManagment()
 
-def format_item_info(items, **view):
+def clean_html_codes(string:str):
+    codes = {
+        "&#41;":")", 
+        "&#40;":"("
+    }
+
+    for k, v in codes.items():
+        if k in string:
+            string = string.replace(k ,v)
+    return string
+
+
+def format_item_info(items, **kwargs):
+
+    if kwargs.get("view") == "search":
+        user_item_ids_portfolio = db.is_item_in_user_items(kwargs.get("user_id"), "portfolio")
+        user_item_ids_watchlist = db.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
+
     item_dicts = []
-    print(items[1:2])
     for item in items:
         item_dict = {
         "item_id":item[0],
-        "item_name":item[1],
+        "item_name":clean_html_codes(item[1]),
         "year_released":item[2],
         "item_type":item[3],
         "avg_price":item[4],
@@ -24,10 +40,16 @@ def format_item_info(items, **view):
         "img_path":f"App/images/{item[0]}.png",
         }
 
-        if view.get("view") == "portfolio":
+        if kwargs.get("view") == "portfolio":
             item_dict.update({
                 "condition":item[8],
                 "owned_quantity":item[9]
+            })
+
+        elif kwargs.get("view") == "search":
+            item_dict.update({
+                "in_portfolio":item[0] in user_item_ids_portfolio,
+                "in_watchlist":item[0] in user_item_ids_watchlist,
             })
 
         item_dicts.append(item_dict)
@@ -133,7 +155,15 @@ def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[d
     return themes
 
 
-def slice_num_pages(num_pages, current_page):
+def check_page_boundaries(current_page, items):
+    if current_page > math.ceil(len(items) / ITEMS_PER_PAGE):
+        current_page = 1
+    return current_page
+
+
+def slice_num_pages(items, current_page):
+    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
+
     a = current_page - (PAGE_NUM_LIMIT // 2)
     b = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT  
 
@@ -145,6 +175,11 @@ def slice_num_pages(num_pages, current_page):
         a = 0
 
     num_pages = num_pages[a:b]
+
+    #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
+    if len(items) % ITEMS_PER_PAGE == 0:
+        num_pages.pop(-1)
+
     return num_pages
 
 
