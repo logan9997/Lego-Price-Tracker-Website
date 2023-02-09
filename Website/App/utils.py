@@ -8,15 +8,15 @@ from .config import *
 
 db = DatabaseManagment()
 
-def get_user_items(user_id, view):
-    items = db.get_user_items(user_id, view)
+def format_item_info(items, **view):
     item_dicts = []
+    print(items[1:2])
     for item in items:
         item_dict = {
         "item_id":item[0],
         "item_name":item[1],
         "year_released":item[2],
-        "Item_type":item[3],
+        "item_type":item[3],
         "avg_price":item[4],
         "min_price":item[5],
         "max_price":item[6],
@@ -24,7 +24,7 @@ def get_user_items(user_id, view):
         "img_path":f"App/images/{item[0]}.png",
         }
 
-        if view == "portfolio":
+        if view.get("view") == "portfolio":
             item_dict.update({
                 "condition":item[8],
                 "owned_quantity":item[9]
@@ -33,6 +33,31 @@ def get_user_items(user_id, view):
         item_dicts.append(item_dict)
 
     return item_dicts
+
+
+def format_theme_items(theme_items):
+    theme_items_formated = [
+        {
+            "item_id":item[0],
+            "item_type":item[1],
+            "img_path":f"App/images/{item[0]}.png",
+        }
+    for item in theme_items]
+    return theme_items_formated
+
+
+def biggest_theme_trends():
+    themes = db.biggest_theme_trends()
+    themes_formated = [
+        {
+            "theme_path":theme[0],
+            "change":theme[1]
+            }
+    for theme in themes]
+    return {
+        "biggest_winners":themes_formated[:5],
+        "biggest_losers":themes_formated[-5:][::-1]
+        }
 
 def get_current_page(request, portfolio_items:list) -> int:
     #current page
@@ -107,12 +132,6 @@ def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[d
 
     return themes
 
-def user_items_get_requests(request) -> tuple[str, int, str]:
-    graph_metric = request.GET.get("graph-metric", "avg_price")
-    page = int(request.GET.get("page", 1))
-    sort_field = request.GET.get("sort-field", "avg_price-desc")
-    return graph_metric, page, sort_field
-
 
 def slice_num_pages(num_pages, current_page):
     a = current_page - (PAGE_NUM_LIMIT // 2)
@@ -129,54 +148,4 @@ def slice_num_pages(num_pages, current_page):
     return num_pages
 
 
-def user_items(request, view, user_id):
 
-    context = {}
-
-    items = get_user_items(user_id, view)
-
-    graph_options = get_graph_options()
-    sort_options = get_sort_options()
-
-    #graph_metric, page, sort_field
-    options = request.session["url_params"]
-
-    for item in items:
-        item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], options["graph-metric"], view):
-            item["prices"].append(price_date_info[0])
-            item["dates"].append(price_date_info[1])
-
-    current_page = int(options["page"])
-
-    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
-    num_pages = slice_num_pages(num_pages, current_page)
-
-    if options["sort-field"] != None:
-        items = sort_items(items, options["sort-field"])
-        #keep selected sort field option as first <option> tag
-        sort_options = sort_dropdown_options(sort_options, options["sort-field"])
-
-    graph_options = sort_dropdown_options(graph_options, options["graph-metric"])
-
-    total_unique_items = len(items)
-    total_price = db.user_items_total_price(user_id, options["graph-metric"], view)
-
-    items = items[(current_page - 1) * ITEMS_PER_PAGE : int(current_page) * ITEMS_PER_PAGE]
-
-    parent_themes = db.parent_themes(user_id, view)
-    themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
-
-    context.update({
-        "items":items,
-        "num_pages":num_pages,
-        "sort_options":sort_options,
-        "graph_options":graph_options,
-        "themes":themes,
-        "total_unique_items":total_unique_items,
-        "total_price":total_price,
-        "view":view,
-        "current_page":current_page
-    })
-
-    return context
