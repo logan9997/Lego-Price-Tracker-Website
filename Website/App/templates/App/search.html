@@ -11,42 +11,77 @@
 
     <section id="search-themes-container">
 
-        <section id="sort-themes">
-            <h2>Sort</h2>
-            <form action="{% url 'search' theme_path %}" method="POST">
+
+
+    <section id="all-themes-container">
+        {% for theme in sub_themes %}
+        <div class="theme-container">
+            <form action="{% url 'search' theme_path %}{{theme}}/" method="post">
                 {% csrf_token %}
-                <select onchange="this.form.submit()" name="sort-order">
-                    {% for option in sort_options %}
-                        <option value="{{option.value}}">{{option.text}}</option>
-                    {% endfor %}
-                </select>
+                <input type="hidden" name="form-type" value="theme-url">
+                <button type="submit">{{theme|replace_underscore}}</button>
             </form>
-        </section>
-
-
-        <section id="all-themes-container">
-            {% for theme in sub_themes %}
-            <div class="theme-container">
-                <a href="{% url 'search' theme_path %}{{theme}}">{{theme|replace_underscore}}</a>
-                <!-- <img src="{{theme}}" alt="{{theme}}_url"> -->
-            </div>
-            {% endfor %}
-        </section>
+        </div>
+        {% endfor %}
+    </section>
 
     </section>
     
     {% endif %}
 
     {% if theme_items|length > 0 %}
+
         <section id="theme-items">
             {% for item in theme_items %}
-                {{item.0}} {{item.1}}
+            <div class="item-container">
+                <p class="item-name">{{item.item_name}}</p>
+                <p class="item-id-condition">{{item.item_id}} ({{item.item_type}})</p>
+                <img src="{% static item.img_path %}" alt="">
+                <table>
+                    <tr>
+                        <th>Avg</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Qty</th>
+                    </tr>
+                    <tr>
+                        <td>{{item.avg_price}}</td>
+                        <td>{{item.min_price}}</td>
+                        <td>{{item.max_price}}</td>
+                        <td>{{item.total_quantity}}</td>
+                    </tr>
+                </table>
+            </div>
             {% endfor %}
         </section>
 
     {% else %}
-        <section id="">
+        <section id="info">
+            <div id="trending-themes">
+                <div id="biggest-winners" class="trending-themes-container">
+                    <h3>Biggest Winners</h3>
+                    <table>
+                        {% for theme in biggest_theme_trends.biggest_winners %}
+                        <tr>
+                            <td class="theme-path">{{theme.theme_path|replace_space_substitute}}</td>
+                            <td class="change">£{{theme.change|absolute_value}}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
 
+                <div id="biggest-losers" class="trending-themes-container">
+                    <h3>Biggest Losers</h3>
+                    <table>
+                    {% for theme in biggest_theme_trends.biggest_losers %}
+                    <tr>
+                        <td class="theme-path">{{theme.theme_path|replace_space_substitute}}</td>
+                        <td class="change">£{{theme.change|absolute_value}}</td>
+                    </tr>
+                    {% endfor %}
+                    </table>
+                </div>             
+            </div>
         </section>
     {% endif %}
 

@@ -223,10 +223,10 @@ def search(request, theme_path='all'):
         theme_items = [] 
     else:
         theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
-        #get all sub themes (if any)
-
+        print(theme_items[:5])
         if len(theme_items) == 0:
-            return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
+            print("REDIRECT - NO ITEMS []")
+            #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
         sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
         #split "~" (used to seperate sub themes in database) with 
@@ -239,16 +239,20 @@ def search(request, theme_path='all'):
     if sort_option != None:
         sort_options = sort_dropdown_options(sort_options, sort_option)
 
-    if request.method == "POST":            
-        order = sort_option.split("-")[1]
-        field = sort_option.split("-")[0]
-        sub_themes = sort_themes(field, order, sub_themes)
+    if request.method == "POST": 
+        if request.POST.get("form-type") != "theme-url":
+            order = sort_option.split("-")[1]
+            field = sort_option.split("-")[0]
+            sub_themes = sort_themes(field, order, sub_themes)
+
+    page = 0
 
     context = {
         "theme_path":theme_path,
         "sub_themes":sub_themes,
-        "theme_items":theme_items,
+        "theme_items":format_item_info(theme_items)[page * SEARCH_ITEMS_PER_PAGE : (page+1) * SEARCH_ITEMS_PER_PAGE],
         "sort_options":sort_options,
+        "biggest_theme_trends":biggest_theme_trends()
     }
     
     return render(request, "App/search.html", context=context)
@@ -363,13 +367,78 @@ def join(request):
             context["signup_message"] = "Passwords do not Match"
 
     #add the username to context which can only happen if the user is logged in
-    
-
     return render(request, "App/join.html", context=context)
+
+
+def user_items(request, view, user_id):
+
+    context = {}
+
+    items = db.get_user_items(user_id, view)
+
+    items = format_item_info(items, view=view)
+
+    graph_options = get_graph_options()
+    sort_options = get_sort_options()
+
+    if "url_params" in request.session:
+        options = request.session["url_params"]
+    else:
+        options = {}
+
+    graph_metric = options.get("graph-metric", "avg_price")
+    current_page = int(options.get("page", 1))
+    sort_field = options.get("sort-field", "avg_price-desc")
+
+    if current_page > math.ceil(len(items) / ITEMS_PER_PAGE):
+        current_page = 1
+
+    for item in items:
+        item["prices"] = [] ; item["dates"] = []
+        for price_date_info in db.get_user_item_graph_info(user_id, item["item_id"], graph_metric, view):
+            item["prices"].append(price_date_info[0])
+            item["dates"].append(price_date_info[1])
+
+    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
+    num_pages = slice_num_pages(num_pages, current_page)
+
+    #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
+    if len(items) % ITEMS_PER_PAGE == 0:
+        num_pages.pop(-1)
+
+    items = sort_items(items, sort_field)
+    #keep selected sort field option as first <option> tag
+    sort_options = sort_dropdown_options(sort_options, sort_field)
+
+    graph_options = sort_dropdown_options(graph_options, graph_metric)
+
+    total_unique_items = len(items)
+    total_price = db.user_items_total_price(user_id, graph_metric, view)
+
+    items = items[(current_page - 1) * ITEMS_PER_PAGE : int(current_page) * ITEMS_PER_PAGE]
+
+    parent_themes = db.parent_themes(user_id, view)
+    themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
+
+    context.update({
+        "items":items,
+        "num_pages":num_pages,
+        "sort_options":sort_options,
+        "graph_options":graph_options,
+        "themes":themes,
+        "total_unique_items":total_unique_items,
+        "total_price":total_price,
+        "view":view,
+        "current_page":current_page
+    })
+
+    return context
 
 
 def portfolio(request):
 
+    if "user_id" not in request.session or request.session["user_id"] == -1:
+        return redirect("index")
     user_id = request.session["user_id"]
 
     view = request.GET.get("view")
@@ -395,9 +464,13 @@ def portfolio(request):
 
 def view_POST(request, view):
 
+    if "user_id" not in request.session or request.session["user_id"] == -1:
+        return redirect("index")
     user_id = request.session["user_id"]
 
-    portfolio_items = get_user_items(user_id, "portfolio")
+    items = db.get_user_items(items, view=view)
+
+    portfolio_items = format_item_info(items, view="portfolio")
 
     if request.POST.get("form-type") == "remove-or-add-portfolio-item":
         form = AddOrRemovePortfolioItem(request.POST)
@@ -433,6 +506,8 @@ def view_POST(request, view):
 
 def watchlist(request):
 
+    if "user_id" not in request.session or request.session["user_id"] == -1:
+        return redirect("index")
     user_id = request.session["user_id"]
 
     context = user_items(request, "watchlist", user_id)
@@ -454,6 +529,8 @@ def add_to_user_items(request, item_id):
             quantity = form.cleaned_data["quantity"]
         else:print(form.errors)
 
+    if "user_id" not in request.session or request.session["user_id"] == -1:
+        return redirect("index")
     user_id = request.session["user_id"]
 
     user_item_ids = [_item[0] for _item in db.get_user_items(user_id, view)]
@@ -475,6 +552,8 @@ def add_to_user_items(request, item_id):
 
 def profile(request):
 
+    if "user_id" not in request.session or request.session["user_id"] == -1:
+        return redirect("index")
     user_id = request.session["user_id"]
 
     context = {
