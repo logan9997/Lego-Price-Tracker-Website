@@ -1,6 +1,6 @@
 from django.db import models
 
-DATE_FORMAT = 'YYYY-MM-DD'
+DATE_FORMAT = '%Y-%m-%d'
 DATE_DEFAULT = '1991-01-01'
 
 class Item(models.Model):
@@ -10,6 +10,7 @@ class Item(models.Model):
     item_type = models.CharField(max_length=1, choices=(
         ("M","minifig"), ("S", "set")
     ))
+    views = models.IntegerField()
 
 
 class Price(models.Model):
@@ -37,7 +38,7 @@ class User(models.Model):
         ("Never", "Never"), ("Occasional", "Occasional"),
         ("All", "All")
     ))
-    date_joined = models.DateField(auto_now=True)
+    date_joined = models.DateField(DATE_FORMAT)
     region = models.CharField(max_length=60, default='None')
 
 
