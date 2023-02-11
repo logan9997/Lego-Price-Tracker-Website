@@ -117,6 +117,11 @@ def index(request):
 def item(request, item_id):
     context = {}
 
+    #stops view count being increased on refresh
+    if "item_id" not in request.session or request.session.get("item_id") != item_id:
+        request.session["item_id"] = item_id
+        db.increment_item_views(item_id)
+
     '''
     CHANGE IF USER IS LOGGED IN!!
     '''
@@ -222,7 +227,6 @@ def search(request, theme_path='all'):
     page = 0
 
     if theme_path != "all":
-        redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
         theme_path = theme_path.replace("all/", "")
 
     if theme_path == 'all':
@@ -233,6 +237,7 @@ def search(request, theme_path='all'):
         theme_items = format_item_info(theme_items, view="search", user_id=user_id)[page * SEARCH_ITEMS_PER_PAGE : (page+1) * SEARCH_ITEMS_PER_PAGE]
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
+            redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
         sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
