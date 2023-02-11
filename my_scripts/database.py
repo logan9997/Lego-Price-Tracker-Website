@@ -2,13 +2,16 @@ import sqlite3
 import datetime
 import threading
 
-
 class DatabaseManagment():
 
     def __init__(self) -> None:
         self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\website\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
         self.lock = threading.Lock()
+
+
+    def SELECT(self, sql):
+        return self.cursor.execute(sql).fetchall()
 
 
     def add_price_info(self, item) -> None:
@@ -32,44 +35,60 @@ class DatabaseManagment():
 
 
     def get_all_items(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id
             FROM App_price
             GROUP BY item_id
-        """)
-        return [str(fig_id).split("'")[1] for fig_id in result.fetchall()]
-
+        """
+        return self.SELECT(sql)
 
     def check_for_todays_date(self) -> int:
         today = datetime.date.today()
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT COUNT()
             FROM App_price
             WHERE date = '{today}'
+        """
+        return self.SELECT(sql)
+
+
+    def get_most_viewed_items(self) -> list[str]:
+        sql = """
+            SELECT item_id
+            FROM App_item
+            ORDER BY views DESC
+        """
+        return self.SELECT(sql)
+
+    def increment_item_views(self, item_id) -> None:
+        self.cursor.execute(f"""
+            UPDATE App_item
+            SET views = views + 1
+            WHERE item_id = '{item_id}'
         """)
-        return result.fetchall()
+        self.con.commit()
 
 
     def get_minifig_prices(self, minifig_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT date, avg_price, min_price, max_price, total_quantity
             FROM App_price
             WHERE item_id = '{minifig_id}'
-        """)
+        """
         
-        return result.fetchall()
+        return self.SELECT(sql)
 
     def get_dates(self, minifig_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT date
             FROM App_price
             WHERE item_id = '{minifig_id}'
-        """)
-        return result.fetchall()     
+        """
+        return self.SELECT(sql)     
 
     
     def get_biggest_trends(self) -> list[str]:
-        result = self.cursor.execute('''
+        sql = """
             SELECT item_name, P1.item_id, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
@@ -87,48 +106,48 @@ class DatabaseManagment():
                     FROM App_price
                 ) 
             ORDER BY [£ change] DESC
-        ''')
+        """
 
-        result = result.fetchall()
+        result = self.SELECT(sql)
         losers = result[len(result)-10:][::-1]
         winners = result[:10]
         return losers, winners
 
 
     def check_if_price_recorded(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id
             FROM App_price
             WHERE date = '{datetime.date.today().strftime('%Y-%m-%d')}'
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def group_by_items(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id, item_type
             FROM App_item
             GROUP BY item_id
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def get_parent_themes(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT REPLACE(REPLACE(theme_path, '/', ''), ' ', '-')
             FROM App_item, App_theme
             WHERE theme_path NOT LIKE '%~%'
                 AND item_type = 'M'
                 AND App_item.item_id = App_theme.item_id
             GROUP BY theme_path
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def get_theme_items(self, theme_path) -> list[str]:
         try:
             self.lock.acquire(True)
-            result = self.cursor.execute(f"""
+            sql = """
                 SELECT I.*,avg_price, min_price, max_price, total_quantity
                 FROM App_item I, App_theme T, App_price P
                 WHERE T.item_id = I.item_id
@@ -136,17 +155,17 @@ class DatabaseManagment():
                     AND theme_path = '{theme_path}'
                     and item_type = 'M'
                 GROUP BY I.item_id
-            """)
-            return result.fetchall()      
+            """
+            return self.SELECT(sql)      
         finally:
             self.lock.release()
 
     def get_item_ids(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT App_item.item_id
             FROM App_item
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def insert_year_released(self, year_released, item_id) -> None:
@@ -159,32 +178,32 @@ class DatabaseManagment():
 
 
     def get_item_info(self, item_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT item_id, item_name, year_released 
             FROM App_item
             WHERE item_id = '{item_id}'
             GROUP BY item_id
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
     def get_not_null_years(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id
             FROM App_item
             WHERE year_released is null
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def transfer_to_theme(self) -> None:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT App_item.item_id, theme_path
             FROM App_item, App_theme
             WHERE App_item.item_id = App_theme.item_id
                 AND item.item_type = 'S'
 
-        """)   
-        results = result.fetchall()
+        """ 
+        results = self.SELECT(sql)
 
         for result in results:
             self.cursor.execute(f"""
@@ -195,31 +214,31 @@ class DatabaseManagment():
 
 
     def get_sub_themes(self, parent_theme) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT REPLACE(theme_path, '{parent_theme}~', '')
             FROM App_theme, App_item
             WHERE App_theme.item_id = App_item.item_id
                 AND theme_path LIKE '{parent_theme}_%'
             GROUP BY theme_path
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def get_starwars_ids(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id
             FROM App_item
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def fetch_theme_details(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_type, theme_path
             FROM App_item I, App_theme T
             WHERE I.item_id = T.item_id
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def add_theme_details(self, theme_details, item_type) -> None:
@@ -236,7 +255,7 @@ class DatabaseManagment():
         if view == "portfolio":
             sql_select += ", condition, quantity"
 
-        result = self.cursor.execute(f"""
+        sql = f"""
             {sql_select}
             FROM App_{view} _view, App_item I, App_price P
             WHERE user_id = {user_id}
@@ -244,41 +263,41 @@ class DatabaseManagment():
                 AND I.item_id = _view.item_id 
                 AND I.item_id = P.item_id
             GROUP BY I.item_id
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def is_item_in_user_items(self, user_id, view) -> bool:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT item_id
             FROM App_{view}
             WHERE user_id = {user_id}
             GROUP BY item_id
-        """)
-        item_ids = [item[0] for item in result.fetchall()]
+        """
+        item_ids = [item[0] for item in self.SELECT(sql)]
         return item_ids
 
 
 
     def portfolio_total_item_price(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT ROUND(avg_price * PO.quantity, 2), I.item_id, condition
             FROM App_portfolio PO, App_price PR, App_item I
             WHERE PO.user_id = {user_id}
                 AND PO.item_id = I.item_id
                 AND I.item_id = PR.item_id
             GROUP BY I.item_id, condition
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def total_portfolio_items(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT SUM(quantity)
             FROM App_portfolio 
             WHERE user_id = {user_id}
-        """)
-        return result.fetchall()[0][0]
+        """
+        return self.SELECT(sql)[0][0]
 
     def user_items_total_price(self, user_id, metric, view) -> list[str]:
         if view == "portfolio":
@@ -286,16 +305,16 @@ class DatabaseManagment():
         else:
             select_string = f"SELECT ROUND(SUM({metric}), 2)"
 
-        result = self.cursor.execute(f"""
+        sql = f"""
         {select_string}
         FROM App_{view} _view, App_item I, App_price P
         WHERE user_id = {user_id}
             AND (date, I.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
             AND I.item_id = _view.item_id 
             AND I.item_id = P.item_id
-        """)
+        """
 
-        return result.fetchall()[0][0]
+        return self.SELECT(sql)[0][0]
 
 
     def update_portfolio_item_quantity(self, user_id, item_id, condition, quantity) -> None:
@@ -317,30 +336,30 @@ class DatabaseManagment():
 
 
     def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT quantity
             FROM App_portfolio
             WHERE item_id = '{item_id}'
                 AND condition = '{condition}'
                 AND user_id = '{user_id}'
-        """)
-        return int(result.fetchall()[0][0])
+        """
+        return int(self.SELECT(sql)[0][0])
 
 
     def get_portfolio_price_trends(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT date, ROUND(SUM(avg_price * quantity) ,2)
             FROM App_portfolio PO, App_price PR, App_item I
             WHERE user_id = {user_id}
                 AND PO.item_id = I.item_id
                 AND PR.item_id = I.item_id
             GROUP BY date
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def biggest_portfolio_changes(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT item_name, I.item_id, portfolio.condition, quantity, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
@@ -362,12 +381,12 @@ class DatabaseManagment():
                 ) 
             GROUP BY portfolio.item_id, condition
             ORDER BY [£ change] DESC
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def biggest_theme_trends(self) -> list[str]:
-        result = self.cursor.execute("""
+        sql = """
             SELECT theme_path, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
@@ -388,30 +407,30 @@ class DatabaseManagment():
                 ) 
             GROUP BY theme_path
             ORDER BY [£ change] DESC
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def check_login(self, username, password) -> bool:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT *
             FROM App_user
             WHERE username = '{username}'
                 AND password = '{password}'
-        """)
-        if len(result.fetchall()) == 1:
+        """
+        if len(self.SELECT(sql)) == 1:
             return True
         return False
 
     
     def if_username_or_email_already_exists(self, username, email) -> bool:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT username, email
             FROM App_user
             WHERE username = '{username}' 
                 OR email = '{email}'
-        """)
-        if len(result.fetchall()) > 0:
+        """
+        if len(self.SELECT(sql)) > 0:
             return True
         return False
 
@@ -436,16 +455,16 @@ class DatabaseManagment():
 
 
     def get_portfolio_items_condition(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id, condition
             FROM App_portfolio
             WHERE user_id = {user_id}
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def total_portfolio_price_trend(self, user_id) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT SUM(max_price), date
             FROM App_price price, App_portfolio portfolio, App_item item, App_user user
             WHERE user.user_id = {user_id}
@@ -453,18 +472,18 @@ class DatabaseManagment():
                 AND item.item_id = portfolio.item_id
                 AND portfolio.user_id = user.user_id
             GROUP BY date
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def get_all_itemIDs(self) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = """
             SELECT item_id
             FROM App_item
             WHERE item_id LIKE 'sw%' 
                 AND item_type = 'M'
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
     def insert_item_info(self, item_info) -> None:
         type_convert = {"MINIFIG":"M", "SET":"S"}
@@ -487,13 +506,13 @@ class DatabaseManagment():
 
 
     def check_password_id_match(self, user_id, old_password) -> bool:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT *
             FROM App_user
             WHERE user_id = {user_id}
                 AND password = '{old_password}'
-        """)
-        if len(result.fetchall()) > 0:
+        """
+        if len(self.SELECT(sql)) > 0:
             return True
         return False
 
@@ -541,7 +560,7 @@ class DatabaseManagment():
 
     def get_item_graph_info(self,item_id, metric, **kwargs) -> list[str]:
         if kwargs.get("user_id") != None and kwargs.get("view") != None:
-            result = self.cursor.execute(f"""
+            sql = f"""
                 SELECT {metric}, date
                 FROM App_price P, App_{kwargs.get("view")} View, App_item I
                 WHERE user_id = {kwargs.get("user_id")}
@@ -549,16 +568,16 @@ class DatabaseManagment():
                     AND P.item_id = I.item_id
                     AND I.item_id = View.item_id
                 GROUP BY I.item_id, P.date
-            """)
+            """
         else:
-            result = self.cursor.execute(f"""
+            sql = f"""
                 SELECT {metric}, date
                 FROM App_price P, App_item I
                 WHERE I.item_id = '{item_id}'
                     AND P.item_id = I.item_id
                 GROUP BY I.item_id, P.date
-            """)          
-        return result.fetchall()
+            """        
+        return self.SELECT(sql)
 
 
     def parent_themes(self, user_id:int, view:str) -> list[str]:
@@ -568,7 +587,7 @@ class DatabaseManagment():
             select_string = "SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id"
            
 
-        result = self.cursor.execute(f"""
+        sql = f"""
             {select_string}
             FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
@@ -579,12 +598,12 @@ class DatabaseManagment():
                 AND I.item_id = T.item_id
             GROUP BY theme_path
 
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
 
 
     def sub_themes(self, user_id:int, theme_path:str, view:str) -> list[str]:
-        result = self.cursor.execute(f"""
+        sql = f"""
             SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
             FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
@@ -595,5 +614,5 @@ class DatabaseManagment():
                 AND I.item_id = _view.item_id
                 AND I.item_id = T.item_id
             GROUP BY theme_path
-        """)
-        return result.fetchall()
+        """
+        return self.SELECT(sql)
