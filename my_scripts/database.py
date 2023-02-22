@@ -147,7 +147,7 @@ class DatabaseManagment():
     def get_theme_items(self, theme_path) -> list[str]:
         try:
             self.lock.acquire(True)
-            sql = """
+            sql = f"""
                 SELECT I.*,avg_price, min_price, max_price, total_quantity
                 FROM App_item I, App_theme T, App_price P
                 WHERE T.item_id = I.item_id
@@ -179,12 +179,14 @@ class DatabaseManagment():
 
     def get_item_info(self, item_id) -> list[str]:
         sql = f"""
-            SELECT item_id, item_name, year_released 
-            FROM App_item
-            WHERE item_id = '{item_id}'
-            GROUP BY item_id
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+                min_price, max_price, total_quantity
+            FROM App_price PR, App_item I
+            WHERE I.item_id = '{item_id}'
+                AND PR.item_id = I.item_id
+            GROUP BY I.item_id
         """
-        return self.SELECT(sql)
+        return self.SELECT(sql)[0]
 
     def get_not_null_years(self) -> list[str]:
         sql = """
@@ -360,7 +362,8 @@ class DatabaseManagment():
 
     def biggest_portfolio_changes(self, user_id) -> list[str]:
         sql = f"""
-            SELECT item_name, I.item_id, portfolio.condition, quantity, round(avg_price - (
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity, portfolio.condition, quantity, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
@@ -418,13 +421,14 @@ class DatabaseManagment():
             WHERE username = '{username}'
                 AND password = '{password}'
         """
+        print(sql)
         if len(self.SELECT(sql)) == 1:
             return True
         return False
-
+    
     
     def if_username_or_email_already_exists(self, username, email) -> bool:
-        sql = """
+        sql = f"""
             SELECT username, email
             FROM App_user
             WHERE username = '{username}' 
@@ -455,7 +459,7 @@ class DatabaseManagment():
 
 
     def get_portfolio_items_condition(self, user_id) -> list[str]:
-        sql = """
+        sql = f"""
             SELECT item_id, condition
             FROM App_portfolio
             WHERE user_id = {user_id}
@@ -464,7 +468,7 @@ class DatabaseManagment():
 
 
     def total_portfolio_price_trend(self, user_id) -> list[str]:
-        sql = """
+        sql = f"""
             SELECT SUM(max_price), date
             FROM App_price price, App_portfolio portfolio, App_item item, App_user user
             WHERE user.user_id = {user_id}
@@ -577,6 +581,7 @@ class DatabaseManagment():
                     AND P.item_id = I.item_id
                 GROUP BY I.item_id, P.date
             """        
+
         return self.SELECT(sql)
 
 
