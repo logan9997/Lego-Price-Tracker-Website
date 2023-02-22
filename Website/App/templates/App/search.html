@@ -4,6 +4,7 @@
 
     {% load static %}
     <link rel="stylesheet" href="{% static 'App/search.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 
     {% load tags %}
 
@@ -30,13 +31,50 @@
     {% endif %}
 
     {% if theme_items|length > 0 %}
-
         <section id="theme-items">
+            <form action="{% url 'search' %}" method="post">
+                {% for page_button in page_buttons %}
+                    <input type="submit" name="page-button" value="{{page_button.value}}">
+                {% endfor %}
+            </form>
+
             {% for item in theme_items %}
             <div class="item-container">
+                <div class="item-img-info-container">
+                    <div class="in-user-items">
+                        <div class="in-portfolio-container">
+                            {% if item.in_portfolio %}
+                            <div class="label-input-container">
+                                <input name="in-portflio" type="checkbox" disabled="True" checked>
+                                <label for="in-portflio">In Portfolio</label>
+                            </div>
+                            {% else %}
+                            <div class="label-input-container">
+                                <input name="in-portflio" type="checkbox" disabled="True">
+                                <label for="in-portflio">In Portfolio</label>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="in-watchlist-container">
+                            {% if item.in_watchlist %}
+                            <div class="label-input-container">
+                                <input name="in-watchlist" type="checkbox" disabled="True" checked>
+                                <label for="in-watchlist">In Watchlist</label>
+                            </div>
+                            {% else %}
+                            <div class="label-input-container">
+                                <input name="in-watchlist" type="checkbox" disabled="True">
+                                <label for="in-watchlist">In Watchlist</label>
+                            </div>
+                            {% endif %}  
+                        </div>
+                    </div>             
                 <p class="item-name">{{item.item_name}}</p>
                 <p class="item-id-condition">{{item.item_id}} ({{item.item_type}})</p>
                 <img src="{% static item.img_path %}" alt="">
+                </div>
+
                 <table>
                     <tr>
                         <th>Avg</th>
@@ -51,6 +89,49 @@
                         <td>{{item.total_quantity}}</td>
                     </tr>
                 </table>
+
+                <canvas class="item_canvas" id="chart_{{item.item_id}}"></canvas>
+
+                {% with item.item_id|add:"_prices" as prices %}
+                    {{ item.prices|json_script:prices }}
+
+                {% with item.item_id|add:"_dates" as dates %}
+                    {{ item.dates|json_script:dates }}
+
+                <script>
+
+                    var prices = JSON.parse(document.getElementById('{{item.item_id}}_prices').textContent);
+                    var dates = JSON.parse(document.getElementById('{{item.item_id}}_dates').textContent);
+
+                    var data = [];
+                    for (let i = 0; i < prices.length; i++) {
+                        data.push({y:prices[i], x:dates[i]});
+                    }
+                    
+                    new Chart(`chart_{{item.item_id}}`, {
+                        type: "line",
+                        data: {
+                            labels: dates,
+                            datasets: [{
+                            fill: false,
+                            backgroundColor: "orangered",
+                            borderColor: "orangered",
+                            data: data
+                            }]
+                        },
+                        options: {
+                            legend: {display: false},
+                            scales: {
+                                x : {
+                                    type:"time",
+                                    time: {unit:"day"}
+                                }
+                            }
+                        }
+                        });
+                </script>
+                {% endwith %}
+                {% endwith %}
             </div>
             {% endfor %}
         </section>

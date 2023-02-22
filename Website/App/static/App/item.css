@@ -2,6 +2,18 @@
     background-color: red;
 }
 
+#add-to-watchlist {
+    background-color: blue;
+    padding: 3rem;
+    width: 10rem;
+}
+
+#add-to-portfolio {
+    background-color: green;
+    padding: 3rem;
+    width: 10rem;
+}
+
 #item-profile {
     background-color: white;
     width: 12rem;
@@ -9,19 +21,19 @@
     text-align: center;
 }
 
-    #item-name {
-        font-size: 1rem;
-        background-color: yellow;
-        margin: 0;
-    }
+#item-name {
+    font-size: 1rem;
+    background-color: yellow;
+    margin: 0;
+}
 
-    #item-id {
-        font-size: 0.85rem;
-        background-color: purple;
-        border-bottom : 0.2rem orangered solid;
+#item-id {
+    font-size: 0.85rem;
+    background-color: purple;
+    border-bottom : 0.2rem orangered solid;
 
-    }
+}
 
-    #item-image {
-        background-color: aqua;
-    }
+#item-image {
+    background-color: aqua;
+}

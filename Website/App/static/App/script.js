@@ -31,3 +31,12 @@ function show_dropdown_content() {
         document.getElementById("dropdown-content").style.display = "flex";
     }
 }
+
+
+function reveal_sub_themes(theme_path) {
+    if (theme_path.style.display == "none") {
+        theme_path.style.display = "block";
+    } else {
+        theme_path.style.display = "none";  
+    }
+}

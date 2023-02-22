@@ -1,114 +1,51 @@
+{% extends 'App/base.html' %}
+{% block content %}
 
+{% load static %}
+<link rel="stylesheet" href="{% static 'App/home.css' %}">
 
-<body>
-    {% extends 'App/base.html' %}
-    {% block content %}
+<h1>Brick Economy</h1>
+<h2>Created by Logan Baxter</h2>
 
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'App/home.css' %}">
+<section id="container-layer1">
 
-    <section id="main-container">
-
-        <section class="section-top-row" id="portfolio-growth">
-            {% if logged_in %}
-                <h1>Portfolio Growth</h1>
-                <div id="slider">
-                    {% for item in biggest_portfolio_changes_1 %}
-                    <div class="item-and-growth-container">
-                        <div class="item">
-                            <h2>{{item.item_name}}</h2>
-                            <h3><a href="{% url 'item' item.item_id %}">{{item.item_id}}</a></h3>
-
-                            <img src="{% static item.image_path %}" alt="{{item.image_path}}">
-                        </div>
-
-                        <div class="growth">
-                            {% if item.change >= 0 %}
-                                <p style="color: green;">+ {{item.change}}</p>
-                            {% else %}
-                                <p style="color:red">{{item.change}}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor%}
-                </div>
-            {% endif %}
-        </section>
-
-        <section class="section-top-row" id="about-section">
-            {% if logged_in %}
-                <h1>Welcome Back {{username}}</h1>
-            {% else %}
-                <h1>Brick Economy</h1>
-            {% endif %}
-
-
-            <div id="about-boxes-container">
-                <div class="about-box" id="create-your-portfolio">
-                    <a href="{% url 'portfolio' %}?view=items">
-                    <h2>Create Your Portfolio</h2>
-                    <img src="{% static 'App/styling-images/portfolio-sample.jpg'%}" alt="">
-                    </a>
-                </div>
-
-                <div class="about-box" id="view-trends">
-                    <a href="{% url 'trending' %}">
-                        <h2>View the Latest Trends</h2>
-                        <img src="{% static 'App/styling-images/portfolio-graph.jpg'%}" alt="">
-                    </a>
-                </div>
-
-                <div class="about-box" id="view-item-info">
-                    <a href="{% url 'item' random_item_id %}">
-                        <h2>View Item Info</h2>
-                    </a>
-                </div>
-
-                <div class="about-box" id="none">
-                    <h2>-----</h2>
-                </div>
+    <section id="biggest-trends">
+        {% for item in trending %}
+            <div class="main-item-container">
+            {% include 'App/item_container.html' %}
             </div>
-
-        </section>
-
-        <section class="section-top-row" id="ad-panel">
-
-        </section>
-
-        <section id="recently-viewed">
-            <h1>Recently Viewed</h1>
-            <div id="item-flex-container">
-                {% for item in recently_viewed %}
-                <div class="item">
-                    <div class="item-header">
-                        <h2>{{item.item_name}}</h2>
-                        <h3><a href="{% url 'item' item.item_id %}">{{item.item_id}}</a></h3>
-                    </div>
-
-                    <div class="item-body">
-                        <img src="{% static item.image_path %}" alt="{{item.image_path}}">
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            
-        </section>
-
-        <section id="popular-items" class="bottom-row-sections">
-            <h1>Most Viewed</h1>
-        </section>
-
-        <section id="trending" class="bottom-row-sections">
-            <h1>Trending</h1>
-            {% for item in trending %}
-                <p>{{item}}</p>
-            {% endfor %}
-        </section>
-
+        {% endfor %}
     </section>
 
+    <section id="about-panel">
 
-    {% endblock %}
+        <div id="create-portfolio" class="about-box">
+            <h3>Build your own portfolio</h3>
+        </div>
 
-</body>
+        <div id="view-trends" class="about-box">
+            <h3>View the latest price trends</h3>
+        </div>
+
+        <div id="price-data" class="about-box">
+            <h3>View lots of pricing data</h3>
+        </div>
+
+        <div id="explore-database" class="about-box">
+            <h3>Explore a database with over 33,000 items</h3>
+        </div>
+    </section>
+
+    <section id="ads">
+        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Laudantium dolorem earum dignissimos distinctio, possimus reiciendis porro ea eius repudiandae nihil deleniti itaque autem unde sint veritatis sit et numquam repellat.</p>
+    </section>
+
+</section>
+
+<section id="recently-viewed">
+    {% for item in recently_viewed %}
+        {% include 'App/item_container.html' %}
+    {% endfor %}
+</section>
+
+{% endblock %}

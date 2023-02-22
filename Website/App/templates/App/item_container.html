@@ -1,0 +1,86 @@
+{% load static %}
+
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+</script>
+
+<link rel="stylesheet" href="{% static 'App/item_container.css' %}">
+
+<div class="item-container">
+    <div class="item-img-and-title">
+        <h3>{{item.item_name}}</h3>
+        <h4>{{item.item_id}}</h4>
+        <img src="{% static item.img_path  %}" alt="{{item.item_id}}">
+        
+        {% if show_graph %}
+
+        <div class="price-info">
+            <table>
+                <tr>
+                    <th>Avg</th>
+                    <th>Min</th>
+                    <th>Max</th>
+                    <th>Qty</th>
+                </tr>
+
+                <tr>
+                    <td>{{item.avg_price}}</td>
+                    <td>{{item.min_price}}</td>
+                    <td>{{item.max_price}}</td>
+                    <td>{{item.total_quantity}}</td>
+                </tr>
+            </table>
+        </div> 
+
+    </div>
+
+    
+
+    <div class="price-trend">
+        <canvas class="item_canvas" id="chart_{{item.item_id}}"></canvas>
+
+        {% with item.item_id|add:"_prices" as prices %}
+            {{ item.prices|json_script:prices }}
+
+
+        {% with item.item_id|add:"_dates" as dates %}
+            {{ item.dates|json_script:dates }}
+
+        <script>
+
+            var prices = JSON.parse(document.getElementById('{{item.item_id}}_prices').textContent);
+            var dates = JSON.parse(document.getElementById('{{item.item_id}}_dates').textContent);
+
+            var data = [];
+            for (let i = 0; i < prices.length; i++) {
+                data.push({y:prices[i], x:dates[i]});
+            }
+            
+            new Chart(`chart_{{item.item_id}}`, {
+                type: "line",
+                data: {
+                    labels: dates,
+                    datasets: [{
+                    fill: false,
+                    backgroundColor: "orangered",
+                    borderColor: "orangered",
+                    data: data
+                    }]
+                },
+                options: {
+                    legend: {display: false},
+                    scales: {
+                        x : {
+                            type:"time",
+                            time: {unit:"day"}
+                        }
+                    }
+                }
+                });
+        </script>
+    </div>
+    {% endwith %}
+    {% endwith %}
+</div>
+{% endif %}
+</div>

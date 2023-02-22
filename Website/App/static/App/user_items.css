@@ -1,6 +1,14 @@
 body {
     background-color: purple;
+    margin: 0;
+    padding: 0;
 }
+
+h1 {
+    text-align: center;
+    padding: 0.5rem 0 0.5rem;
+    margin-top: 4rem;
+} 
 
 #header {
     height: 30rem;
@@ -16,6 +24,10 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+#main-container {
+    position: relative;
 }
 
 #tool-bar-header {
@@ -55,6 +67,8 @@ body {
 
 #page-buttons-form input {
     margin: 0.2rem;
+    width: 1.8rem;
+    text-align: center;
 }
 
 #dropdown-forms {
@@ -87,6 +101,20 @@ select {
     background-color: whitesmoke;
 }
 
+#tool-bar h3 {
+    padding: 1rem 0.5rem 0;
+}
+
+#tool-bar p {
+    margin-left: 1.4rem;
+}
+
+.tool-bar-div {
+    margin:0 1rem 0;
+    background-color: white;
+    border-radius: 0.7rem;
+}
+
 #items-container {
     background-color: whitesmoke;
     width: 70vw;
@@ -107,13 +135,44 @@ select {
 }
 
 .portfolio-items-options {
-    background-color: red;
+    background-color: white;
     width: 4rem;
     font-size: 1rem;
     height: 7rem;
     right: 4rem;
     top: 8rem;
     position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.add-item {
+    background-color: green;
+}
+
+.remove-item {
+    background-color: red;
+}
+
+
+.portfolio-items-options input[type=number] {
+    width: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.qty-condition-container {
+    display: flex;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    top: 0.3rem;
+}
+
+.qty-condition-container p {
+    padding: 0.2rem;
+    margin: 0;
 }
 
 .item-container {

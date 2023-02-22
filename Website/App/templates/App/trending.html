@@ -2,6 +2,9 @@
 
 {% block content %}
 
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'App/trending.css' %}">
+
     <section id="winners-losers">
         <!-- <div id="losers">
             <table>
@@ -21,20 +24,8 @@
         </div> -->
 
         <div id="winners">
-        {% for minifig in winners %}
-            <div class="trending-minifig">
-                
-                <div class="image-container">
-                    <p>{{minifig.id}}</p>
-                    <img id="minifig-image" src="{{minifig.img_url}}" alt="">
-                </div>
-
-                <div class="text-container">
-                    
-                    <p>{{minifig.name}}</p>
-                    <p>+{{minifig.change}} (£)</p>                    
-                </div>
-            </div>
+        {% for item in winners %}
+            {% include 'App/item_container.html' %}
         {% endfor %}
         </div>
     </section>

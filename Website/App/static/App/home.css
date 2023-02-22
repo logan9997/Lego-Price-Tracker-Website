@@ -1,220 +1,73 @@
 h1 {
-    background-color: orangered;
-    margin: 0;
-    margin-bottom: 1rem;
-    padding: 0.8rem;
     text-align: center;
-    border-bottom: 0.2rem black solid;
+    background-color: none;
+    border: none;
+    margin: 0;
 }
 
-#main-container {
-    width:88%;
-    margin-left: 8%;
+h2 {
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+#container-layer1 {
     display: flex;
-    justify-content: space-between;
     flex-direction: row;
-    flex-wrap: wrap;
 }
 
-.section-top-row {
-    height: 40rem;
-    border: 0.2rem black solid;
-}
-
-#portfolio-growth {
-    width :14%;
-    margin-right: 1%;
-    background-color: white;
+#biggest-trends {
+    background-color: red;
+    margin-left: 3rem;
+    width: 20%;
+    max-height: 40rem;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
+    justify-content: space-around;
 }
 
-    #slider {
-        animation: portfolio-items-scroll linear infinite;
-    }
-
-    .item-and-growth-container {
-        position: relative;
-        height: calc(12rem + 2rem);
-        white-space: wrap;
-        
-    }
-
-    .item {
-        height: 12rem;
-        width: calc(88% - 0.1rem);
-        text-align: center;
-        margin-left: 6%;
-        border: 0.1rem orangered solid;
-        position: relative;
-        margin-top: 1rem;
-
-    }
-
-    .item h3 {
-        padding-bottom: 0.3rem;
-        padding-top: 0.3rem;
-        margin: 0;
-        margin-bottom: 0.4rem;
-        border-bottom: 0.1rem orangered solid;
-        border-top: 0.1rem orangered solid;
-        background-color: skyblue;
-        font-size: 0.7rem;
-    }
-
-    .item img {
-        margin-top: 0.5rem;
-        padding: 0.1rem;
-        height: 50%;
-        border: 0.2rem black solid;
-    }
-
-    .growth {
-        height: 2rem;
-        width: calc(88% - 0.1rem);
-        margin-left: 6%;
-        border: 0.1rem orangered solid;
-        border-top: none;
-    }
-
-    .growth p {
-        margin: 0;
-    }
-
-    @keyframes portfolio-items-scroll {
-        0% {
-            transform: translateY(0);
-        }
-
-        100% {
-            transform: translateY(calc(-250% * 7.5));
-        }
-    } 
-
-#about-section {
-    width: 68%;
+.main-item-container {
+    max-width: 14rem;
 }
 
-    #search-container {
-        display: flex;
-        justify-content: center;
-    }
-
-        #search-container form input, button {
-            display: block;
-            border-radius: 1rem;
-        }
-
-        #search-container form input {
-            width: 10rem;
-            height: 1.45rem;
-        }
-
-        #search-container form button {
-            width: 6rem;
-            margin-left: 2rem;
-            margin-top: 0.3rem;
-        }
-
-    #about-boxes-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        flex-wrap: wrap;  
-    }
-
-    #about-boxes-container a {
-        text-decoration: none;
-        color: black;
-    }
-
-    .about-box {
-        text-align: center;
-        width: 45%;
-        margin: 1.5% 2.5% 2.5% 1.5%;
-        height: 13rem;
-        border: 0.1rem black solid;
-        background-color: rgb(245, 245, 245);
-    }
-
-    .about-box:hover {
-        width: 47%;
-        height: 14rem;
-        margin: 0.75% 1.5% 1.5% 0.75%;
-    }
-
-    .about-box img {
-        width: 90%;
-        height: 68%;
-    }
-
-    .about-box h2 {
-        font-size: 1.2rem;
-    }
-
-
-#ad-panel {
-    width: 14%;
-    margin-left: 1%;
-    background-color: white;
+#about-panel {
+    width: 60rem;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 2rem 0;
 }
 
-#recently-viewed {
-    height: 20rem;
+.about-box {
+    border-radius: 1rem;
+    width: 46%;
+    height: 16rem;
+    margin: 2%;
+    transition: 0.5s;
+    background:  repeating-linear-gradient(
+        135deg,
+        rgb(238, 126, 85),
+        rgb(238, 126, 85) 10px,
+        white 10px,
+        white 40px
+      );
+    box-shadow: 1rem 1rem 1rem rgb(225,225,225);
+    }
+
+.about-box:hover {
+    transform: scale(1.03);
+    transition: 0.5s;
+}
+
+.about-box h3 {
     text-align: center;
-    margin-top:1rem;
-    width: calc(100% - 0.8rem);
-    background-color: white;
-    border: 0.2rem black solid;
+    background-color: orangered;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+    margin: 0;
 }
 
-    #item-flex-container {
-        display: flex;
-        height: 16rem;
-        flex-direction: row;
-        align-items: center;
-        overflow-x: auto;
-        overflow-y: hidden;
-    }
-
-    #recently-viewed .item {
-        margin: 1rem 1rem 1rem 1rem;
-        min-width: 10rem; max-width: 10rem;
-        height: 14rem;
-        border: 0.1rem orangered solid;
-
-    }
-
-    .item h2 {
-        font-size: 0.85rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-
-        height: 1rem;
-    }
-
-    #recently-viewed .item {
-        margin-top: 1rem;
-    }
-
-     .item img {
-        height: 40%;
-    }
-
-.bottom-row-sections {
-    margin-top: 1.5rem;
-    height: 28rem;
-    width: 48%;
-    border: 0.2rem black solid;
+#ads {
+    background-color: red;
+    margin-right: 3rem;
+    width: 20%;
 }
 
-#popular-items {
-    margin-right: 1%;
-}
-
-#trending {
-}
