@@ -6,7 +6,7 @@ sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\B
 from my_scripts.database import *
 from .config import *
 
-db = DatabaseManagment()
+DB = DatabaseManagment()
 
 def clean_html_codes(string:str):
     codes = {
@@ -23,8 +23,8 @@ def clean_html_codes(string:str):
 def format_item_info(items, **kwargs):
 
     if kwargs.get("view") == "search":
-        user_item_ids_portfolio = db.is_item_in_user_items(kwargs.get("user_id"), "portfolio")
-        user_item_ids_watchlist = db.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
+        user_item_ids_portfolio = DB.is_item_in_user_items(kwargs.get("user_id"), "portfolio")
+        user_item_ids_watchlist = DB.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
 
     item_dicts = []
     for item in items:
@@ -52,6 +52,22 @@ def format_item_info(items, **kwargs):
                 "in_watchlist":item[0] in user_item_ids_watchlist,
             })
 
+        if kwargs.get("price_trend", False):
+            item_dict.update({
+                "price_change":item[10]
+            })
+
+        graph_data = kwargs.get("graph_data", False)
+
+        if graph_data != False:
+            graph_metric = graph_data[0]
+            user_id = graph_data[1]
+
+            item_dict.update({
+                "prices":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[0],
+                "dates":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[1],
+            })
+
         item_dicts.append(item_dict)
 
     return item_dicts
@@ -63,23 +79,27 @@ def format_theme_items(theme_items):
             "item_id":item[0],
             "item_type":item[1],
             "img_path":f"App/images/{item[0]}.png",
-        }
-    for item in theme_items]
+        } for item in theme_items
+    ]
+
     return theme_items_formated
 
 
 def biggest_theme_trends():
-    themes = db.biggest_theme_trends()
+    themes = DB.biggest_theme_trends()
     themes_formated = [
         {
             "theme_path":theme[0],
             "change":theme[1]
-            }
-    for theme in themes]
-    return {
+        } for theme in themes
+    ]
+
+    losers_winners = {
         "biggest_winners":themes_formated[:5],
         "biggest_losers":themes_formated[-5:][::-1]
-        }
+    }
+
+    return losers_winners 
 
 def get_current_page(request, portfolio_items:list) -> int:
     #current page
@@ -100,7 +120,7 @@ def get_current_page(request, portfolio_items:list) -> int:
     return back_page, page, next_page
 
 
-def get_change_password_error_message(rules:list[dict]) -> str:
+def get_change_password_error_message(rules:list[dict[str, str]]) -> str:
     for rule in rules:
         rule = rule.popitem()
         if not rule[0]:
@@ -136,12 +156,12 @@ def sort_dropdown_options(options:list[dict[str,str]], field:str) -> list[dict[s
     
     return options
 
-def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent:int, view:str) -> list[str]:
+def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent:int, view:str) -> list[str]:
 
     indent += 1
     for theme in parent_themes:
-        sub_themes = db.sub_themes(user_id, theme[0], view)
-        sub_themes = [t for t in sub_themes if t.count("~") == indent]
+        sub_themes = DB.sub_themes(user_id, theme[0], view)
+        sub_themes = [theme_path for theme_path in sub_themes if theme_path.count("~") == indent]
 
         themes.append({
             "theme_path":theme[0],
@@ -150,7 +170,7 @@ def recursive_get_sub_themes(user_id:int, parent_themes:list[str], themes:list[d
             "sub_themes":sub_themes,
         })
 
-        recursive_get_sub_themes(user_id, sub_themes, themes, indent, view)
+        get_sub_themes(user_id, sub_themes, themes, indent, view)
 
     return themes
 
@@ -164,17 +184,17 @@ def check_page_boundaries(current_page, items):
 def slice_num_pages(items, current_page):
     num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
 
-    a = current_page - (PAGE_NUM_LIMIT // 2)
-    b = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT  
+    list_slice_start = current_page - (PAGE_NUM_LIMIT // 2)
+    list_slice_end = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT  
 
-    if b > len(num_pages):
-        b = len(num_pages) -1
-        a = b - PAGE_NUM_LIMIT
-    if a < 0 :
-        b -= a
-        a = 0
+    if list_slice_end > len(num_pages):
+        list_slice_end = len(num_pages) -1
+        list_slice_start = list_slice_end - PAGE_NUM_LIMIT
+    if list_slice_start < 0 :
+        list_slice_end -= list_slice_start
+        list_slice_start = 0
 
-    num_pages = num_pages[a:b]
+    num_pages = num_pages[list_slice_start:list_slice_end]
 
     #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
     if len(items) % ITEMS_PER_PAGE == 0:
@@ -183,4 +203,9 @@ def slice_num_pages(items, current_page):
     return num_pages
 
 
-
+def append_item_graph_info(item_id, graph_metric, **kwargs):
+    prices = [] ; dates = []
+    for price_date_info in DB.get_item_graph_info(item_id, graph_metric, view=kwargs.get("view"), user_id=kwargs.get("user_id")):
+        prices.append(price_date_info[0])
+        dates.append(price_date_info[1])
+    return prices, dates

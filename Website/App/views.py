@@ -1,7 +1,5 @@
 import random
 
-from pprint import pprint
-
 from datetime import (
     datetime as dt, 
     timedelta
@@ -27,37 +25,25 @@ from .models import (
     User,
 )
 
-
 from my_scripts.responses import * 
 from my_scripts.database import *
 from my_scripts.misc import get_price_colour
 
-resp = Response()
-db = DatabaseManagment()
-
-
-def update_prices_table():
-    #return  (item_ids, type) grouped by item id
-    items = db.group_by_items()[500:700]
-    
-    #update prices
-    type_convert = {"M":"MINIFIG", "S":"SET"}
-    for item in items:
-        item_info = resp.get_response_data(f"items/{type_convert[item[1]]}/{item[0]}/price")
-        db.add_price_info(item_info)
+RESP = Response()
+DB = DatabaseManagment()
 
 
 def search_item(request, current_view):
     #get a list of all item ids that exist inside the database 
-    item_ids = [item_id[0] for item_id in db.get_item_ids()] 
+    item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
     
     #get item from the search bar, if it exists redirect to that items info page
     selected_item = request.POST.get("item_id")
-    print(current_view)
-    print(selected_item)
+
     if selected_item in item_ids:
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
     return redirect(current_view)
+
 
 def index(request):
 
@@ -67,7 +53,7 @@ def index(request):
     user_id = request.session["user_id"]
 
     #get a list of all item ids that exist inside the database 
-    item_ids = [item_id[0] for item_id in db.get_item_ids()] 
+    item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
 
     #if the user has no recently viewed items create a new emtpy list to store items in the future
     if "recently-viewed" not in request.session and user_id == -1:
@@ -77,21 +63,28 @@ def index(request):
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
 
     #create dict for each recently viewed item 
-    recently_viewed = [{
-        "item_id":db.get_item_info(item_id)[0][0],
-        "item_name":db.get_item_info(item_id)[0][1],
-        "image_path":f"App/images/{db.get_item_info(item_id)[0][0]}.png",
-    } for item_id in recently_viewed_ids]
+    recently_viewed = [DB.get_item_info(item_id) for item_id in recently_viewed_ids]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
 
     #set context. random_item_id used when user clicks 'view item info' in middle / about section
+    recently_viewed = format_item_info(recently_viewed, graph_data=("avg_price", user_id))
+    
+    print(recently_viewed[0])
+
     context = {
         "recently_viewed":recently_viewed,
         "random_item_id":random.choice(item_ids),
-        "trending":db.get_biggest_trends()[0]
+        "show_graph":False
     }
+
+    if user_id == -1:
+        context["trending"] = format_item_info(DB.get_biggest_trends(), 
+        price_trend=True, graph_data=("avg_price", user_id))
+    else:
+        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data=("avg_price", user_id))
+
 
     #if user is logged in pass biggest portfolio changes to context 
     if "user_id" in request.session:
@@ -102,7 +95,7 @@ def index(request):
             "condition":_item[2],
             "quantity_owned":_item[3],
             "change":_item[4],
-            } for _item in db.biggest_portfolio_changes(user_id)[:9]]
+            } for _item in DB.biggest_portfolio_changes(user_id)[:9]]
         context.update({ #MIGHT ONLY NEED ONE
             "biggest_portfolio_changes_1":biggest_portfolio_changes[:len(biggest_portfolio_changes)//2],
             "biggest_portfolio_changes_2":biggest_portfolio_changes[len(biggest_portfolio_changes)//2:],
@@ -120,7 +113,7 @@ def item(request, item_id):
     #stops view count being increased on refresh
     if "item_id" not in request.session or request.session.get("item_id") != item_id:
         request.session["item_id"] = item_id
-        db.increment_item_views(item_id)
+        DB.increment_item_views(item_id)
 
     '''
     CHANGE IF USER IS LOGGED IN!!
@@ -147,13 +140,13 @@ def item(request, item_id):
     if item_id != "favicon.ico":
 
         #STORE THIS IN DATABASE!
-        # supersets = resp.get_response_data(f"items/MINIFIG/{item_id}/supersets")
-        # subsets = resp.get_response_data(f"items/MINIFIG/{item_id}/subsets")
+        # supersets = RESP.get_response_data(f"items/MINIFIG/{item_id}/supersets")
+        # subsets = RESP.get_response_data(f"items/MINIFIG/{item_id}/subsets")
 
-        prices = db.get_minifig_prices(item_id)
+        prices = DB.get_minifig_prices(item_id)
 
         #get all dates of each price record, replace "-" with "/"
-        dates = db.get_dates(item_id)
+        dates = DB.get_dates(item_id)
         dates = [d[0].replace("-", "/") for d in dates]
 
         #if there IS price records then set colours (red/green/gray) for each price (avg,min,max)
@@ -167,15 +160,15 @@ def item(request, item_id):
         #provide default value as some items do not have any supersets
         # sets_info = []
         # if supersets != []:
-        #     sets_info = [resp.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"] if resp.get_response_data(f'items/SET/{s["item"]["no"]}') != None]
+        #     sets_info = [RESP.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"] if RESP.get_response_data(f'items/SET/{s["item"]["no"]}') != None]
 
-        # parts_info = [resp.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
+        # parts_info = [RESP.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
 
         #general info dict to be added to context
         general_info = {
-            "item_id":db.get_item_info(item_id)[0][0],
-            "name":db.get_item_info(item_id)[0][1],
-            "year_released":db.get_item_info(item_id)[0][2],
+            "item_id":DB.get_item_info(item_id)[0][0],
+            "name":DB.get_item_info(item_id)[0][1],
+            "year_released":DB.get_item_info(item_id)[0][2],
         }
 
         add_error_msg = request.session.get("add_to_user_items_error_msg", "")
@@ -198,7 +191,7 @@ def item(request, item_id):
 
 
 def trending(request):
-    losers, winners = db.get_biggest_trends()
+    losers, winners = DB.get_biggest_trends()
 
     #create list[dict] of all of the biggest winners / losers
     winners = [{
@@ -230,17 +223,17 @@ def search(request, theme_path='all'):
         theme_path = theme_path.replace("all/", "")
 
     if theme_path == 'all':
-        sub_themes = [theme[0].strip("'") for theme in db.get_parent_themes()]
+        sub_themes = [theme[0].strip("'") for theme in DB.get_parent_themes()]
         theme_items = [] 
     else:
-        theme_items = db.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
+        theme_items = DB.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
         theme_items = format_item_info(theme_items, view="search", user_id=user_id)[page * SEARCH_ITEMS_PER_PAGE : (page+1) * SEARCH_ITEMS_PER_PAGE]
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
-        sub_themes = db.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
+        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
         #split "~" (used to seperate sub themes in database) with 
         sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
         #remove duplicates
@@ -250,7 +243,7 @@ def search(request, theme_path='all'):
 
     for item in theme_items:
         item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_item_graph_info(item["item_id"], graph_metric):
+        for price_date_info in DB.get_item_graph_info(item["item_id"], graph_metric):
             item["prices"].append(price_date_info[0])
             item["dates"].append(price_date_info[1])
 
@@ -302,7 +295,7 @@ def login(request):
             password = form.cleaned_data["password"]
 
             #check if username and password match, create new user_id session, del login_attempts session
-            if db.check_login(username, password):
+            if DB.check_login(username, password):
                 #filter database to find user with corrisponding username and password
                 user = User.objects.filter(username=username, password=password)
 
@@ -319,6 +312,7 @@ def login(request):
                 #display login error message, increment login_attempts 
                 context.update({"login_message":"Username and Password do not match"})
                 request.session["login_attempts"] += 1
+        else:print(form.errors)
 
 
 
@@ -368,10 +362,10 @@ def join(request):
             if password == password_confirmation:
 
                 #check if the username / email already exists inside the database, cannot be duplicates
-                if not db.if_username_or_email_already_exists(username, email):
+                if not DB.if_username_or_email_already_exists(username, email):
 
                     #if the username or email does not already exist, add the new users details to database
-                    db.add_user(username, email, password)
+                    DB.add_user(username, email, password)
 
                     #get the new users id to add to session
                     user = User.objects.filter(username=username, password=password)
@@ -392,10 +386,6 @@ def user_items(request, view, user_id):
 
     context = {}
 
-    items = db.get_user_items(user_id, view)
-
-    items = format_item_info(items, view=view)
-
     graph_options = get_graph_options()
     sort_options = get_sort_options()
 
@@ -408,14 +398,10 @@ def user_items(request, view, user_id):
     current_page = int(options.get("page", 1))
     sort_field = options.get("sort-field", "avg_price-desc")
 
+    items = DB.get_user_items(user_id, view)
+    items = format_item_info(items, view=view, graph_data=(graph_metric, user_id))
+
     current_page = check_page_boundaries(current_page, items)
-
-    for item in items:
-        item["prices"] = [] ; item["dates"] = []
-        for price_date_info in db.get_item_graph_info(item["item_id"], graph_metric, view=view, user_id=user_id):
-            item["prices"].append(price_date_info[0])
-            item["dates"].append(price_date_info[1])
-
     
     num_pages = slice_num_pages(items, current_page)
 
@@ -426,12 +412,12 @@ def user_items(request, view, user_id):
     graph_options = sort_dropdown_options(graph_options, graph_metric)
 
     total_unique_items = len(items)
-    total_price = db.user_items_total_price(user_id, graph_metric, view)
+    total_price = DB.user_items_total_price(user_id, graph_metric, view)
 
     items = items[(current_page - 1) * ITEMS_PER_PAGE : int(current_page) * ITEMS_PER_PAGE]
 
-    parent_themes = db.parent_themes(user_id, view)
-    themes = recursive_get_sub_themes(user_id, parent_themes, [], -1, view)
+    parent_themes = DB.parent_themes(user_id, view)
+    themes = get_sub_themes(user_id, parent_themes, [], -1, view)
 
     context.update({
         "items":items,
@@ -460,11 +446,11 @@ def portfolio(request):
 
     context = user_items(request, "portfolio", user_id)
 
-    context["total_items"] = db.total_portfolio_items(user_id)
+    context["total_items"] = DB.total_portfolio_items(user_id)
     context["view_param"] = f"/?view=items"
 
     if view == "trends":
-        trends_graph_data = db.get_portfolio_price_trends(user_id)
+        trends_graph_data = DB.get_portfolio_price_trends(user_id)
 
         trends_graph_dates = [data[0] for data in trends_graph_data]
         trends_graph_prices = [data[1] for data in trends_graph_data]
@@ -481,7 +467,7 @@ def view_POST(request, view):
         return redirect("index")
     user_id = request.session["user_id"]
 
-    items = db.get_user_items(user_id, view=view)
+    items = DB.get_user_items(user_id, view=view)
 
     portfolio_items = format_item_info(items, view=view)
 
@@ -497,9 +483,9 @@ def view_POST(request, view):
                 quantity *= -1
 
             if (item_id, condition) in [(_item["item_id"], _item["condition"]) for _item in portfolio_items]:
-                db.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
+                DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
             else:
-                db.add_to_user_items(item_id, user_id, view, condition=condition, quantity=quantity)
+                DB.add_to_user_items(item_id, user_id, view, condition=condition, quantity=quantity)
 
     if "url_params" in request.session:
         for k, v in request.POST.items():
@@ -546,17 +532,17 @@ def add_to_user_items(request, item_id):
         return redirect("index")
     user_id = request.session["user_id"]
 
-    user_item_ids = [_item[0] for _item in db.get_user_items(user_id, view)]
-    portfolio_items_and_condition = db.get_portfolio_items_condition(user_id)
+    user_item_ids = [_item[0] for _item in DB.get_user_items(user_id, view)]
+    portfolio_items_and_condition = DB.get_portfolio_items_condition(user_id)
 
     if view == "portfolio":
         if (item_id, condition) not in portfolio_items_and_condition:
-            db.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
+            DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
         else:
             request.session["add_to_user_items_error_msg"] = f"{item_id}, {condition} is already in your portfolio"
     else:
         if item_id not in user_item_ids:
-            db.add_to_user_items(user_id, item_id, view)
+            DB.add_to_user_items(user_id, item_id, view)
         else:
             request.session["add_to_user_items_error_msg"] = f"{item_id} is already in your watchlist"
 
@@ -590,13 +576,13 @@ def profile(request):
                 #list of rules that must all return True for the password to be updated, with corrisponding error messages
                 #to be displayed to the user.
                 rules:list[dict] = [ 
-                    {db.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
+                    {DB.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
                     {new_password == confirm_password:"'New password' and 'Confirm password' do not match"},
                 ]
 
                 #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
                 if all([all(rule) for rule in rules]):
-                    db.update_password(user_id, old_password, new_password)
+                    DB.update_password(user_id, old_password, new_password)
                 else:
                     #pass an error message to context, based on what condition was not satisfied
                     context["change_password_error_message"] = get_change_password_error_message(rules)
@@ -607,7 +593,7 @@ def profile(request):
             if form.is_valid():
                 email = form.cleaned_data["email"]
                 preference = form.cleaned_data["preference"][0]
-                db.update_email_preferences(user_id, email, preference)
+                DB.update_email_preferences(user_id, email, preference)
                 print(email, preference)
             else:print(form.errors)
 
@@ -618,7 +604,7 @@ def profile(request):
                 username = form.cleaned_data["username"]
 
                 #update username is database
-                db.change_username(user_id, username)
+                DB.change_username(user_id, username)
 
     #USER INFO
 
