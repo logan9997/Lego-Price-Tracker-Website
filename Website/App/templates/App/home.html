@@ -9,12 +9,15 @@
 
 <section id="container-layer1">
 
-    <section id="biggest-trends">
-        {% for item in trending %}
-            <div class="main-item-container">
-            {% include 'App/item_container.html' %}
-            </div>
-        {% endfor %}
+    <section id="biggest-trends" class="side-bars">
+        <h3>Trending Items</h3>
+        <div id="trending-items-container">
+            {% for item in trending %}
+                <div class="main-item-container">
+                {% include 'App/item_container.html' %}
+                </div>
+            {% endfor %}
+        </div>
     </section>
 
     <section id="about-panel">
@@ -36,16 +39,25 @@
         </div>
     </section>
 
-    <section id="ads">
-        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Laudantium dolorem earum dignissimos distinctio, possimus reiciendis porro ea eius repudiandae nihil deleniti itaque autem unde sint veritatis sit et numquam repellat.</p>
+    <section id="ads"  class="side-bars">
+        <h3>Ads</h3>
     </section>
 
 </section>
 
+{% if recently_viewed|length != 0 %}
+
 <section id="recently-viewed">
-    {% for item in recently_viewed %}
-        {% include 'App/item_container.html' %}
-    {% endfor %}
+    <h3>Recently Viewed</h3>
+    <div id="recently-viewed-items-container">
+        {% for item in recently_viewed %}
+        <div class="main-item-container-recently-viewed">
+            {% include 'App/item_container.html' %}
+        </div>
+        {% endfor %}
+    </div>
 </section>
+
+{% endif %}
 
 {% endblock %}
