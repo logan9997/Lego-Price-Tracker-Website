@@ -69,10 +69,8 @@ def index(request):
     '''recently_viewed.extend(recently_viewed)'''
 
     #set context. random_item_id used when user clicks 'view item info' in middle / about section
-    recently_viewed = format_item_info(recently_viewed, graph_data=("avg_price", user_id))
+    recently_viewed = format_item_info(recently_viewed, graph_data={"metric":"avg_price", "user_id":user_id})
     
-    print(recently_viewed[0])
-
     context = {
         "recently_viewed":recently_viewed,
         "random_item_id":random.choice(item_ids),
@@ -80,10 +78,9 @@ def index(request):
     }
 
     if user_id == -1:
-        context["trending"] = format_item_info(DB.get_biggest_trends(), 
-        price_trend=True, graph_data=("avg_price", user_id))
+        context["trending"] = format_item_info(DB.get_biggest_trends(), price_trend=True, graph_data={"metric":"avg_price", "user_id":user_id})
     else:
-        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data=("avg_price", user_id))
+        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data={"metric":"avg_price", "user_id":user_id})
 
 
     #if user is logged in pass biggest portfolio changes to context 
@@ -191,19 +188,12 @@ def item(request, item_id):
 
 
 def trending(request):
-    losers, winners = DB.get_biggest_trends()
 
-    #create list[dict] of all of the biggest winners / losers
-    winners = [{
-        "name":m[0],
-        "id":m[1],
-        "change":m[2],
-        "image_path":f"App/images/{m[1]}.png",
-    } for m in winners]
+    winners = format_item_info(DB.get_biggest_trends(), price_trend=True, graph_data={"metric":"avg_price"})
 
     context = {
-        "losers":losers,
         "winners":winners,
+        "show_graph":True,
         }
     
 
@@ -312,8 +302,6 @@ def login(request):
                 #display login error message, increment login_attempts 
                 context.update({"login_message":"Username and Password do not match"})
                 request.session["login_attempts"] += 1
-        else:print(form.errors)
-
 
 
     #if max login attempts exceeded, then block user for 24hrs and display message on page
@@ -399,7 +387,7 @@ def user_items(request, view, user_id):
     sort_field = options.get("sort-field", "avg_price-desc")
 
     items = DB.get_user_items(user_id, view)
-    items = format_item_info(items, view=view, graph_data=(graph_metric, user_id))
+    items = format_item_info(items, view=view, graph_data={"metric":graph_metric, "user_id":user_id})
 
     current_page = check_page_boundaries(current_page, items)
     
@@ -498,7 +486,6 @@ def view_POST(request, view):
     portfolio_view = ""
     if view == "portfolio":
         portfolio_view = "?view=" + request.session.get("portfolio_view", "items")
-    print("portfolio_view", portfolio_view)
     return redirect(f"http://127.0.0.1:8000/{view}/" + portfolio_view)
 
 
@@ -517,7 +504,6 @@ def watchlist(request):
 def add_to_user_items(request, item_id):
 
     view = request.POST.get("view-type")
-    print(view)
 
     #view = request.session["view-type"]
 
@@ -526,7 +512,6 @@ def add_to_user_items(request, item_id):
         if form.is_valid():
             condition = form.cleaned_data["condition"]
             quantity = form.cleaned_data["quantity"]
-        else:print(form.errors)
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
@@ -561,9 +546,7 @@ def profile(request):
         "email":User.objects.filter(user_id=user_id).values_list("email", flat=True)[0],
     }
 
-    #SETTINGS
-    print(request.POST.get("form-type"))
-    
+    #SETTINGS    
     if request.method == "POST":
         #-Change password
         if request.POST.get("form-type") == "change-password-form":
@@ -594,8 +577,6 @@ def profile(request):
                 email = form.cleaned_data["email"]
                 preference = form.cleaned_data["preference"][0]
                 DB.update_email_preferences(user_id, email, preference)
-                print(email, preference)
-            else:print(form.errors)
 
         #-Change personal info
         elif request.POST.get("form-type") == "personal-details-form":

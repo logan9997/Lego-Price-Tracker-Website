@@ -27,6 +27,7 @@ def format_item_info(items, **kwargs):
         user_item_ids_watchlist = DB.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
 
     item_dicts = []
+    print(len(items))
     for item in items:
         item_dict = {
         "item_id":item[0],
@@ -52,16 +53,21 @@ def format_item_info(items, **kwargs):
                 "in_watchlist":item[0] in user_item_ids_watchlist,
             })
 
-        if kwargs.get("price_trend", False):
+        if kwargs.get("price_trend", False) and kwargs.get("view") == "portfolio":
             item_dict.update({
                 "price_change":item[10]
             })
 
+        elif kwargs.get("price_trend", False):
+             item_dict.update({
+                "price_change":item[8]
+            })           
+
         graph_data = kwargs.get("graph_data", False)
 
         if graph_data != False:
-            graph_metric = graph_data[0]
-            user_id = graph_data[1]
+            graph_metric = graph_data.get("metric")
+            user_id = graph_data.get("user_id")
 
             item_dict.update({
                 "prices":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[0],
