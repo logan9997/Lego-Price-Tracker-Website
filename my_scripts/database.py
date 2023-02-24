@@ -89,7 +89,8 @@ class DatabaseManagment():
     
     def get_biggest_trends(self) -> list[str]:
         sql = """
-            SELECT item_name, P1.item_id, round(avg_price - (
+            SELECT  I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
@@ -111,7 +112,7 @@ class DatabaseManagment():
         result = self.SELECT(sql)
         losers = result[len(result)-10:][::-1]
         winners = result[:10]
-        return losers, winners
+        return winners
 
 
     def check_if_price_recorded(self) -> list[str]:
@@ -382,7 +383,7 @@ class DatabaseManagment():
                     SELECT min(date)
                     FROM App_price
                 ) 
-            GROUP BY portfolio.item_id, condition
+            GROUP BY portfolio.item_id
             ORDER BY [£ change] DESC
         """
         return self.SELECT(sql)
