@@ -12,25 +12,49 @@ h2 {
 
 #container-layer1 {
     display: flex;
+    flex-wrap: nowrap;
     flex-direction: row;
+    margin-bottom: 3rem;
+    justify-content: space-between;
+    width: 98%;
+    margin-left: 1%;
+}
+
+.side-bars {
+    max-height: 40rem;
+    width: 17%;
+    text-align: center;
+    border-top: 0.1rem orangered solid;
+
 }
 
 #biggest-trends {
-    background-color: red;
-    margin-left: 3rem;
-    width: 20%;
-    max-height: 40rem;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-around;
+    box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
+    margin-left: 2rem;
+    border-left: 0.1rem orangered solid;
+    border-top-left-radius: 1rem;
+}
+
+#trending-items-container {
+    overflow-y: hidden;
+    max-height: 90%;
 }
 
 .main-item-container {
     max-width: 14rem;
+    text-align: center;
+    margin-left: calc((100% - 14rem) / 2);
+}
+
+#ads {
+    box-shadow: 1rem 1rem 1rem 1rem rgb(225,225,225);   
+    margin-right: 2rem;
+    border-right: 0.1rem orangered solid;
+    border-top-right-radius: 1rem;  
 }
 
 #about-panel {
-    width: 60rem;
+    width: 60%;
     display: flex;
     flex-wrap: wrap;
     margin: 0 2rem 0;
@@ -49,7 +73,7 @@ h2 {
         white 10px,
         white 40px
       );
-    box-shadow: 1rem 1rem 1rem rgb(225,225,225);
+    box-shadow: 0.6rem 0.6rem 0.6rem rgb(225,225,225);
     }
 
 .about-box:hover {
@@ -65,9 +89,23 @@ h2 {
     margin: 0;
 }
 
-#ads {
-    background-color: red;
-    margin-right: 3rem;
-    width: 20%;
+#recently-viewed {
+    box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
+    text-align: center;
+    border: 0.1rem orangered solid;
+    margin: 0 calc(1% + 2rem) 3rem;
+    padding-bottom: 1rem;
+
+
 }
+
+#recently-viewed-items-container {
+    display: flex;
+    overflow-x: scroll;
+}
+
+.main-item-container-recently-viewed {
+    margin: 0 1rem 0;
+}
+
 

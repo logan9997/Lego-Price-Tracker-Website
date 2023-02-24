@@ -1,15 +1,12 @@
 .item-container {
     background-color: white;
-    width: 120%;
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
-    display: flex;
-    flex-direction: row;
     border-radius: 0.6rem;
 }
 
 .item-img-and-title {
-    width: 10rem;
+    width: 12rem;
     height: 70%;
     text-align: center;
     margin-left: 0.5rem;
