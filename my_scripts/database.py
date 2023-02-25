@@ -10,7 +10,9 @@ class DatabaseManagment():
         self.lock = threading.Lock()
 
 
-    def SELECT(self, sql):
+    def SELECT(self, sql, **kwargs):
+        if kwargs.get("fetchone"):
+            return self.cursor.execute(sql).fetchone()
         return self.cursor.execute(sql).fetchall()
 
 
@@ -620,5 +622,67 @@ class DatabaseManagment():
                 AND I.item_id = _view.item_id
                 AND I.item_id = T.item_id
             GROUP BY theme_path
+        """
+        return self.SELECT(sql)
+    
+
+    def get_popular_items(self) -> list[str]:
+        sql = """
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+                min_price, max_price, total_quantity, views
+            FROM App_item i, App_price P
+            WHERE views > 0
+                AND I.item_id = P.item_id
+            GROUP BY I.item_id
+            ORDER BY views DESC
+
+        """
+        return self.SELECT(sql)
+    
+
+    def get_weekly_item_metric_change(self, item_id, last_weeks_date, metric) -> int:
+        two_weeks_ago_date = datetime.datetime.today() - datetime.timedelta(days = 14)
+        two_weeks_ago_date.strftime('%Y-%m-%d')
+        
+        sql = f"""
+            SELECT (
+            (SELECT AVG({metric})
+            FROM App_price
+            WHERE date > '{last_weeks_date}'
+                AND item_id = '{item_id}'
+            ) 
+            - 
+            (SELECT AVG({metric})
+            FROM App_price
+            WHERE date > '{two_weeks_ago_date}'
+                AND date < '{last_weeks_date}'
+                AND item_id = '{item_id}'
+            )
+        ) AS 'change'
+        FROM App_item
+        WHERE item_id = '{item_id}'
+        """
+        return self.SELECT(sql, fetchone=True)
+    
+    def get_new_items(self) -> list[str]:
+        #REMOVE WHERE CLAUSE, only items where y_released = 1900 is stored in App_price
+        sql = """
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity
+            FROM App_item I, App_price P
+            WHERE I.item_id LIKE 'sw%'
+                AND I.item_id = P.item_id
+            ORDER BY year_released DESC
+        """
+        return self.SELECT(sql)
+    
+
+    def get_most_weekly_viewed_themes(self) -> list[str]:
+        sql = """
+            SELECT theme_path, SUM(views) as [total_views]
+            FROM App_theme T, App_item I
+            WHERE T.item_id = I.item_id
+            GROUP BY theme_path
+            ORDER BY [total_views] DESC
         """
         return self.SELECT(sql)
