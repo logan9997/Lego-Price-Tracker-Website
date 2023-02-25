@@ -91,7 +91,7 @@ class DatabaseManagment():
     
     def get_biggest_trends(self) -> list[str]:
         sql = """
-            SELECT  I.item_id, item_name, year_released, item_type, avg_price, 
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
             min_price, max_price, total_quantity, round(avg_price - (
                 SELECT avg_price
                 FROM App_price P2
@@ -151,7 +151,8 @@ class DatabaseManagment():
         try:
             self.lock.acquire(True)
             sql = f"""
-                SELECT I.*,avg_price, min_price, max_price, total_quantity
+                SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+                min_price, max_price, total_quantity
                 FROM App_item I, App_theme T, App_price P
                 WHERE T.item_id = I.item_id
                     AND I.item_id = P.item_id
