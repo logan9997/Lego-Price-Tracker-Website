@@ -52,6 +52,10 @@ def index(request):
     #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
 
+    graph_options = get_graph_options()
+    graph_metric = request.POST.get("graph-metric", "avg_price")
+    graph_options = sort_dropdown_options(graph_options, graph_metric)
+
     #if the user has no recently viewed items create a new emtpy list to store items in the future
     if "recently-viewed" not in request.session and user_id == -1:
         request.session["recently-viewed"] = []
@@ -65,21 +69,19 @@ def index(request):
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
 
-    #set context. random_item_id used when user clicks 'view item info' in middle / about section
-    recently_viewed = format_item_info(recently_viewed, graph_data={"metric":"avg_price", "user_id":user_id})
-    
-    popular_items = format_item_info(DB.get_popular_items(), home_view="_popular_items", graph_data={"metric":"avg_price"})
-
-    new_items = format_item_info(DB.get_new_items(), home_view="_new_items", graph_data={"metric":"avg_price"})[:10]
-    print(new_items)
+    recently_viewed = format_item_info(recently_viewed, graph_data={"metric":graph_metric, "user_id":user_id})
+    popular_items = format_item_info(DB.get_popular_items()[:10], popular_items=True, home_view="_popular_items", graph_data={"metric":graph_metric})
+    new_items = format_item_info(DB.get_new_items()[:10], home_view="_new_items", graph_data={"metric":graph_metric})[:10]
 
     last_week = dt.today() - timedelta(days=7)
     last_week = last_week.strftime("%d/%m/%y")
 
     for popular_item in popular_items:
-        popular_item["change"] = DB.get_weekly_item_metric_change(popular_item["item_id"], last_week, "avg_price")[0] 
+        popular_item["change"] = DB.get_weekly_item_metric_change(popular_item["item_id"], last_week, graph_metric)[0] 
 
+    #set context. random_item_id used when user clicks 'view item info' in middle / about section
     context = {
+        "graph_options":graph_options,
         "last_week":last_week,
         "popular_items":popular_items,
         "new_items":new_items,

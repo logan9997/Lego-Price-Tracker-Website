@@ -64,6 +64,18 @@
 
 </section>
 
+<section id="graph-options" class="layers">
+    <form action="{% url 'index'  %}" method="POST">
+        {% csrf_token %}
+        <label for="graph-data-form">Graph Data</label>
+        <select onchange="this.form.submit()" name="graph-metric">
+            {% for graph_option in graph_options %}
+                <option value="{{graph_option.value}}">{{graph_option.text}}</option>
+            {% endfor %}
+        </select>
+    </form>
+</section>
+
 <section id="container-layer3" class="layers">
 
     <section id="popular-items" class="layer3-containers">
@@ -76,8 +88,8 @@
                 </div>
 
                 <div class="info-container">
-                    <p class="view-count">Views this week : <br><br> {{item.views}}</p>
-                    <p class="weeks-price-trend">Change since {{last_week}} : <br><br> {{item.change}}</p>
+                    <p class="view-count">Weekly Views<br>{{item.views}}</p>
+                    <p class="weeks-price-trend">Change since {{last_week}} : <br> {{item.change}}</p>
                 </div>
             </div>
             {% endfor %}
