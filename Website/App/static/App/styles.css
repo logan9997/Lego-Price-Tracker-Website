@@ -7,6 +7,7 @@ body {
     margin: 0;
     padding: 0;
     padding-top: 6rem;
+    overflow-x: hidden;
 }
 
 nav {
@@ -154,9 +155,12 @@ nav ul li:hover .dropdown-content {
 }
 
 footer {
-    height: 2.6rem;
+    height: 10rem;
     background-color: white;
-    width: 99%;
     top: 0;
+    width: 100vw;
+    padding: 0;
+    border-top: 0.1rem rgb(228, 220, 220) solid;
+    text-align: center;
 }
 

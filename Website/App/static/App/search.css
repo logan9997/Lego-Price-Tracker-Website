@@ -1,3 +1,8 @@
+#important-info {
+    text-align: center;
+    font-size: 1.3rem;
+}
+
 #search-themes-container {
     display: flex;
     justify-content: row;
@@ -10,7 +15,7 @@
 }
 
 #all-themes-container {
-    background-color: gainsboro;
+    box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
     display: flex;
     flex-wrap:wrap;
     justify-content:space-evenly;
@@ -19,7 +24,11 @@
     height: 14rem;
     width: 98%;
     margin-left: 1%;
+    margin-bottom: 2rem;
     overflow-y:hidden;
+    border-left: 0.1rem orangered solid;
+    border-top: 0.1rem orangered solid;
+    border-top-left-radius: 1rem;
 }
 
 .theme-container {
@@ -36,54 +45,55 @@
     text-decoration: none;
 }
 
-#theme-items {
-    background-color: gray;
+#theme-items-container {
+    text-align: center;
+    background-color: whitesmoke;
     width: 70%;
     margin:2rem 15% 0;
+}
+
+#item-pages {
+    background-color: orangered;
+    padding: 0.5rem 0 0.5rem;
+    border-top-right-radius: 1rem;
+    border-top-left-radius: 1rem;
+}
+
+#item-pages input {
+    border-width: 0.1rem;
+}
+
+#theme-items {
     display: flex;
-    flex-direction: column;
     justify-content: center;
+    flex-wrap: wrap;
+    box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
+    padding: 2rem 0 2rem;
+    margin-bottom: 5rem;
 }
 
-.item-container {
-    background-color: red;
-    margin: 1rem 10% 1rem;
-    width: 80%;
-    height: 14rem;
-    display: flex;
-}
-
-.in-user-items {
-    background-color: green;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-}
-
-.in-user-items input {
-    accent-color: white;
-}
-
-.label-input-container {
-    display: flex;
-    flex-direction: row;
-}
-
-.item-img-info-container {
-    width: 20rem;
-    background-color: yellow;
-    text-align: center;
-}
-
-.item_canvas {
-    max-width: 20rem;
-    height: 180%;
-    background-color: white;
+.main-item-container {
+    width: 47%;
+    margin-left: 1rem;
 }
 
 #trending-themes {
     display: flex;
     justify-content: space-around;
+}
+
+#biggest-winners {
+    border-left: 0.1rem green solid;
+    border-top: 0.1rem green solid;
+    border-top-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+}
+
+#biggest-losers {
+    border-right: 0.1rem red solid;
+    border-bottom: 0.1rem red solid;
+    border-top-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
 }
 
 #biggest-winners h3, #biggest-winners .change {
@@ -95,10 +105,11 @@
 }
 
 .trending-themes-container {
-    background-color: gainsboro;
     width: 30rem;
     height: 20rem;
     margin: 1rem;
+    box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
+    margin-bottom: 4rem;
 }
 
 .trending-themes-container h3 {
