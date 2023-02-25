@@ -7,7 +7,7 @@
 <h1>Brick Economy</h1>
 <h2>Created by Logan Baxter</h2>
 
-<section id="container-layer1">
+<section id="container-layer1" class="layers">
 
     <section id="biggest-trends" class="side-bars">
         <h3>Trending Items</h3>
@@ -45,19 +45,62 @@
 
 </section>
 
-{% if recently_viewed|length != 0 %}
+<section id="container-layer2" class="layers">
 
-<section id="recently-viewed">
-    <h3>Recently Viewed</h3>
-    <div id="recently-viewed-items-container">
-        {% for item in recently_viewed %}
-        <div class="main-item-container-recently-viewed">
-            {% include 'App/item_container.html' %}
+    {% if recently_viewed|length != 0 %}
+
+    <section id="recently-viewed">
+        <h3>Recently Viewed</h3>
+        <div id="recently-viewed-items-container">
+            {% for item in recently_viewed %}
+            <div class="main-item-container-recently-viewed">
+                {% include 'App/item_container.html' %}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+    </section>
+
+    {% endif %}
+
 </section>
 
-{% endif %}
+<section id="container-layer3" class="layers">
+
+    <section id="popular-items" class="layer3-containers">
+        <h3>Popular</h3>
+        <div class="items-container">
+            {% for item in popular_items %}
+            <div class="main-item-container-layer3">
+                <div class="item-panel-container">
+                    {% include 'App/item_container.html' with show_graph=True %}
+                </div>
+
+                <div class="info-container">
+                    <p class="view-count">Views this week : <br><br> {{item.views}}</p>
+                    <p class="weeks-price-trend">Change since {{last_week}} : <br><br> {{item.change}}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="new-items" class="layer3-containers">
+        <h3>New</h3>
+        <div class="items-container">
+            {% for item in new_items %}
+            <div class="main-item-container-layer3">
+                <div class="item-panel-container">
+                    {% include 'App/item_container.html' with show_graph=True %}
+                </div>
+
+                <div class="info-container">
+                    <p>Info</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</section>
 
 {% endblock %}

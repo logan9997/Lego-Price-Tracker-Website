@@ -31,28 +31,30 @@
     {% if show_graph %}
 
     <div class="price-trend">
-        <canvas class="item_canvas" id="chart_{{item.item_id}}"></canvas>
+        <canvas class="item_canvas" id="{{item.chart_id}}"></canvas>
 
-        {% with item.item_id|add:"_prices" as prices %}
+        {% with item.prices_id as prices %}
             {{ item.prices|json_script:prices }}
 
 
-        {% with item.item_id|add:"_dates" as dates %}
+        {% with item.dates_id as dates %}
             {{ item.dates|json_script:dates }}
 
         {% endwith %}
         {% endwith %}
 
         <script>
-            var prices = JSON.parse(document.getElementById('{{item.item_id}}_prices').textContent);
-            var dates = JSON.parse(document.getElementById('{{item.item_id}}_dates').textContent);
+            var prices = JSON.parse(document.getElementById('{{item.prices_id}}').textContent);
+            var dates = JSON.parse(document.getElementById('{{item.dates_id}}').textContent);
+
+            console.log(prices ,dates)
 
             var data = [];
             for (let i = 0; i < prices.length; i++) {
                 data.push({y:prices[i], x:dates[i]});
             }
             
-            new Chart(`chart_{{item.item_id}}`, {
+            new Chart(`{{item.chart_id}}`, {
                 type: "line",
                 data: {
                     labels: dates,

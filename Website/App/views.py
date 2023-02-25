@@ -29,9 +29,6 @@ from my_scripts.responses import *
 from my_scripts.database import *
 from my_scripts.misc import get_price_colour
 
-RESP = Response()
-DB = DatabaseManagment()
-
 
 def search_item(request, current_view):
     #get a list of all item ids that exist inside the database 
@@ -71,7 +68,21 @@ def index(request):
     #set context. random_item_id used when user clicks 'view item info' in middle / about section
     recently_viewed = format_item_info(recently_viewed, graph_data={"metric":"avg_price", "user_id":user_id})
     
+    popular_items = format_item_info(DB.get_popular_items(), home_view="_popular_items", graph_data={"metric":"avg_price"})
+
+    new_items = format_item_info(DB.get_new_items(), home_view="_new_items", graph_data={"metric":"avg_price"})[:10]
+    print(new_items)
+
+    last_week = dt.today() - timedelta(days=7)
+    last_week = last_week.strftime("%d/%m/%y")
+
+    for popular_item in popular_items:
+        popular_item["change"] = DB.get_weekly_item_metric_change(popular_item["item_id"], last_week, "avg_price")[0] 
+
     context = {
+        "last_week":last_week,
+        "popular_items":popular_items,
+        "new_items":new_items,
         "recently_viewed":recently_viewed,
         "random_item_id":random.choice(item_ids),
         "show_graph":False
@@ -416,7 +427,8 @@ def user_items(request, view, user_id):
         "total_unique_items":total_unique_items,
         "total_price":total_price,
         "view":view,
-        "current_page":current_page
+        "current_page":current_page,
+        "show_graph":True
     })
 
     return context

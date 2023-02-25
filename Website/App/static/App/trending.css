@@ -1,0 +1,11 @@
+#winners {
+    background-color: red;
+    width: 60%;
+    margin-left: 20%;
+}
+
+.item-container-trending {
+    flex-direction: row;
+    width: 30rem;
+    margin: 1rem;
+}
