@@ -4,9 +4,7 @@ import time
 from .config import *
 
 def timer(func):
-    print("timer")
     def inner(*args, **kwargs):
-        print("inner")
         start = time.time()
         result = func(*args, **kwargs)
         finish = round(time.time() - start, 5)
@@ -123,11 +121,11 @@ def biggest_theme_trends():
 
     return losers_winners 
 
-def get_current_page(request, portfolio_items:list) -> int:
+def get_current_page(request, portfolio_items:list, items_per_page) -> int:
     #current page
     page = int(request.GET.get("page", 1)) 
     #number of pages, ITEMS_PER_PAGE items per page
-    pages = math.ceil(len(portfolio_items) / ITEMS_PER_PAGE) 
+    pages = math.ceil(len(portfolio_items) / items_per_page) 
     #boundaries for next and back page
     back_page = page - 1
     next_page = page + 1
@@ -197,17 +195,18 @@ def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], inde
     return themes
 
 
-def check_page_boundaries(current_page, items):
-    if current_page > math.ceil(len(items) / ITEMS_PER_PAGE):
+def check_page_boundaries(current_page, items, items_per_page):
+    if current_page > math.ceil(len(items) / items_per_page):
         current_page = 1
     return current_page
 
 
-def slice_num_pages(items, current_page):
-    num_pages = [i+1 for i in range((len(items) // ITEMS_PER_PAGE ) + 1)]
+def slice_num_pages(items, current_page, items_per_page):
+    num_pages = [i+1 for i in range((len(items) // items_per_page ) + 1)]
+    last_page = num_pages[-1] -1
 
     list_slice_start = current_page - (PAGE_NUM_LIMIT // 2)
-    list_slice_end = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT  
+    list_slice_end = current_page - (PAGE_NUM_LIMIT // 2) + PAGE_NUM_LIMIT 
 
     if list_slice_end > len(num_pages):
         list_slice_end = len(num_pages) -1
@@ -219,8 +218,14 @@ def slice_num_pages(items, current_page):
     num_pages = num_pages[list_slice_start:list_slice_end]
 
     #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
-    if len(items) % ITEMS_PER_PAGE == 0:
+    if len(items) % items_per_page == 0:
         num_pages.pop(-1)
+
+    if 1 not in num_pages:
+        num_pages.insert(0, 1)
+
+    if last_page not in num_pages:
+        num_pages.append(last_page)
 
     return num_pages
 
