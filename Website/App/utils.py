@@ -1,12 +1,19 @@
-import sys
 import math
+import time
 
-sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API")
-
-from my_scripts.database import *
 from .config import *
 
-DB = DatabaseManagment()
+def timer(func):
+    print("timer")
+    def inner(*args, **kwargs):
+        print("inner")
+        start = time.time()
+        result = func(*args, **kwargs)
+        finish = round(time.time() - start, 5)
+        print(f"\n<{func.__name__.upper()}> finished in {finish} seconds.\n")
+        return result 
+    return inner
+
 
 def clean_html_codes(string:str):
     codes = {
@@ -21,13 +28,14 @@ def clean_html_codes(string:str):
 
 
 def format_item_info(items, **kwargs):
+    #view:str ,price_trend:bool, popular_items:bool
+    #graph_data:bool new_items:bool
 
     if kwargs.get("view") == "search":
         user_item_ids_portfolio = DB.is_item_in_user_items(kwargs.get("user_id"), "portfolio")
         user_item_ids_watchlist = DB.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
 
     item_dicts = []
-    print(len(items))
     for item in items:
         item_dict = {
         "item_id":item[0],
@@ -61,7 +69,12 @@ def format_item_info(items, **kwargs):
         elif kwargs.get("price_trend", False):
              item_dict.update({
                 "price_change":item[8]
-            })           
+            })   
+
+        if kwargs.get("popular_items"):
+            item_dict.update({
+                "views":item[8], 
+            })        
 
         graph_data = kwargs.get("graph_data", False)
 
@@ -72,6 +85,9 @@ def format_item_info(items, **kwargs):
             item_dict.update({
                 "prices":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[0],
                 "dates":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[1],
+                "chart_id":f"{item[0]}_chart" + f"{kwargs.get('home_view', '')}",
+                "prices_id":f"{item[0]}_prices" + f"{kwargs.get('home_view', '')}",
+                "dates_id":f"{item[0]}_dates" + f"{kwargs.get('home_view', '')}",
             })
 
         item_dicts.append(item_dict)
