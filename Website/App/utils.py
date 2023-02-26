@@ -195,6 +195,19 @@ def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], inde
     return themes
 
 
+def clear_session_url_params(request, *keys, **sub_dict):
+    #options to del values from a sub dict of request.session eg request.session["dict_name"]
+    if sub_dict.get("sub_dict") != None:
+        _dict = request.session[sub_dict.get("sub_dict")]
+    else:
+        _dict = request.session
+
+    for key in keys:
+        if key in _dict:
+            del _dict[key]
+    return request
+
+
 def check_page_boundaries(current_page, items:list, items_per_page:int):
 
     try:

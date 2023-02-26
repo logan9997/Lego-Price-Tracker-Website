@@ -44,12 +44,10 @@ def search_item(request, current_view):
 
 def index(request):
 
-    #set user_id if no user is logged in, get user_id from session
     if "user_id" not in request.session:
         request.session["user_id"] = -1
     user_id = request.session["user_id"]
 
-    #get a list of all item ids that exist inside the database 
     item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
 
     graph_options = get_graph_options()
@@ -60,10 +58,7 @@ def index(request):
     if "recently-viewed" not in request.session and user_id == -1:
         request.session["recently-viewed"] = []
 
-    #get the first x items from recently viewed
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
-
-    #create dict for each recently viewed item 
     recently_viewed = [DB.get_item_info(item_id) for item_id in recently_viewed_ids]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
@@ -90,29 +85,12 @@ def index(request):
         "show_graph":False
     }
 
-    if user_id == -1:
+    if user_id == -1 or len(DB.get_user_items(user_id, "portfolio")) == 0:
+        context["portfolio_trending_items"] = False
         context["trending"] = format_item_info(DB.get_biggest_trends(), price_trend=True, graph_data={"metric":"avg_price", "user_id":user_id})
     else:
+        context["portfolio_trending_items"] = True
         context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data={"metric":"avg_price", "user_id":user_id})
-
-
-    #if user is logged in pass biggest portfolio changes to context 
-    if "user_id" in request.session:
-        biggest_portfolio_changes = [{
-            "image_path":f"App/images/{_item[1]}.png",
-            "item_id":_item[1],
-            "item_name":_item[0],
-            "condition":_item[2],
-            "quantity_owned":_item[3],
-            "change":_item[4],
-            } for _item in DB.biggest_portfolio_changes(user_id)[:9]]
-        context.update({ #MIGHT ONLY NEED ONE
-            "biggest_portfolio_changes_1":biggest_portfolio_changes[:len(biggest_portfolio_changes)//2],
-            "biggest_portfolio_changes_2":biggest_portfolio_changes[len(biggest_portfolio_changes)//2:],
-
-        })
-        #adds the users username to context since they are logged in
-        
 
     return render(request, "App/home.html", context=context)
 
@@ -215,6 +193,9 @@ def trending(request):
 
 def search(request, theme_path='all'):
 
+    if "search" not in request.META.get('HTTP_REFERER'):
+        request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
+
     if "url_params" in request.session:
         for k, v in request.POST.items():
             request.session["url_params"][k] = v
@@ -228,8 +209,6 @@ def search(request, theme_path='all'):
     graph_metric = options.get("graph-metric", "avg_price")
     sort_field = options.get("sort-field", "avg_price-desc")
     current_page = options.get("page", 1)
-
-    print(sort_field)
 
     if "user_id" in request.session:
         user_id = request.session["user_id"]
@@ -248,7 +227,7 @@ def search(request, theme_path='all'):
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
-            return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
+            #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
         sub_themes = DB.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
         #split "~" (used to seperate sub themes in database) with 
@@ -409,6 +388,9 @@ def join(request):
 def user_items(request, view, user_id):
 
     context = {}
+
+    if view not in request.META.get('HTTP_REFERER'):
+        request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
 
     graph_options = get_graph_options()
     sort_options = get_sort_options()
