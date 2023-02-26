@@ -17,40 +17,7 @@
         {% endif %}
 
         {% if request.GET.view == "items" or request.path == "/watchlist/" %}
-        <form id="page-buttons-form" action="{% url 'view_POST' view %}" method="POST">
-            {% csrf_token %}
-            {% for page_button in num_pages %}
-                {% if page_button == current_page %}
-                    <input style="background-color: green;" name="page" type="submit" value="{{page_button}}">
-                {% else %}
-                    <input name="page" type="submit" value="{{page_button}}">
-                {% endif %}
-            {% endfor %}
-        </form>
-
-        <div id="dropdown-forms">
-            <form id="sort-form" action="{% url 'view_POST' view %}" method="POST">
-                {% csrf_token %}
-                <div class="input-label-container">
-                    <label for="sort-field">Sort</label>
-                    <select onchange="this.form.submit()" name="sort-field">
-                        {% for sort in sort_options %}
-                            <option value="{{sort.value}}">{{sort.text}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </form>
-
-            <form action="{% url 'view_POST' view %}" method="POST">
-                {% csrf_token %}
-                <label for="graph-data-form">Graph Data</label>
-                <select onchange="this.form.submit()" name="graph-metric">
-                    {% for graph_option in graph_options %}
-                        <option value="{{graph_option.value}}">{{graph_option.text}}</option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
+            {% include 'App/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
         {% endif %}
     </div>
     

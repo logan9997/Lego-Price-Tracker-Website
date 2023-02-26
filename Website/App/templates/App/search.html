@@ -17,13 +17,10 @@
 
     <section id="all-themes-container">
         {% for theme in sub_themes %}
-        <div class="theme-container">
-            <form action="{% url 'search' theme_path %}{{theme}}/" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="form-type" value="theme-url">
-                <button type="submit">{{theme|replace_underscore}}</button>
-            </form>
-        </div>
+        <a class="theme-container" href="{% url 'search' theme_path %}{{theme}}/">
+            <h3>{{theme|replace_underscore}}</h3>
+            <img src="{% static 'App/images/sw0001a.png' %}" alt="placeholder">
+        </a>
         {% endfor %}
     </section>
 
@@ -34,17 +31,10 @@
     {% if theme_items|length > 0 %}
 
     <section id="theme-items-container">
-        <h2>Theme Items</h2>
-        <form id="item-pages" action="{% url 'search' theme_path %}" method="POST">
-            {% csrf_token %}
-            {% for page_button in page_buttons %}
-                {% if page_button == current_page %}
-                    <input style="background-color: green;" type="submit" name="page" value="{{page_button}}">
-                {% else %}
-                    <input type="submit" name="page" value="{{page_button}}">
-                {% endif%}
-            {% endfor %}
-        </form>
+        <!-- item sorting, graph data, page buttons -->
+        <div id="sort-options-container">
+            {% include 'App/item_filters_and_sorts.html' with view="search" sub_view=theme_path %}
+        </div>
 
         <div id="theme-items">
         {% for item in theme_items %}
