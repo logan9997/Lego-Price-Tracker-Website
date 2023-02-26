@@ -1,4 +1,4 @@
-{% extends 'App/base.html' %}
+{% extends 'App/template_blocks/base.html' %}
 
 {% block content %}
 
@@ -26,7 +26,7 @@
         <div id="winners">
         {% for item in winners %}
             <div class="item-container-trending">
-            {% include 'App/item_container.html' %}
+            {% include 'App/template_blocks/item_container.html' %}
             </div>
         {% endfor %}
         </div>

@@ -1,0 +1,36 @@
+{% load static %}
+
+<div class="item-container">
+    <div class="item-img-and-title">
+        <h3>{{item.item_name}}</h3>
+        <h4><a href="{% url 'item' item.item_id %}">{{item.item_id}}</a></h4>
+        <img src="{% static item.img_path  %}" alt="{{item.item_id}}">
+
+        {% if show_graph %}
+        <div class="price-info">
+            <table>
+                <tr>
+                    <th>Avg</th>
+                    <th>Min</th>
+                    <th>Max</th>
+                    <th>Qty</th>
+                </tr>
+
+                <tr>
+                    <td>{{item.avg_price}}</td>
+                    <td>{{item.min_price}}</td>
+                    <td>{{item.max_price}}</td>
+                    <td>{{item.total_quantity}}</td>
+                </tr>
+            </table>
+        </div> 
+        {% endif %}
+    </div>
+
+
+    {% if show_graph %}
+
+    {% include 'App/template_blocks/item_chart.html' %}
+
+    {% endif %}
+</div>

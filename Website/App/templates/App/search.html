@@ -1,4 +1,4 @@
-{% extends 'App/base.html' %}
+{% extends 'App/template_blocks/base.html' %}
 
 {% block content %}
 
@@ -33,13 +33,13 @@
     <section id="theme-items-container">
         <!-- item sorting, graph data, page buttons -->
         <div id="sort-options-container">
-            {% include 'App/item_filters_and_sorts.html' with view="search" sub_view=theme_path %}
+            {% include 'App/template_blocks/item_filters_and_sorts.html' with view="search" sub_view=theme_path %}
         </div>
 
         <div id="theme-items">
         {% for item in theme_items %}
             <div class="main-item-container">
-            {% include 'App/item_container.html' %}
+            {% include 'App/template_blocks/item_container.html' %}
             </div>
         {% endfor %}
         </div>

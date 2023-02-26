@@ -17,7 +17,7 @@
         {% endif %}
 
         {% if request.GET.view == "items" or request.path == "/watchlist/" %}
-            {% include 'App/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
+            {% include 'App/template_blocks/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
         {% endif %}
     </div>
     
@@ -73,7 +73,7 @@
             </div>
             {% endif %}
 
-            {% include 'App/item_container.html' %}
+            {% include 'App/template_blocks/item_container.html' %}
 
             </div>
             {% endfor %}

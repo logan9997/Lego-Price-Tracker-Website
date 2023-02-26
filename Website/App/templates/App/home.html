@@ -1,4 +1,4 @@
-{% extends 'App/base.html' %}
+{% extends 'App/template_blocks/base.html' %}
 {% block content %}
 
 {% load static %}
@@ -10,11 +10,15 @@
 <section id="container-layer1" class="layers">
 
     <section id="biggest-trends" class="side-bars">
-        <h3>Trending Items</h3>
+        {% if portfolio_trending_items %}
+            <h3>Your Trending Items</h3>
+        {% else %}
+            <h3>Trending Items</h3>
+        {% endif %}
         <div id="trending-items-container">
             {% for item in trending %}
                 <div class="main-item-container">
-                {% include 'App/item_container.html' %}
+                {% include 'App/template_blocks/item_container.html' %}
                 </div>
             {% endfor %}
         </div>
@@ -54,7 +58,7 @@
         <div id="recently-viewed-items-container">
             {% for item in recently_viewed %}
             <div class="main-item-container-recently-viewed">
-                {% include 'App/item_container.html' %}
+                {% include 'App/template_blocks/item_container.html' %}
             </div>
             {% endfor %}
         </div>
@@ -84,7 +88,7 @@
             {% for item in popular_items %}
             <div class="main-item-container-layer3">
                 <div class="item-panel-container">
-                    {% include 'App/item_container.html' with show_graph=True %}
+                    {% include 'App/template_blocks/item_container.html' with show_graph=True %}
                 </div>
 
                 <div class="info-container">
@@ -102,7 +106,7 @@
             {% for item in new_items %}
             <div class="main-item-container-layer3">
                 <div class="item-panel-container">
-                    {% include 'App/item_container.html' with show_graph=True %}
+                    {% include 'App/template_blocks/item_container.html' with show_graph=True %}
                 </div>
 
                 <div class="info-container">

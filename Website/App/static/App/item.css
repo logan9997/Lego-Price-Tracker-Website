@@ -1,39 +1,84 @@
-#tophalf-container {
+.layers {
+    margin-left: 2%;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 3rem;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+#main-item-container {
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+}
+
+#info-overview {
+    margin-left: 2rem;
+    display: flex;
+    justify-content: space-around;
+    width: 80%;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+}
+
+.info-block {
+    width: 30.5%;
+    height: 20rem;
+    margin: 1rem;
+    background-color: white;
+    border-radius: 1rem;
+}
+
+#chart-form-container {
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+    width: 97%;
+    padding: 0.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    border: 0.1rem orangered solid;
+}
+
+#chart-container {
+    background-color: white;
+    margin: 1rem;
+    height: 100%;
+}
+
+#chart-container .price-trend {
+    width: 50rem;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+    border-radius: 2rem;
+    padding: 1rem;
+}
+
+.item_canvas {
+    margin-top: 0;
+    border-radius: 2rem;
+}
+
+#form-container {
     background-color: red;
+    width: 18rem;
+    height: 12rem;
+    margin-top: 1rem;
 }
 
 #add-to-watchlist {
-    background-color: blue;
-    padding: 3rem;
-    width: 10rem;
+    background-color: green;
 }
 
 #add-to-portfolio {
-    background-color: green;
-    padding: 3rem;
+    margin-top: 1rem;
+    background-color: yellow;
+}
+
+#add-to-portfolio .label-input-container {
+    display: flex;
+    margin-bottom: 0.8rem;
+}
+
+label {
     width: 10rem;
 }
 
-#item-profile {
-    background-color: white;
-    width: 12rem;
-    border: 0.2rem orangered solid;
+select {
     text-align: center;
-}
-
-#item-name {
-    font-size: 1rem;
-    background-color: yellow;
-    margin: 0;
-}
-
-#item-id {
-    font-size: 0.85rem;
-    background-color: purple;
-    border-bottom : 0.2rem orangered solid;
-
-}
-
-#item-image {
-    background-color: aqua;
 }

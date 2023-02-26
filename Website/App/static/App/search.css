@@ -20,7 +20,7 @@
     flex-wrap:wrap;
     justify-content:space-evenly;
     flex-direction: column-reverse;
-    overflow-y: scroll;
+    overflow: scroll;
     height: 14rem;
     width: 98%;
     margin-left: 1%;

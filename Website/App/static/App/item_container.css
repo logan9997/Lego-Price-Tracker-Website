@@ -45,15 +45,6 @@
     justify-content: center;
 }
 
-.price-trend {
-    z-index: 3;
-    width: 20rem;
-    height: 12rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
-}
 .price-info table {
     border-collapse: collapse;
 }
@@ -64,6 +55,15 @@
 
 .price-info td {
     padding: 0.25rem;
+}
+
+.price-trend {
+    z-index: 3;
+    width: 20rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
 }
 
 .item_canvas {
