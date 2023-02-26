@@ -59,7 +59,7 @@ def index(request):
         request.session["recently-viewed"] = []
 
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
-    recently_viewed = [DB.get_item_info(item_id) for item_id in recently_viewed_ids]
+    recently_viewed = [DB.get_item_info(item_id) for item_id in recently_viewed_ids][0]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
@@ -96,7 +96,8 @@ def index(request):
 
 
 def item(request, item_id):
-    context = {}
+ 
+    print(item_id)
 
     #stops view count being increased on refresh
     if "item_id" not in request.session or request.session.get("item_id") != item_id:
@@ -124,52 +125,26 @@ def item(request, item_id):
         #list is mutable, to save the changes to session
         request.session.modified = True
 
+    metric = request.POST.get("graph-metric", "avg_price")
+
+    #[0] since list with one element (being the item)
+    item_info = format_item_info(DB.get_item_info(item_id), graph_data={"metric":metric}, price_trend=True)[0]
+
+    graph_options = sort_dropdown_options(get_graph_options(), metric)
+
+    context = {
+        "show_graph":False,
+        "item":item_info,
+        "graph_options":graph_options
+    }
+
 
     if item_id != "favicon.ico":
 
-        #STORE THIS IN DATABASE!
-        # supersets = RESP.get_response_data(f"items/MINIFIG/{item_id}/supersets")
-        # subsets = RESP.get_response_data(f"items/MINIFIG/{item_id}/subsets")
-
-        prices = DB.get_minifig_prices(item_id)
-
-        #get all dates of each price record, replace "-" with "/"
-        dates = DB.get_dates(item_id)
-        dates = [d[0].replace("-", "/") for d in dates]
-
-        #if there IS price records then set colours (red/green/gray) for each price (avg,min,max)
-        if len(prices) > 0:
-            context.update({
-                "avg_price":get_price_colour(prices[-1][1] - prices[0][1]),
-                "min_price":get_price_colour(prices[-1][2] - prices[0][2]),
-                "max_price":get_price_colour(prices[-1][3] - prices[0][3]),
-            })
-
-        #provide default value as some items do not have any supersets
-        # sets_info = []
-        # if supersets != []:
-        #     sets_info = [RESP.get_response_data(f'items/SET/{s["item"]["no"]}') for s in supersets[0]["entries"] if RESP.get_response_data(f'items/SET/{s["item"]["no"]}') != None]
-
-        # parts_info = [RESP.get_response_data(f'items/PART/{p["entries"][0]["item"]["no"]}') for p in subsets]
-
-        #general info dict to be added to context
-        general_info = {
-            "item_id":DB.get_item_info(item_id)[0][0],
-            "name":DB.get_item_info(item_id)[0][1],
-            "year_released":DB.get_item_info(item_id)[0][2],
-        }
-
-        add_error_msg = request.session.get("add_to_user_items_error_msg", "")
+        add_to_user_items_error_msg = request.session.get("add_to_user_items_error_msg", "")
 
         context.update({
-            "general_info":general_info,
-            "image_path":f"App/images/{item_id}.png",
-            "prices": prices,
-            "dates":dates,
-            "avg_prices":[price[1] for price in prices],
-            "add_error_msg":add_error_msg
-            # "parts_info":parts_info,
-            # "sets_info":sets_info,
+            "add_to_user_items_error_msg":add_to_user_items_error_msg
         })
     
         if "add_to_user_items_error_msg" in request.session:
@@ -526,13 +501,6 @@ def add_to_user_items(request, item_id):
 
     view = request.POST.get("view-type")
 
-    #view = request.session["view-type"]
-
-    if view == "portfolio":
-        form = AddItemToPortfolio(request.POST)
-        if form.is_valid():
-            condition = form.cleaned_data["condition"]
-            quantity = form.cleaned_data["quantity"]
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
@@ -542,10 +510,17 @@ def add_to_user_items(request, item_id):
     portfolio_items_and_condition = DB.get_portfolio_items_condition(user_id)
 
     if view == "portfolio":
-        if (item_id, condition) not in portfolio_items_and_condition:
-            DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
-        else:
-            request.session["add_to_user_items_error_msg"] = f"{item_id}, {condition} is already in your portfolio"
+
+        form = AddItemToPortfolio(request.POST)
+        if form.is_valid():
+            condition = form.cleaned_data["condition"]
+            quantity = form.cleaned_data["quantity"]
+
+            if (item_id, condition) not in portfolio_items_and_condition:
+                DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
+            else:
+                condition = {"U":"Used", "N":"New"}[condition]
+                request.session["add_to_user_items_error_msg"] = f"{item_id} ({condition}) is already in your portfolio"
     else:
         if item_id not in user_item_ids:
             DB.add_to_user_items(user_id, item_id, view)
