@@ -1,7 +1,18 @@
-ITEMS_PER_PAGE = 6
-RECENTLY_VIEWED_ITEMS_NUM = 15
+import sys
+
+sys.path.insert(1, r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API")
+
+from my_scripts.database import *
+from my_scripts.responses import *
+from .config import *
+
+RESP = Response()
+DB = DatabaseManagment()
+
+RECENTLY_VIEWED_ITEMS_NUM = 6
 PAGE_NUM_LIMIT = 8
 SEARCH_ITEMS_PER_PAGE = 20
+USER_ITEMS_ITEMS_PER_PAGE = 6
 
 def get_sort_options() -> list[dict[str, str]]:
     SORT_OPTIONS = [
