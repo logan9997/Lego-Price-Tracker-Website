@@ -184,13 +184,27 @@ class DatabaseManagment():
     def get_item_info(self, item_id) -> list[str]:
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-                min_price, max_price, total_quantity
-            FROM App_price PR, App_item I
-            WHERE I.item_id = '{item_id}'
-                AND PR.item_id = I.item_id
+                min_price, max_price, total_quantity, round(avg_price - (
+                SELECT avg_price
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND I.item_id = '{item_id}'
+                    AND date = (
+                        SELECT max(date)
+                        FROM App_price
+                    ) 
+            ),2) as [£ change]
+
+            FROM App_price P1, App_item I
+            WHERE I.item_id = P1.item_id 
+                AND I.item_id = '{item_id}'
+                AND date = (
+                    SELECT min(date)
+                    FROM App_price
+                ) 
             GROUP BY I.item_id
         """
-        return self.SELECT(sql)[0]
+        return self.SELECT(sql)
 
     def get_not_null_years(self) -> list[str]:
         sql = """
@@ -273,15 +287,26 @@ class DatabaseManagment():
         return self.SELECT(sql)
 
 
-    def is_item_in_user_items(self, user_id, view) -> bool:
+    def is_item_in_user_items(self, user_id, view, item_id) -> bool:
+
+        if view == "portfolio":
+            sql_select = "SELECT condition, quantity" 
+            sql_group = "GROUP BY condition"
+        else:
+            sql_select = "SELECT item_id" 
+            sql_group = ""
+
+        print(view, sql_select, sql_group)
+
         sql = f"""
-            SELECT item_id
+            {sql_select}
             FROM App_{view}
             WHERE user_id = {user_id}
-            GROUP BY item_id
+                AND item_id = '{item_id}'
+            {sql_group}
         """
-        item_ids = [item[0] for item in self.SELECT(sql)]
-        return item_ids
+        
+        return self.SELECT(sql)
 
 
 
@@ -687,3 +712,27 @@ class DatabaseManagment():
             ORDER BY [total_views] DESC
         """
         return self.SELECT(sql)
+
+
+    def get_total_owners_or_watchers(self ,view, item_id):
+        if view == "portfolio":
+            sql = f"""
+                SELECT item_id
+                FROM App_{view}
+                WHERE item_id = '{item_id}'
+                GROUP BY user_id
+            """
+            return len(self.SELECT(sql))
+        else:
+            sql = f"""
+                SELECT count()
+                FROM App_watchlist
+                WHERE item_id = '{item_id}'
+                GROUP BY user_id
+            """
+            result = self.SELECT(sql, fetchone=True)
+            if result == None:
+                return 0
+            return result[0]
+
+        

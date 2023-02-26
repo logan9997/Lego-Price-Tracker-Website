@@ -59,7 +59,7 @@ def index(request):
         request.session["recently-viewed"] = []
 
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
-    recently_viewed = [DB.get_item_info(item_id) for item_id in recently_viewed_ids][0]
+    recently_viewed = [DB.get_item_info(item_id)[0] for item_id in recently_viewed_ids]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
@@ -97,7 +97,10 @@ def index(request):
 
 def item(request, item_id):
  
-    print(item_id)
+    if "user_id" in request.session:
+        user_id = request.session["user_id"]
+    else:
+        user_id = -1
 
     #stops view count being increased on refresh
     if "item_id" not in request.session or request.session.get("item_id") != item_id:
@@ -132,10 +135,27 @@ def item(request, item_id):
 
     graph_options = sort_dropdown_options(get_graph_options(), metric)
 
+    in_portfolio = DB.is_item_in_user_items(user_id, "portfolio", item_id)
+    #convert tuple to dict 
+    in_portfolio = [{"condition":{"N":"New", "U":"Used"}[_item[0]], "count":_item[1] } for _item in in_portfolio]
+
+    in_watchlist = DB.is_item_in_user_items(user_id, "watchlist", item_id)
+    if len(in_watchlist) == 1:
+        in_watchlist = "Yes"
+    else:
+        in_watchlist = "No"
+
+    total_watchers = DB.get_total_owners_or_watchers("watchlist", item_id) 
+    total_owners = DB.get_total_owners_or_watchers("portfolio", item_id)
+
     context = {
         "show_graph":False,
         "item":item_info,
-        "graph_options":graph_options
+        "graph_options":graph_options,
+        "in_portfolio":in_portfolio,
+        "in_watchlist":in_watchlist,
+        "total_watchers":total_watchers,
+        "total_owners":total_owners,
     }
 
 
@@ -385,9 +405,6 @@ def user_items(request, view, user_id):
 
     current_page = check_page_boundaries(current_page, items, USER_ITEMS_ITEMS_PER_PAGE)
     num_pages = slice_num_pages(items, current_page, USER_ITEMS_ITEMS_PER_PAGE)
-
-    print(current_page)
-
 
     items = sort_items(items, sort_field)
     #keep selected sort field option as first <option> tag

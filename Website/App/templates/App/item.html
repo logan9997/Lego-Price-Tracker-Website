@@ -12,17 +12,26 @@
 
     <section id="info-overview">
         <div class="info-block">
+            <h3>Price Data</h3>
             <p>Price Change {{ item.price_change }} </p>
-            <p>Owned by 232</p>
+            <p>Total Quantity Available {{item.total_quantity}}</p>
+            <p>Avg Price {{item.avg_price}}</p>
+            <p>Min Price {{item.min_price}}</p>
+            <p>Max Price {{item.max_price}}</p>
+
         </div>
 
         <div class="info-block">
+            <h3>Sets and Pieces</h3>
             <p>6 pieces</p>
             <p>1 set</p>
         </div>
 
         <div class="info-block">
+            <h3>General Info</h3>
             <p>Year Released : {{item.year_released}}</p>
+            <p>Owned By : {{total_owners}}</p>
+            <p>Watched By : {{total_watchers}}</p>
         </div>
     </section>
 
@@ -48,8 +57,12 @@
     <section id="in-collections-forms-container">
 
         <section id="in-collections">
-            <p>In Portfolio : *7 (N), *2 (U)</p>
-            <p>In Watchlist : No</p>
+            {% if in_portfolio|length != 0%}
+                <p>In Portfolio | {% for condition in in_portfolio %} {{condition.condition}} - {{condition.count}} | {% endfor %}</p>
+            {% else %}
+                <p>In Portfolio : No</p>
+            {% endif %}
+            <p>In Watchlist : {{in_watchlist}}</p>
         </section>
 
         <section id="form-container">
