@@ -54,31 +54,67 @@
     border-radius: 2rem;
 }
 
+#in-collections-forms-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#in-collections {
+    height: 7rem;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+    margin:2rem 0 2rem;
+}
+
+#in-collections p {
+    margin-left: 1.5rem;
+}
+
 #form-container {
-    background-color: red;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
     width: 18rem;
-    height: 12rem;
+    height: 16rem;
     margin-top: 1rem;
+}
+
+#form-container h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
 #add-to-watchlist {
-    background-color: green;
+    margin: 1rem 2.5rem 0;
+    border-top: 0.05rem black solid;
+    padding-top: 1rem;
+
 }
 
 #add-to-portfolio {
-    margin-top: 1rem;
-    background-color: yellow;
+    margin: 1rem 2.5rem 0;
+    width: 60%;
 }
 
 #add-to-portfolio .label-input-container {
-    display: flex;
     margin-bottom: 0.8rem;
 }
 
-label {
-    width: 10rem;
+#form-container label {
+    width:180px;
+    text-align:left;
+    padding-right:10px;
 }
 
-select {
+#form-container select, input {
     text-align: center;
+    float: right;
+    width: 4rem;
+    padding: 0;
+}
+
+#form-container select {
+    width: 4.2rem;
+}
+
+#error-msg {
+    text-align: center;
+
 }
