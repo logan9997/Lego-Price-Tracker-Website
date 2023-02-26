@@ -1,9 +1,7 @@
 
 
 #main-container {
-    position: absolute;
-    left: calc(50% - 18rem);
-    margin-left: -10px;
+    margin-left: calc(50% - 18rem);
     width: 36rem;
     height: 30rem;
     display: flex;
@@ -12,6 +10,7 @@
     justify-content:right;
     border-radius: 1.4rem;
     border: 0.1rem black solid;
+    margin-bottom: 5rem;
     /* box-shadow: 0.1rem 0.1rem 0.1rem  black; */
 }
 
