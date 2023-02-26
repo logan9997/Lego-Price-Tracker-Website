@@ -195,13 +195,25 @@ def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], inde
     return themes
 
 
-def check_page_boundaries(current_page, items, items_per_page):
-    if current_page > math.ceil(len(items) / items_per_page):
-        current_page = 1
+def check_page_boundaries(current_page, items:list, items_per_page:int):
+
+    try:
+        current_page = int(current_page)
+    except:
+        return 1
+
+    conditions = [
+        current_page <= math.ceil(len(items) / items_per_page),
+        current_page > 0,
+    ]
+
+    if not all(conditions):
+        return 1
+    
     return current_page
 
 
-def slice_num_pages(items, current_page, items_per_page):
+def slice_num_pages(items:list, current_page:int, items_per_page:int):
     num_pages = [i+1 for i in range((len(items) // items_per_page ) + 1)]
     last_page = num_pages[-1] -1
 
@@ -230,7 +242,7 @@ def slice_num_pages(items, current_page, items_per_page):
     return num_pages
 
 
-def append_item_graph_info(item_id, graph_metric, **kwargs):
+def append_item_graph_info(item_id:str, graph_metric:str, **kwargs):
     prices = [] ; dates = []
     for price_date_info in DB.get_item_graph_info(item_id, graph_metric, view=kwargs.get("view"), user_id=kwargs.get("user_id")):
         prices.append(price_date_info[0])

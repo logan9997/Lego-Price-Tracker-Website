@@ -215,15 +215,26 @@ def trending(request):
 
 def search(request, theme_path='all'):
 
-    graph_metric = "avg_price"
+    if "url_params" in request.session:
+        for k, v in request.POST.items():
+            request.session["url_params"][k] = v
+        options = request.session["url_params"]
+    else:
+        request.session["url_params"] = {}
+        options = {}
+
+    request.session.modified = True
+
+    graph_metric = options.get("graph-metric", "avg_price")
+    sort_field = options.get("sort-field", "avg_price-desc")
+    current_page = options.get("page", 1)
+
+    print(sort_field)
 
     if "user_id" in request.session:
         user_id = request.session["user_id"]
     else:
         user_id = -1
-
-    current_page = int(request.POST.get("page", 1)) 
-
 
     if theme_path != "all":
         theme_path = theme_path.replace("all/", "")
@@ -237,7 +248,7 @@ def search(request, theme_path='all'):
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
-            #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
+            return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
         sub_themes = DB.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
         #split "~" (used to seperate sub themes in database) with 
@@ -248,26 +259,35 @@ def search(request, theme_path='all'):
     current_page = check_page_boundaries(current_page, theme_items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(theme_items, current_page, SEARCH_ITEMS_PER_PAGE)
 
-    theme_items = theme_items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
 
-    sort_option = request.POST.get("sort-order", "theme_name-asc")
-    sort_options = get_search_sort_options()
-    if sort_option != None:
-        sort_options = sort_dropdown_options(sort_options, sort_option)
+    theme_sort_option = request.POST.get("sort-order", "theme_name-asc")
+    theme_sort_options = get_search_sort_options()
+    if theme_sort_option != None:
+        theme_sort_options = sort_dropdown_options(theme_sort_options, theme_sort_option)
+
+    graph_options = sort_dropdown_options(get_graph_options(), graph_metric)
+    sort_options = sort_dropdown_options(get_sort_options(), sort_field)
+
+    theme_items = sort_items(theme_items,sort_field)
+
+    theme_items = theme_items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
+    
 
     if request.method == "POST": 
         if request.POST.get("form-type") != "theme-url":
-            order = sort_option.split("-")[1]
-            field = sort_option.split("-")[0]
+            order = theme_sort_option.split("-")[1]
+            field = theme_sort_option.split("-")[0]
             sub_themes = sort_themes(field, order, sub_themes)
 
     context = {
         "show_graph":True,
         "current_page":current_page,
-        "page_buttons":page_numbers,
+        "num_pages":page_numbers,
         "theme_path":theme_path,
         "sub_themes":sub_themes,
         "theme_items":theme_items,
+        "theme_sort_options":theme_sort_options,
+        "graph_options":graph_options,
         "sort_options":sort_options,
         "biggest_theme_trends":biggest_theme_trends()
     }
@@ -402,11 +422,15 @@ def user_items(request, view, user_id):
     current_page = int(options.get("page", 1))
     sort_field = options.get("sort-field", "avg_price-desc")
 
+
     items = DB.get_user_items(user_id, view)
     items = format_item_info(items, view=view, graph_data={"metric":graph_metric, "user_id":user_id})
 
     current_page = check_page_boundaries(current_page, items, USER_ITEMS_ITEMS_PER_PAGE)
     num_pages = slice_num_pages(items, current_page, USER_ITEMS_ITEMS_PER_PAGE)
+
+    print(current_page)
+
 
     items = sort_items(items, sort_field)
     #keep selected sort field option as first <option> tag
@@ -416,7 +440,6 @@ def user_items(request, view, user_id):
 
     total_unique_items = len(items)
     total_price = DB.user_items_total_price(user_id, graph_metric, view)
-
     items = items[(current_page - 1) * USER_ITEMS_ITEMS_PER_PAGE : int(current_page) * USER_ITEMS_ITEMS_PER_PAGE]
 
     parent_themes = DB.parent_themes(user_id, view)
