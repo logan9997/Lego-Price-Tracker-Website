@@ -36,10 +36,11 @@ def search_item(request, current_view):
     
     #get item from the search bar, if it exists redirect to that items info page
     selected_item = request.POST.get("item_id")
+    print(selected_item)
 
     if selected_item in item_ids:
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
-    return redirect(current_view)
+    return redirect(f"http://127.0.0.1:8000{current_view}")
 
 
 def index(request):
@@ -96,7 +97,16 @@ def index(request):
 
 
 def item(request, item_id):
- 
+
+    metric = request.POST.get("graph-metric", "avg_price")
+
+    #[0] since list with one element (being the item)
+    item_info = format_item_info(DB.get_item_info(item_id), graph_data={"metric":metric}, price_trend=True)
+    if item_info == []:
+        print(request.META.get('HTTP_REFERER'))
+        return redirect(request.META.get('HTTP_REFERER'))
+    item_info = item_info[0]
+
     if "user_id" in request.session:
         user_id = request.session["user_id"]
     else:
@@ -128,11 +138,6 @@ def item(request, item_id):
         #list is mutable, to save the changes to session
         request.session.modified = True
 
-    metric = request.POST.get("graph-metric", "avg_price")
-
-    #[0] since list with one element (being the item)
-    item_info = format_item_info(DB.get_item_info(item_id), graph_data={"metric":metric}, price_trend=True)[0]
-
     graph_options = sort_dropdown_options(get_graph_options(), metric)
 
     in_portfolio = DB.is_item_in_user_items(user_id, "portfolio", item_id)
@@ -149,6 +154,7 @@ def item(request, item_id):
     total_owners = DB.get_total_owners_or_watchers("portfolio", item_id)
 
     context = {
+        "show_year_released_availability":True,
         "show_graph":False,
         "item":item_info,
         "graph_options":graph_options,
@@ -518,7 +524,6 @@ def add_to_user_items(request, item_id):
 
     view = request.POST.get("view-type")
 
-
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
     user_id = request.session["user_id"]
@@ -527,17 +532,14 @@ def add_to_user_items(request, item_id):
     portfolio_items_and_condition = DB.get_portfolio_items_condition(user_id)
 
     if view == "portfolio":
-
         form = AddItemToPortfolio(request.POST)
         if form.is_valid():
             condition = form.cleaned_data["condition"]
             quantity = form.cleaned_data["quantity"]
-
             if (item_id, condition) not in portfolio_items_and_condition:
                 DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
             else:
-                condition = {"U":"Used", "N":"New"}[condition]
-                request.session["add_to_user_items_error_msg"] = f"{item_id} ({condition}) is already in your portfolio"
+                DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
     else:
         if item_id not in user_item_ids:
             DB.add_to_user_items(user_id, item_id, view)
