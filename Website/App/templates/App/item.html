@@ -29,7 +29,6 @@
 
         <div class="info-block">
             <h3>General Info</h3>
-            <p>Year Released : {{item.year_released}}</p>
             <p>Owned By : {{total_owners}}</p>
             <p>Watched By : {{total_watchers}}</p>
         </div>
@@ -58,7 +57,7 @@
 
         <section id="in-collections">
             {% if in_portfolio|length != 0%}
-                <p>In Portfolio | {% for condition in in_portfolio %} {{condition.condition}} - {{condition.count}} | {% endfor %}</p>
+                <p>In Portfolio | {% for condition in in_portfolio %} {{condition.condition}} : {{condition.count}} | {% endfor %}</p>
             {% else %}
                 <p>In Portfolio : No</p>
             {% endif %}
@@ -80,7 +79,7 @@
 
                     <div class="label-input-container">
                         <label for="quantity">Quantity</label>
-                        <input min="1" placeholder="1" type="number" name="quantity">
+                        <input min="1" value="1" type="number" name="quantity">
                     </div>
 
                     <button name="view-type" type="submit" value="portfolio">Add to Portfolio!</button>

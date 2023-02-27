@@ -12,6 +12,7 @@
     {% endwith %}
 
     <script>
+
         var prices = JSON.parse(document.getElementById('{{item.prices_id}}').textContent);
         var dates = JSON.parse(document.getElementById('{{item.dates_id}}').textContent);
 
@@ -37,7 +38,12 @@
                     x : {
                         type:"time",
                         time: {unit:"day"}
-                    }
+                    }, 
+                    yAxes: [{  
+                        ticks : {
+                            maxTicksLimit: 8,
+                        } 
+                    }],
                 }
             }
             });

@@ -71,7 +71,7 @@
         <div id="flex-container">
             <div id="RHS-nav-content">  
                 <div>
-                    <form id="search-form" action="{% url 'search_item' request.path_info|replace_forward_slash %}" method="post">
+                    <form id="search-form" action="{% url 'search_item' request.path_info %}" method="post">
                         {% csrf_token %}
                         <div id="input-submit-container">
                             <input placeholder="Enter item ID / name" type="text" name="item_id">
