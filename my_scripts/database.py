@@ -90,26 +90,33 @@ class DatabaseManagment():
         return self.SELECT(sql)     
 
     
-    def get_biggest_trends(self) -> list[str]:
-        sql = """
+    def get_biggest_trends(self, change_metric) -> list[str]:
+        sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-            min_price, max_price, total_quantity, round(avg_price - (
-                SELECT avg_price
+            min_price, max_price, total_quantity, round((
+                (SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ),2) as [£ change]
-
+            ) - {change_metric}) / (
+            SELECT {change_metric}
+            FROM App_price P2
+            WHERE P2.item_id = P1.item_id
+                AND date = (
+                    SELECT min(date)
+                    FROM App_price
+                ) 
+            ) * 100, 2) AS [percentage change]
             FROM App_price P1, App_item I
             WHERE I.item_id = P1.item_id 
                 AND date = (
                     SELECT max(date)
                     FROM App_price
                 ) 
-            ORDER BY [£ change] DESC
+            ORDER BY [percentage change] DESC
         """
 
         result = self.SELECT(sql)
@@ -184,11 +191,12 @@ class DatabaseManagment():
         self.con.commit()
 
 
-    def get_item_info(self, item_id) -> list[str]:
+    def get_item_info(self, item_id, change_metric) -> list[str]:
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-                min_price, max_price, total_quantity, round(avg_price - (
-                SELECT avg_price
+            min_price, max_price, total_quantity, round(
+                ((
+                SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND I.item_id = '{item_id}'
@@ -196,7 +204,16 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ),2) as [£ change]
+                ) - {change_metric}) / (
+                SELECT {change_metric}
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND I.item_id = '{item_id}'
+                    AND date = (
+                        SELECT min(date)
+                        FROM App_price
+                    )
+            ) *100, 2) as '%change'
 
             FROM App_price P1, App_item I
             WHERE I.item_id = P1.item_id 
@@ -418,28 +435,34 @@ class DatabaseManagment():
         return self.SELECT(sql)
 
 
-    def biggest_theme_trends(self) -> list[str]:
-        sql = """
-            SELECT theme_path, round(avg_price - (
-                SELECT avg_price
+    def biggest_theme_trends(self, change_metric) -> list[str]:
+        sql = f"""
+            SELECT theme_path, round((
+                (SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ),2) as [£ change]
-
+            ) - {change_metric}) / (
+            SELECT {change_metric}
+            FROM App_price P2
+            WHERE P2.item_id = P1.item_id
+                AND date = (
+                    SELECT min(date)
+                    FROM App_price
+                ) 
+            ) * 100, 2) AS [percentage change]
             FROM App_price P1, App_item I, App_theme T
             WHERE I.item_id = P1.item_id 
-                AND P1.item_id = I.item_id
-                AND I.item_id = T.item_id
+                AND T.item_id = I.item_id
                 AND date = (
                     SELECT max(date)
                     FROM App_price
                 ) 
             GROUP BY theme_path
-            ORDER BY [£ change] DESC
+            ORDER BY [percentage change] DESC
         """
         return self.SELECT(sql)
 

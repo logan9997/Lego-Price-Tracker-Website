@@ -30,8 +30,8 @@ def format_item_info(items, **kwargs):
     #graph_data:bool new_items:bool
 
     if kwargs.get("view") == "search":
-        user_item_ids_portfolio = DB.is_item_in_user_items(kwargs.get("user_id"), "portfolio")
-        user_item_ids_watchlist = DB.is_item_in_user_items(kwargs.get("user_id"), "watchlist")
+        user_item_ids_portfolio = DB.user_item_ids(kwargs.get("user_id"), "portfolio")
+        user_item_ids_watchlist = DB.user_item_ids(kwargs.get("user_id"), "watchlist")
 
     item_dicts = []
     for item in items:
@@ -106,7 +106,7 @@ def format_theme_items(theme_items):
 
 
 def biggest_theme_trends():
-    themes = DB.biggest_theme_trends()
+    themes = DB.biggest_theme_trends("avg_price")
     themes_formated = [
         {
             "theme_path":theme[0],
@@ -252,6 +252,12 @@ def slice_num_pages(items:list, current_page:int, items_per_page:int):
     if last_page not in num_pages:
         num_pages.append(last_page)
 
+    if 0 in num_pages:
+        num_pages.remove(0)
+
+    if len(num_pages) == 1:
+        return []
+
     return num_pages
 
 
@@ -261,3 +267,4 @@ def append_item_graph_info(item_id:str, graph_metric:str, **kwargs):
         prices.append(price_date_info[0])
         dates.append(price_date_info[1])
     return prices, dates
+

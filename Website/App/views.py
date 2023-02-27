@@ -60,7 +60,7 @@ def index(request):
         request.session["recently-viewed"] = []
 
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
-    recently_viewed = [DB.get_item_info(item_id)[0] for item_id in recently_viewed_ids]
+    recently_viewed = [DB.get_item_info(item_id, "avg_price")[0] for item_id in recently_viewed_ids]
 
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
@@ -101,7 +101,7 @@ def item(request, item_id):
     metric = request.POST.get("graph-metric", "avg_price")
 
     #[0] since list with one element (being the item)
-    item_info = format_item_info(DB.get_item_info(item_id), graph_data={"metric":metric}, price_trend=True)
+    item_info = format_item_info(DB.get_item_info(item_id, "avg_price"), graph_data={"metric":metric}, price_trend=True)
     if item_info == []:
         print(request.META.get('HTTP_REFERER'))
         return redirect(request.META.get('HTTP_REFERER'))
