@@ -80,6 +80,7 @@ class DatabaseManagment():
         
         return self.SELECT(sql)
 
+
     def get_dates(self, minifig_id) -> list[str]:
         sql = f"""
             SELECT date
@@ -97,7 +98,7 @@ class DatabaseManagment():
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
-                        SELECT max(date)
+                        SELECT min(date)
                         FROM App_price
                     ) 
             ),2) as [£ change]
@@ -105,7 +106,7 @@ class DatabaseManagment():
             FROM App_price P1, App_item I
             WHERE I.item_id = P1.item_id 
                 AND date = (
-                    SELECT min(date)
+                    SELECT max(date)
                     FROM App_price
                 ) 
             ORDER BY [£ change] DESC
@@ -157,12 +158,14 @@ class DatabaseManagment():
                 WHERE T.item_id = I.item_id
                     AND I.item_id = P.item_id
                     AND theme_path = '{theme_path}'
-                    and item_type = 'M'
+                    AND item_type = 'M'
+                    AND date = (SELECT MAX(date) FROM App_price)
                 GROUP BY I.item_id
             """
             return self.SELECT(sql)      
         finally:
             self.lock.release()
+
 
     def get_item_ids(self) -> list[str]:
         sql = """
@@ -190,7 +193,7 @@ class DatabaseManagment():
                 WHERE P2.item_id = P1.item_id
                     AND I.item_id = '{item_id}'
                     AND date = (
-                        SELECT max(date)
+                        SELECT min(date)
                         FROM App_price
                     ) 
             ),2) as [£ change]
@@ -199,7 +202,7 @@ class DatabaseManagment():
             WHERE I.item_id = P1.item_id 
                 AND I.item_id = '{item_id}'
                 AND date = (
-                    SELECT min(date)
+                    SELECT max(date)
                     FROM App_price
                 ) 
             GROUP BY I.item_id
@@ -271,7 +274,7 @@ class DatabaseManagment():
 
     def get_user_items(self, user_id, view) -> list[str]:
 
-        sql_select = "SELECT I.*,avg_price, min_price, max_price, total_quantity"
+        sql_select = "SELECT I.item_id, item_name, year_released, item_type,avg_price, min_price, max_price, total_quantity"
         if view == "portfolio":
             sql_select += ", condition, quantity"
 
@@ -295,8 +298,6 @@ class DatabaseManagment():
         else:
             sql_select = "SELECT item_id" 
             sql_group = ""
-
-        print(view, sql_select, sql_group)
 
         sql = f"""
             {sql_select}
@@ -397,7 +398,7 @@ class DatabaseManagment():
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
-                        SELECT max(date)
+                        SELECT min(date)
                         FROM App_price
                     ) 
             ),2) as [£ change]
@@ -408,7 +409,7 @@ class DatabaseManagment():
                 AND portfolio.user_id = user.user_id
                 AND user.user_id = {user_id}
                 AND date = (
-                    SELECT min(date)
+                    SELECT max(date)
                     FROM App_price
                 ) 
             GROUP BY portfolio.item_id
@@ -424,7 +425,7 @@ class DatabaseManagment():
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
                     AND date = (
-                        SELECT max(date)
+                        SELECT min(date)
                         FROM App_price
                     ) 
             ),2) as [£ change]
@@ -434,7 +435,7 @@ class DatabaseManagment():
                 AND P1.item_id = I.item_id
                 AND I.item_id = T.item_id
                 AND date = (
-                    SELECT min(date)
+                    SELECT max(date)
                     FROM App_price
                 ) 
             GROUP BY theme_path
@@ -450,7 +451,6 @@ class DatabaseManagment():
             WHERE username = '{username}'
                 AND password = '{password}'
         """
-        print(sql)
         if len(self.SELECT(sql)) == 1:
             return True
         return False
@@ -567,6 +567,15 @@ class DatabaseManagment():
         self.con.commit()
 
 
+    def user_item_ids(self, user_id, view):
+        sql = f"""
+            SELECT item_id
+            FROM App_{view}
+            WHERE user_id = {user_id}
+            GROUP BY item_id
+        """
+        return self.SELECT(sql)
+
     def add_to_user_items(self, user_id, item_id, view, **portfolio_args) -> None:
         date = datetime.date.today().strftime('%Y-%m-%d')
         
@@ -659,6 +668,7 @@ class DatabaseManagment():
             FROM App_item i, App_price P
             WHERE views > 0
                 AND I.item_id = P.item_id
+                AND date = (SELECT MAX(date) FROM App_price)
             GROUP BY I.item_id
             ORDER BY views DESC
 
@@ -698,6 +708,7 @@ class DatabaseManagment():
             FROM App_item I, App_price P
             WHERE I.item_id LIKE 'sw%'
                 AND I.item_id = P.item_id
+                AND date = (SELECT MAX(date) FROM App_price)
             ORDER BY year_released DESC
         """
         return self.SELECT(sql)
