@@ -12,18 +12,32 @@
     flex-direction: column;
     justify-content: center;
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
-    padding: 1rem;
 }
 
 .item-container {
     height: 20rem;
+    margin: 1rem;
+}
+
+.item-container h3 {
+    border-top: 0.1rem orangered solid;
+    border-bottom: 0.1rem orangered solid;
+}
+
+.item-container h4 {
+    padding-top: 1rem;
+}
+
+.item-img-and-title {
+    margin-left: 0;
+    padding: 0.5rem 0 0.5rem;
 }
 
 #info-overview {
     margin-left: 2rem;
     display: flex;
     justify-content: space-around;
-    width: 80%;
+    width: 79%;
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
 }
 
