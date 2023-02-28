@@ -185,7 +185,9 @@ def item(request, item_id):
 
 def trending(request):
 
-    winners = format_item_info(DB.get_biggest_trends(), price_trend=True, graph_data={"metric":"avg_price"})
+    metric = "total_quantity"
+
+    winners = format_item_info(DB.get_biggest_trends(metric), price_trend=True, graph_data={"metric":metric})
 
     context = {
         "winners":winners,
@@ -489,6 +491,10 @@ def view_POST(request, view):
                 DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
             else:
                 DB.add_to_user_items(item_id, user_id, view, condition=condition, quantity=quantity)
+
+    if request.POST.get("form-type") == "remove-watchlist-item":
+        item_id = request.POST.get("item_id")
+        DB.remove_from_watchlist(user_id, item_id)
 
     request = save_POST_params(request)[0]
 

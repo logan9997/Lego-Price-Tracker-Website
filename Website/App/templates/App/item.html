@@ -1,5 +1,6 @@
 {% extends 'App/template_blocks/base.html' %}
 {% load static %}
+{% load tags %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'App/item.css' %}">
@@ -12,8 +13,8 @@
 
     <section id="info-overview">
         <div class="info-block">
-            <h3>Price Data</h3>
-            <p>Price Change {{ item.price_change }} </p>
+            <h3>Prices & Quantity</h3>
+            <p>{{metric}} Change (%) {{ item.price_change|postivie_or_negative_sign }} </p>
             <p>Total Quantity Available {{item.total_quantity}}</p>
             <p>Avg Price {{item.avg_price}}</p>
             <p>Min Price {{item.min_price}}</p>

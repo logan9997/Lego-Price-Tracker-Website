@@ -51,7 +51,7 @@
 
         <div class="item-and-side-bar-container">
             {% if request.path == "/portfolio/" %}
-            <div class="portfolio-items-options">
+            <div class="items-options">
                 <div class="qty-condition-container">
                     <p>{{item.owned_quantity}}</p>
                     <p>({{item.condition}})</p>
@@ -69,6 +69,15 @@
                     
                     <input class="add-item" name="remove_or_add" type="submit" value="+">
                     <input class="remove-item" name="remove_or_add" type="submit" value="-">
+                </form>
+            </div>
+            {% else %}
+            <div class="items-options watchlist-options">
+                <form action="{% url 'view_POST' view %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="form-type" value="remove-watchlist-item">
+                    <input type="hidden" name="item_id" value="{{item.item_id}}">
+                    <button type="submit">-</button>
                 </form>
             </div>
             {% endif %}
