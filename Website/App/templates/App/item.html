@@ -14,7 +14,14 @@
     <section id="info-overview">
         <div class="info-block">
             <h3>Prices & Quantity</h3>
-            <p>{{metric}} Change (%) {{ item.price_change|postivie_or_negative_sign }} </p>
+            
+            <div id="metric-change-container">
+                <div class="tool-tip">
+                    <span class="tool-tip-icon">?</span>
+                    <p class="tool-tip-text">% change since oldest record</p>
+                </div>
+                <p id="metric-change"> {{metric}} Change (%) {{ item.price_change|postivie_or_negative_sign }} </p>
+            </div>
             <p>Total Quantity Available {{item.total_quantity}}</p>
             <p>Avg Price {{item.avg_price}}</p>
             <p>Min Price {{item.min_price}}</p>

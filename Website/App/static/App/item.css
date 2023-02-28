@@ -41,6 +41,19 @@
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
 }
 
+#metric-change-container {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    height: 2.5rem;
+}
+
+.tool-tip {
+    position: relative;
+    top: 2.3rem;
+    margin-left: 11%;
+}
+
 .info-block {
     width: 30.5%;
     height: 20rem;
