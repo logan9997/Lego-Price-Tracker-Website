@@ -98,10 +98,13 @@ def index(request):
 
 def item(request, item_id):
 
-    metric = request.POST.get("graph-metric", "avg_price")
+    request, options = save_POST_params(request)
+    print(options)
+
+    metric = options.get("graph-metric", "avg_price")
 
     #[0] since list with one element (being the item)
-    item_info = format_item_info(DB.get_item_info(item_id, "avg_price"), graph_data={"metric":metric}, price_trend=True)
+    item_info = format_item_info(DB.get_item_info(item_id, metric), graph_data={"metric":metric}, price_trend=True)
     if item_info == []:
         print(request.META.get('HTTP_REFERER'))
         return redirect(request.META.get('HTTP_REFERER'))
@@ -162,6 +165,7 @@ def item(request, item_id):
         "in_watchlist":in_watchlist,
         "total_watchers":total_watchers,
         "total_owners":total_owners,
+        "metric":"".join([f"{string.capitalize()} " for string in  metric.split("_")]),
     }
 
 
@@ -197,15 +201,7 @@ def search(request, theme_path='all'):
     if "search" not in request.META.get('HTTP_REFERER'):
         request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
 
-    if "url_params" in request.session:
-        for k, v in request.POST.items():
-            request.session["url_params"][k] = v
-        options = request.session["url_params"]
-    else:
-        request.session["url_params"] = {}
-        options = {}
-
-    request.session.modified = True
+    request, options = save_POST_params(request)
 
     graph_metric = options.get("graph-metric", "avg_price")
     sort_field = options.get("sort-field", "avg_price-desc")
@@ -494,13 +490,7 @@ def view_POST(request, view):
             else:
                 DB.add_to_user_items(item_id, user_id, view, condition=condition, quantity=quantity)
 
-    if "url_params" in request.session:
-        for k, v in request.POST.items():
-            request.session["url_params"][k] = v
-    else:
-        request.session["url_params"] = {}
-
-    request.session.modified = True
+    request = save_POST_params(request)[0]
 
     portfolio_view = ""
     if view == "portfolio":

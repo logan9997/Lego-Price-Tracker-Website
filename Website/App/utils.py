@@ -268,3 +268,15 @@ def append_item_graph_info(item_id:str, graph_metric:str, **kwargs):
         dates.append(price_date_info[1])
     return prices, dates
 
+
+def save_POST_params(request) -> tuple[dict, dict]:
+    if "url_params" in request.session:
+        for k, v in request.POST.items():
+            request.session["url_params"][k] = v
+        options = request.session["url_params"]
+    else:
+        request.session["url_params"] = {}
+        options = {}
+
+    request.session.modified = True
+    return request, options
