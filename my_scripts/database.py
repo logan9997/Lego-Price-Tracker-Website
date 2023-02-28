@@ -101,7 +101,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ) - {change_metric}) / (
+            ) - {change_metric}) *1.0 /  (
             SELECT {change_metric}
             FROM App_price P2
             WHERE P2.item_id = P1.item_id
@@ -204,7 +204,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-                ) - {change_metric}) / (
+                ) - {change_metric}) *1.0 / (
                 SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
@@ -445,7 +445,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ) - {change_metric}) / (
+            ) - {change_metric}) *1.0 /  (
             SELECT {change_metric}
             FROM App_price P2
             WHERE P2.item_id = P1.item_id
