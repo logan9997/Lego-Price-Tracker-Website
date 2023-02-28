@@ -99,7 +99,6 @@ def index(request):
 def item(request, item_id):
 
     request, options = save_POST_params(request)
-    print(options)
 
     metric = options.get("graph-metric", "avg_price")
 
@@ -153,6 +152,11 @@ def item(request, item_id):
     else:
         in_watchlist = "No"
 
+    
+
+    item_themes = DB.get_items_themes(item_id)
+    similar_items = format_item_info(get_similar_items(item_info["item_name"], item_info["item_type"], item_info["item_id"]))
+
     total_watchers = DB.get_total_owners_or_watchers("watchlist", item_id) 
     total_owners = DB.get_total_owners_or_watchers("portfolio", item_id)
 
@@ -160,6 +164,8 @@ def item(request, item_id):
         "show_year_released_availability":True,
         "show_graph":False,
         "item":item_info,
+        "item_themes":item_themes,
+        "similar_items":similar_items,
         "graph_options":graph_options,
         "in_portfolio":in_portfolio,
         "in_watchlist":in_watchlist,

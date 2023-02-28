@@ -1,5 +1,6 @@
 import math
 import time
+import itertools
 
 from .config import *
 
@@ -280,3 +281,43 @@ def save_POST_params(request) -> tuple[dict, dict]:
 
     request.session.modified = True
     return request, options
+
+
+def similar_items_iterate(single_words, item_name, item_type, item_id, items, i):
+    for sub in itertools.combinations(single_words, i):
+        sql_like = "AND " + ''.join([f"item_name LIKE '%{word}%' AND " for word in sub])[:-4]
+        items = DB.get_similar_items(item_name, item_type, item_id, sql_like)
+        if len(items) > 1:
+            items.extend(items)
+            items = list(dict.fromkeys(items))
+            return i, items 
+        
+        if len(sub) <= 3 and len(items) > 10:
+            return i, items
+
+    return i, []
+
+def get_similar_items(item_name:str, item_type:str, item_id:str) -> list:
+    single_words = [
+        ''.join(char for char in word if char not in REMOVE_CHARS) 
+        for word in item_name.split(" ")
+        if len(word) >= 3 and word not in REMOVE_WORDS
+    ]
+
+    i = len(single_words) ; items = []
+
+    length_single_words_convert = {
+        len(single_words) < 5:1,
+        len(single_words) >= 5 and len(single_words) < 9: 2,
+        len(single_words) >= 9:3
+    }
+    i = i // length_single_words_convert[True]
+
+    while True:
+        i, items = similar_items_iterate(single_words, item_name, item_type, item_id, items, i)
+
+        if len(items) > MAX_SIMILAR_ITEMS or i <= 1:
+            break
+
+        i -= 1
+    return items[:MAX_SIMILAR_ITEMS]

@@ -101,7 +101,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ) - {change_metric}) *1.0 /  (
+            ) - {change_metric}) *-1.0 /  (
             SELECT {change_metric}
             FROM App_price P2
             WHERE P2.item_id = P1.item_id
@@ -151,6 +151,15 @@ class DatabaseManagment():
                 AND item_type = 'M'
                 AND App_item.item_id = App_theme.item_id
             GROUP BY theme_path
+        """
+        return self.SELECT(sql)
+    
+
+    def get_items_themes(self, item_id) -> list[str]:
+        sql = f"""
+            SELECT theme_path
+            FROM App_theme
+            WHERE item_id = '{item_id}'
         """
         return self.SELECT(sql)
 
@@ -204,7 +213,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-                ) - {change_metric}) *1.0 / (
+                ) - {change_metric}) *-1.0 / (
                 SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
@@ -445,7 +454,7 @@ class DatabaseManagment():
                         SELECT min(date)
                         FROM App_price
                     ) 
-            ) - {change_metric}) *1.0 /  (
+            ) - {change_metric}) *-1.0 /  (
             SELECT {change_metric}
             FROM App_price P2
             WHERE P2.item_id = P1.item_id
@@ -508,6 +517,16 @@ class DatabaseManagment():
                 VALUES ('2022-12-26',{randint(1,55)},'{randint(1,55)}','{randint(1,55)}','{randint(1,55)}','{p[0]}')
             """)
             self.con.commit()
+
+
+    def remove_from_watchlist(self, user_id, item_id):
+        sql = f"""
+            DELETE FROM App_watchlist
+            WHERE user_id = {user_id}
+                AND item_id = '{item_id}'
+        """
+        self.cursor.execute(sql)
+        self.con.commit()
 
 
     def get_portfolio_items_condition(self, user_id) -> list[str]:
@@ -770,3 +789,21 @@ class DatabaseManagment():
             return result[0]
 
         
+    def get_similar_items(self, item_name, item_type, item_id, sql_like):
+        sql = f"""
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity
+            FROM App_item I, App_theme T, App_price P
+            WHERE I.item_id = T.item_id
+                AND P.item_id = I.item_id
+                AND theme_path IN (SELECT theme_path FROM App_theme WHERE item_id = '{item_id}')
+                AND item_name != '{item_name}'
+                AND item_type = '{item_type}'
+                {sql_like}
+            GROUP BY I.item_id
+        """
+
+        if self.SELECT(sql) == None:
+            return []
+        return self.SELECT(sql)
+

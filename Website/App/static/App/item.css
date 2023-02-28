@@ -73,6 +73,25 @@
     text-align: center;
 }
 
+#item-themes-container {
+    width: 80%;
+    margin-left: 10%;
+}
+
+#item-themes-container h4 {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    text-decoration: underline;
+    text-align: center;
+    
+}
+
+#item-themes-container span {
+    display: block;
+    margin-left: 3rem;
+    padding: 0.2rem;
+}
+
 #chart-form-container {
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
     width: 97%;
@@ -162,5 +181,24 @@
 
 #error-msg {
     text-align: center;
+
+}
+
+#similar-items-heading {
+    text-align: center;
+    border: 0.1rem orangered solid;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+    width: 97%;
+    padding: 0.5rem;
+}
+
+#similar-items-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.similar-item-container {
 
 }

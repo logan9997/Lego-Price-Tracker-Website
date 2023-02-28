@@ -39,6 +39,13 @@
             <h3>General Info</h3>
             <p>Owned By : {{total_owners}}</p>
             <p>Watched By : {{total_watchers}}</p>
+
+            <div id="item-themes-container">
+                <h4>Themes</h4>
+                {% for theme in item_themes %}
+                    <p>{{theme.0|count_theme_indent}}</p>
+                {% endfor %}
+            </div>  
         </div>
     </section>
 
@@ -104,5 +111,22 @@
     </section>
 
 </section>
+
+{% if similar_items|length > 0 %}
+
+<section id="layer3" class="layers">
+    <section id="similar-items">
+        <h3 id="similar-items-heading">Similar Items</h3>
+        <div id="similar-items-container">
+            {% for item in similar_items %}
+            <div class="similar-item-container">
+                {% include 'App/template_blocks/item_container.html' with item=item %} 
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</section>
+
+{% endif %}
 
 {% endblock %}
