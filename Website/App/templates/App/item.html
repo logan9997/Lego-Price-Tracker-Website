@@ -66,6 +66,13 @@
     </div>
     <section id="chart-container">
         {% include 'App/template_blocks/item_chart.html' %}
+        <div id="chart-options">
+            <p id="slider-output">Range : {{item.dates.0}} - {% with item.dates|last as last %}{{last}}{% endwith %}</p>
+            <p style="display: none;" id="slider-index">{{item.dates|length}}</p>
+            <form action="{% url 'item' item.item_id %}" method="post">
+                <input id="slider" type="range" name="slider" min="2" max="{{item.dates|length}}" value="{{item.dates|length}}">
+            </form>
+        </div>
     </section>
 
     <section id="in-collections-forms-container">
@@ -128,5 +135,39 @@
 </section>
 
 {% endif %}
+
+{% with item.dates as dates  %}
+    {{ item.dates|json_script:"dates" }}
+{% endwith %}
+
+{% with item.prices as prices  %}
+    {{ item.prices|json_script:"prices" }}
+{% endwith %}
+<script>
+    var slider = document.getElementById("slider");
+    var output = document.getElementById("slider-output");
+    var index = document.getElementById("slider-index")
+
+    slider.oninput = function() {
+        var dates = JSON.parse(document.getElementById('dates').textContent);
+        var prices = JSON.parse(document.getElementById('prices').textContent);
+
+        dates = dates.slice(0, slider.value)
+        prices = prices.slice(0, slider.value)
+
+        output.innerHTML = `Range : ${dates[0]} - ${dates[parseInt(slider.value)-1]}`
+        index.innerHTML = slider.value -1
+
+        var data = [];
+        for (let i = 0; i < prices.length; i++) {
+            data.push({y:prices[i], x:dates[i]});
+        }
+
+        mychart.data.datasets[0].data = data
+        mychart.data.labels = dates
+        mychart.update()
+  
+    }
+</script>
 
 {% endblock %}
