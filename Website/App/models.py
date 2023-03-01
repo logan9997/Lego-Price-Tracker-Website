@@ -58,3 +58,22 @@ class Watchlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     date_added = models.DateField(DATE_FORMAT)
+
+
+class Piece(models.Model):
+    piece = models.CharField(max_length=40, primary_key=True)
+    piece_name = models.CharField(max_length=120)
+
+
+class PieceParticipation(models.Model):
+    participation = models.AutoField(primary_key=True)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    piece = models.ForeignKey(Piece, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+
+class SetParticipation(models.Model):
+    participation = models.AutoField(primary_key=True)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="item")
+    set = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="set")
+    quantity = models.IntegerField()
