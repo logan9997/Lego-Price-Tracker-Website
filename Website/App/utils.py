@@ -106,6 +106,31 @@ def format_theme_items(theme_items):
     return theme_items_formated
 
 
+def format_sub_sets(sets):
+    set_dicts = []
+    for _set in sets:
+        set_dict = {
+            "set_id":_set[0],
+            "set_name":_set[1],
+            "colour_id":_set[2],
+            "quantity":_set[3]
+        }
+        set_dicts.append(set_dict)
+    return set_dicts
+
+
+def format_super_sets(sets):
+    set_dicts = []
+    for _set in sets:
+        set_dict = {
+            "set_id":_set[0],
+            "set_name":_set[1],
+            "year_released":_set[2],
+            "quantity":_set[3]
+        }
+        set_dicts.append(set_dict)
+    return set_dicts
+
 def biggest_theme_trends():
     themes = DB.biggest_theme_trends("avg_price")
     themes_formated = [
@@ -160,7 +185,7 @@ def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
     #else:
 
 
-def sort_items(items, sort) -> list[str]:
+def sort_items(items, sort , **order) -> list[str]:
     sort_field = sort.split("-")[0]
     order = {"asc":False, "desc":True}[sort.split("-")[1]]
     items = sorted(items, key=lambda field:field[sort_field], reverse=order)
@@ -283,7 +308,7 @@ def save_POST_params(request) -> tuple[dict, dict]:
     return request, options
 
 
-def similar_items_iterate(single_words, item_name, item_type, item_id, items, i):
+def similar_items_iterate(single_words:list[str], item_name:str, item_type:str, item_id:str, items:list[str], i:int) -> tuple[int, list]:
     for sub in itertools.combinations(single_words, i):
         sql_like = "AND " + ''.join([f"item_name LIKE '%{word}%' AND " for word in sub])[:-4]
         items = DB.get_similar_items(item_name, item_type, item_id, sql_like)
@@ -301,11 +326,12 @@ def get_similar_items(item_name:str, item_type:str, item_id:str) -> list:
     single_words = [
         ''.join(char for char in word if char not in REMOVE_CHARS) 
         for word in item_name.split(" ")
-        if len(word) >= 3 and word not in REMOVE_WORDS
+        if len(word) >= 3 and ''.join(char for char in word if char not in REMOVE_CHARS) not in REMOVE_WORDS
     ]
 
     i = len(single_words) ; items = []
 
+    #shorten i if too many words to parse through
     length_single_words_convert = {
         len(single_words) < 5:1,
         len(single_words) >= 5 and len(single_words) < 9: 2,

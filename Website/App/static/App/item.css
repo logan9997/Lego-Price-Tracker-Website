@@ -51,7 +51,7 @@
 .tool-tip {
     position: relative;
     top: 2.3rem;
-    margin-left: 11%;
+    margin-left: 7%;
 }
 
 .info-block {
@@ -102,21 +102,50 @@
 }
 
 #chart-container {
-    background-color: white;
     margin: 1rem;
     height: 100%;
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+    border-radius: 2rem;
 }
 
 #chart-container .price-trend {
     width: 50rem;
-    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
-    border-radius: 2rem;
     padding: 1rem;
+    margin-left: 1rem;
+    height: 28rem;
+
+}
+
+#chart-background {
+    width: 54rem;
+    height: 30rem;
+    z-index: 1;
+    background-color: white;
+    border-radius: 2rem;
 }
 
 .item_canvas {
     margin-top: 0;
-    border-radius: 2rem;
+    z-index: 2;
+    background-color: white;
+}
+
+#chart-options {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+    margin-left: 10%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+#slider-output {
+    margin: 0;
+}
+
+
+#slider {
+    width: 10rem;
 }
 
 #in-collections-forms-container {
@@ -199,6 +228,14 @@
     justify-content: center;
 }
 
-.similar-item-container {
+#super-sets-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
 
+.set-container {
+    width: 10rem;
+    margin: 1rem;
+    background-color: red;
 }

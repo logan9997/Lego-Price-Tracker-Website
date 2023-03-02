@@ -16,6 +16,24 @@ class DatabaseManagment():
         return self.cursor.execute(sql).fetchall()
 
 
+    def add_pieces(self, info):
+        sql = f"""
+            INSERT INTO App_piece ('piece_name', 'piece_id', 'type') 
+            VALUES ('{info["piece_name"]}', '{info["piece_id"]}', '{info["type"]}')
+        """
+        self.cursor.execute(sql)
+        self.con.commit()
+
+
+    def add_piece_participation(self, info):
+        sql = f"""
+            INSERT INTO App_pieceparticipation ('item_id', 'piece_id', 'quantity', 'colour_id') 
+            VALUES ('{info["item_id"]}', '{info["piece_id"]}', '{info["quantity"]}', '{info["colour_id"]}')
+        """
+        self.cursor.execute(sql)
+        self.con.commit()    
+
+
     def add_price_info(self, item) -> None:
         today = datetime.date.today().strftime('%Y-%m-%d')
         try:
@@ -34,6 +52,48 @@ class DatabaseManagment():
         except sqlite3.IntegrityError:
             pass
         self.con.commit()
+
+
+    def add_set_participation(self, info):
+        sql = f"""
+            INSERT INTO App_setparticipation ('quantity', 'item_id', 'set_id')
+            VALUES ('{info["quantity"]}', '{info["item_id"]}', '{info["set_id"]}') 
+        """
+        self.cursor.execute(sql)
+        self.con.commit()
+
+
+    def get_all_piece_ids(self):
+        sql = """
+            SELECT piece_id
+            FROM App_piece
+        """
+        return self.SELECT(sql)
+
+
+    def get_item_subsets(self, item_id) -> list[tuple[str]]:
+        sql = f"""
+            SELECT P.piece_id, piece_name, colour_id, quantity
+            FROM App_piece P, App_pieceparticipation PP
+            WHERE P.piece_id = PP.piece_id
+                AND item_id = '{item_id}'
+        """
+        return self.SELECT(sql)
+    
+
+    def get_item_supersets(self, item_id):
+        sql = f"""
+            SELECT I.item_id, item_name, year_released, quantity
+            FROM App_item I, App_setparticipation SP
+            WHERE I.item_id in (
+                SELECT set_id
+                FROM App_setparticipation SP 
+                WHERE item_id = '{item_id}'
+            )
+                AND SP.set_id = I.item_id
+            GROUP BY I.item_id
+        """
+        return self.SELECT(sql)
 
 
     def get_all_items(self) -> list[str]:
@@ -221,6 +281,7 @@ class DatabaseManagment():
                     AND date = (
                         SELECT min(date)
                         FROM App_price
+                        WHERE I.item_id = '{item_id}'
                     )
             ) *100, 2) as '%change'
 
@@ -230,6 +291,7 @@ class DatabaseManagment():
                 AND date = (
                     SELECT max(date)
                     FROM App_price
+                    WHERE I.item_id = '{item_id}'
                 ) 
             GROUP BY I.item_id
         """

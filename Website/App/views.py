@@ -36,7 +36,6 @@ def search_item(request, current_view):
     
     #get item from the search bar, if it exists redirect to that items info page
     selected_item = request.POST.get("item_id")
-    print(selected_item)
 
     if selected_item in item_ids:
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
@@ -105,7 +104,6 @@ def item(request, item_id):
     #[0] since list with one element (being the item)
     item_info = format_item_info(DB.get_item_info(item_id, metric), graph_data={"metric":metric}, price_trend=True)
     if item_info == []:
-        print(request.META.get('HTTP_REFERER'))
         return redirect(request.META.get('HTTP_REFERER'))
     item_info = item_info[0]
 
@@ -152,13 +150,14 @@ def item(request, item_id):
     else:
         in_watchlist = "No"
 
-    
-
     item_themes = DB.get_items_themes(item_id)
     similar_items = format_item_info(get_similar_items(item_info["item_name"], item_info["item_type"], item_info["item_id"]))
 
     total_watchers = DB.get_total_owners_or_watchers("watchlist", item_id) 
     total_owners = DB.get_total_owners_or_watchers("portfolio", item_id)
+
+    sub_sets = DB.get_item_subsets(item_id)
+    super_sets = DB.get_item_supersets(item_id)
 
     context = {
         "show_year_released_availability":True,
@@ -171,6 +170,8 @@ def item(request, item_id):
         "in_watchlist":in_watchlist,
         "total_watchers":total_watchers,
         "total_owners":total_owners,
+        "sub_sets":format_sub_sets(sub_sets),
+        "super_sets":format_super_sets(super_sets),
         "metric":"".join([f"{string.capitalize()} " for string in  metric.split("_")]),
     }
 
@@ -191,13 +192,29 @@ def item(request, item_id):
 
 def trending(request):
 
-    metric = "total_quantity"
+    request, options = save_POST_params(request)
 
-    winners = format_item_info(DB.get_biggest_trends(metric), price_trend=True, graph_data={"metric":metric})
+    graph_metric = options.get("graph-metric", "avg_price")
+    sort_field = options.get("sort-field", "avg_price-desc")
+    current_page = options.get("page", 1)
+
+    graph_options = sort_dropdown_options(get_graph_options(), graph_metric)
+    sort_options = sort_dropdown_options(get_sort_options(), sort_field)
+
+    items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data={"metric":graph_metric})
+
+    current_page = check_page_boundaries(current_page, items, SEARCH_ITEMS_PER_PAGE)
+    page_numbers = slice_num_pages(items, current_page, SEARCH_ITEMS_PER_PAGE)
+
+    items = sort_items(items, sort_field)
+    items = items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
 
     context = {
-        "winners":winners,
+        "items":items,
         "show_graph":True,
+        "graph_options":graph_options,
+        "sort_options":sort_options,
+        "page_numbers":page_numbers
         }
     
 

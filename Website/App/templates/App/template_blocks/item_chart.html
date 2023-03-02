@@ -21,7 +21,7 @@
             data.push({y:prices[i], x:dates[i]});
         }
         
-        new Chart(`{{item.chart_id}}`, {
+        var mychart = new Chart(`{{item.chart_id}}`, {
             type: "line",
             data: {
                 labels: dates,
@@ -40,8 +40,13 @@
                         time: {unit:"day"}
                     }, 
                     yAxes: [{  
-                        ticks : {
+                        ticks : { 
                             maxTicksLimit: 8,
+                        } 
+                    }],
+                    xAxes: [{  
+                        ticks : { 
+                            maxTicksLimit: 10,
                         } 
                     }],
                 }

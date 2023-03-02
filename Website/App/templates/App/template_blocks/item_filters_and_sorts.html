@@ -4,7 +4,12 @@
 
 <section id="main-forms-container">
 
-<form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+{% if sub_view != "" %}
+    <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+{% else %}
+    <form id="page-buttons-form" action="{% url view %}" method="POST">
+{% endif %}
+
     {% csrf_token %}
     {% for page_button in num_pages %}
         {% if page_button == current_page %}
@@ -16,7 +21,11 @@
 </form>
 
 <div id="dropdown-forms">
-    <form id="sort-form" action="{% url view sub_view %}" method="POST">
+    {% if sub_view != "" %}
+        <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+    {% else %}
+        <form id="page-buttons-form" action="{% url view %}" method="POST">
+    {% endif %}
         {% csrf_token %}
         <div class="input-label-container">
             <label for="sort-field">Sort</label>
@@ -28,7 +37,11 @@
         </div>
     </form>
 
-    <form action="{% url view sub_view %}" method="POST">
+    {% if sub_view != "" %}
+        <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+    {% else %}
+        <form id="page-buttons-form" action="{% url view %}" method="POST">
+    {% endif %}
         {% csrf_token %}
         <label for="graph-data-form">Graph Data</label>
         <select onchange="this.form.submit()" name="graph-metric">
