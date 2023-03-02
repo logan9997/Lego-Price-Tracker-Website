@@ -74,20 +74,21 @@ def index(request):
     for popular_item in popular_items:
         popular_item["change"] = DB.get_weekly_item_metric_change(popular_item["item_id"], last_week, graph_metric)[0] 
 
-    #set context. random_item_id used when user clicks 'view item info' in middle / about section
+    username = User.objects.filter(user_id=user_id).values_list("username", flat=True)
+
     context = {
+        "username":username,
         "graph_options":graph_options,
         "last_week":last_week,
         "popular_items":popular_items,
         "new_items":new_items,
         "recently_viewed":recently_viewed,
-        "random_item_id":random.choice(item_ids),
         "show_graph":False
     }
 
     if user_id == -1 or len(DB.get_user_items(user_id, "portfolio")) == 0:
         context["portfolio_trending_items"] = False
-        context["trending"] = format_item_info(DB.get_biggest_trends(), price_trend=True, graph_data={"metric":"avg_price", "user_id":user_id})
+        context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data={"metric":"avg_price", "user_id":user_id})
     else:
         context["portfolio_trending_items"] = True
         context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data={"metric":"avg_price", "user_id":user_id})
