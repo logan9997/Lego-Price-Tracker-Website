@@ -125,19 +125,37 @@
 </section>
 
 <section id="layer3" class="layers">
+    
     <section id="super-sets-container">
+        <h3>Sets</h3>
+        <div class="sub-super-set-container">
         {% for set in super_sets %}
             <div class="set-container">
-                <p>{{set.set_id}}</p>
-                <p>{{set.set_name}}</p>
+                <div class="set-img-container">
+                    <img src="{% static set.img_path %}" alt="{{set.img_path}}">
+                </div>
+
+                <div class="set-info-container">
+                    <p><a href="{% url 'item' set.set_id %}">{{set.set_id}}</a></p>
+                    <p>{{set.set_name}}</p>
+                    <p>Year Released : {{set.year_released}}</p>
+                    <p>Quantity : {{set.quantity}}</p>
+                </div>
             </div>
         {% endfor %}
+        </div>
     </section>
 
-    <section id="super-sets-container">
+    <section id="sub-sets-container">
+        <h3>Pieces</h3>
+        <div class="sub-super-set-container">
         {% for piece in sub_sets %}
-            {{piece}}
+            <div class="piece-container">
+                <p>{{piece.piece_id}}</p>
+                <p>{{piece.piece_name}}</p>
+            </div>
         {% endfor %}
+        </div>
     </section>
 </section>
 

@@ -5,7 +5,11 @@
 <link rel="stylesheet" href="{% static 'App/home.css' %}">
 
 <h1>The Brick Exchange</h1>
+{% if logged_in %}
+<h2>Welcome back {{username}}</h2>
+{% else %}
 <h2>- Lego Market Trends -</h2>
+{% endif %}
 
 <section id="container-layer1" class="layers">
 
