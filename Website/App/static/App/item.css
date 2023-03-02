@@ -5,6 +5,7 @@
     margin-bottom: 3rem;
     justify-content: space-around;
     flex-wrap: wrap;
+    width: 96%;
 }
 
 #main-item-container {
@@ -213,11 +214,14 @@
 
 }
 
+#similar-items {
+    width: 100%;
+}
+
 #similar-items-heading {
     text-align: center;
     border: 0.1rem orangered solid;
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
-    width: 97%;
     padding: 0.5rem;
 }
 
@@ -228,14 +232,67 @@
     justify-content: center;
 }
 
-#super-sets-container {
+#layer3 h3 {
+    text-align: center;
+    border-bottom: 0.1rem orangered solid;
+    padding: 1rem;
+    margin: 0;
+}
+
+#super-sets-container, #sub-sets-container {
+    box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
+}
+
+
+
+
+.sub-super-set-container {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    width: 45vw;
+    height: 30rem;
+    justify-content: center;
+    overflow: scroll;
 }
 
 .set-container {
-    width: 10rem;
-    margin: 1rem;
-    background-color: red;
+    width: 90%;
+    height: 12rem;
+    margin-top: 1rem;
+    display: flex;
+    border-bottom: 0.1rem rgb(228, 220, 220) solid;
 }
+
+.set-img-container {
+    width: 60%;
+    margin-top: 1.5rem;
+}
+
+.set-container img {
+    height:9rem;
+    margin-left: 2rem;
+    width: 12rem;
+
+}
+
+.set-info-container {
+    width: 30%;
+}
+
+.piece-container {
+    width: 26%;
+    height: 10rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    margin: 1rem;
+    text-align: center;
+    border: 0.1rem rgb(228, 220, 220) solid;
+    border-radius: 1rem;
+    padding: 0.2rem;
+}
+
+
+
