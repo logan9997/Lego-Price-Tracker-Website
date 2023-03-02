@@ -78,7 +78,7 @@ class Scraper():
         theme_details_list = []
 
         #loop through each item type
-        for item_type in ["S"]: 
+        for item_type in ["M"]: #,'S' 
             #get the catalog page for each item type
             if item_type == "S":
                 self.driver.get(f'https://www.bricklink.com/catalogTree.asp?itemType=S#dacta')
@@ -90,7 +90,8 @@ class Scraper():
             themes = [theme for theme in table.text.rsplit("\n")]
 
             #remove {more} as it is not a url to a catalog page
-            themes.remove(r"     {more}")
+            if r"     {more}" in themes:
+                themes.remove(r"     {more}")
 
             #remove (num) of items in theme from theme name. Some themes have '(', ')' in their name e.g. '(other)'
             #loop backwards of each theme:str and find the first '(' char. Split the string at that position
@@ -162,6 +163,7 @@ class Scraper():
                     theme_details.update({
                             "path": theme_path,
                         })
+                    print(theme_details)
 
                     #ADD TO DATABASE
                     db.add_theme_details(theme_details, item_type)
@@ -169,16 +171,42 @@ class Scraper():
                     #add path and id to the dict which already contains lists of sets and minifigs END OF LOOP
                     theme_details_list.append(theme_details)
 
+class ImageScrape():
+
+    def __init__(self) -> None:
+        self.driver = webdriver.Chrome()
+        self.url = "https://www.bricklink.com/catalogTree.asp?itemType=S"
+        self.db = DatabaseManagment()
+
+
+    def loop_through_images(self):
+        self.item_ids = self.db.get_star_wars_sets()
+        import time, requests, os
+        for item in self.item_ids:
+            #1 = type, #0 = item_id
+            
+            url = f"https://img.bricklink.com/ItemImage/SN/0/{item[0]}.png"
+            img_name = fr"{item[0]}.png"
+            if img_name not in os.listdir(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\Website\App\static\App\images"):
+                print(item[0])
+                img_data = requests.get(url).content
+                with open(img_name, "wb") as handler:
+                    handler.write(img_data)
+
+        self.driver.quit()
 
 
 def main():
     '''
-    cd OneDrive/Documents/programming/python/api's/bl_api/my_scripts
+    cd OneDrive/Documents/programming/python/api's/bl_api/
+    python -m pipenv shell
     '''
-    scraper = Scraper()
-    scraper.setup()
-    scraper.get_theme_ids()
-
+    scraper = ImageScrape()
+    scraper.loop_through_images()
+    # scrape = Scraper()
+    # scrape.setup()
+    # scrape.get_theme_ids()
 
 if __name__ == "__main__":
     main()
+
