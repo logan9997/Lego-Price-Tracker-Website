@@ -249,6 +249,18 @@ class DatabaseManagment():
             FROM App_item
         """
         return self.SELECT(sql)
+    
+
+    def get_star_wars_sets(self):
+        sql = """
+            SELECT I.item_id
+            FROM App_item I, App_theme T
+            WHERE I.item_id = T.item_id
+                AND item_type = 'S'
+                AND theme_path = 'Star_Wars'
+            GROUP BY I.item_id
+        """
+        return self.SELECT(sql)
 
 
     def insert_year_released(self, year_released, item_id) -> None:
