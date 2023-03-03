@@ -464,10 +464,13 @@ class DatabaseManagment():
         """)
         self.con.commit()
 
-        result =self.cursor.execute("""
+
+    def check_portfolio_quantity_boundaries(self):
+        self.cursor.execute("""
             DELETE FROM App_portfolio
             WHERE quantity < 1;
-        """).fetchall()
+        """)
+        self.con.commit()
 
 
     def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
