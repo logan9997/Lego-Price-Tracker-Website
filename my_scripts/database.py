@@ -69,7 +69,16 @@ class DatabaseManagment():
             FROM App_piece
         """
         return self.SELECT(sql)
+    
 
+    def get_todays_price_records(self):
+        today = datetime.datetime.today().strftime('%Y-%m-%d')
+        sql = f"""
+            SELECT item_id
+            FROM App_price
+            WHERE date = '{today}'
+        """
+        return self.SELECT(sql)
 
     def get_item_subsets(self, item_id) -> list[tuple[str]]:
         sql = f"""
@@ -185,15 +194,6 @@ class DatabaseManagment():
         return winners
 
 
-    def check_if_price_recorded(self) -> list[str]:
-        sql = """
-            SELECT item_id
-            FROM App_price
-            WHERE date = '{datetime.date.today().strftime('%Y-%m-%d')}'
-        """
-        return self.SELECT(sql)
-
-
     def group_by_items(self) -> list[str]:
         sql = """
             SELECT item_id, item_type
@@ -229,13 +229,18 @@ class DatabaseManagment():
             self.lock.acquire(True)
             sql = f"""
                 SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-                min_price, max_price, total_quantity
-                FROM App_item I, App_theme T, App_price P
+                min_price, max_price, total_quantity, date
+                FROM App_item I, App_theme T, App_price P1
                 WHERE T.item_id = I.item_id
-                    AND I.item_id = P.item_id
+                    AND I.item_id = P1.item_id
                     AND theme_path = '{theme_path}'
                     AND item_type = 'M'
-                    AND date = (SELECT MAX(date) FROM App_price)
+                    AND date = (
+                        SELECT MAX(date) 
+                        FROM App_price P2 
+                        WHERE P2.item_id = P1.item_id 
+                        GROUP BY item_id
+                    )
                 GROUP BY I.item_id
             """
             return self.SELECT(sql)      
@@ -284,6 +289,7 @@ class DatabaseManagment():
                     AND date = (
                         SELECT min(date)
                         FROM App_price
+                        WHERE item_id = '{item_id}'
                     ) 
                 ) - {change_metric}) *-1.0 / (
                 SELECT {change_metric}
@@ -293,7 +299,7 @@ class DatabaseManagment():
                     AND date = (
                         SELECT min(date)
                         FROM App_price
-                        WHERE I.item_id = '{item_id}'
+                        WHERE item_id = '{item_id}'
                     )
             ) *100, 2) as '%change'
 
@@ -303,7 +309,7 @@ class DatabaseManagment():
                 AND date = (
                     SELECT max(date)
                     FROM App_price
-                    WHERE I.item_id = '{item_id}'
+                    WHERE item_id = '{item_id}'
                 ) 
             GROUP BY I.item_id
         """
@@ -448,7 +454,6 @@ class DatabaseManagment():
 
         return self.SELECT(sql)[0][0]
 
-
     def update_portfolio_item_quantity(self, user_id, item_id, condition, quantity) -> None:
         self.cursor.execute(f"""
             UPDATE App_portfolio
@@ -459,12 +464,10 @@ class DatabaseManagment():
         """)
         self.con.commit()
 
-        self.cursor.execute("""
+        result =self.cursor.execute("""
             DELETE FROM App_portfolio
             WHERE quantity < 1;
-        """)
-        self.con.commit()
-
+        """).fetchall()
 
 
     def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
