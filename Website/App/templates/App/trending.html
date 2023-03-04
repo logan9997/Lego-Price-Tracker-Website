@@ -6,28 +6,16 @@
     <link rel="stylesheet" href="{% static 'App/trending.css' %}">
 
     <section id="winners-losers">
-        <!-- <div id="losers">
-            <table>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price Change</th>
-                </tr>
-                {% for minifig in losers %}
-                    <tr>
-                        <td>{{minifig.1}}</td>
-                        <td>{{minifig.0}}</td>
-                        <td>{{minifig.2}}</td>
-                    </tr>
-                {% endfor %}
-            </table>
-        </div> -->
-
         <div id="winners">
             {% include 'App/template_blocks/item_filters_and_sorts.html' with view="trending" sub_view="" %}
         {% for item in items %}
-            <div class="item-container-trending">
-            {% include 'App/template_blocks/item_container.html' %}
+            <div class="main-item-container">
+                <div class="template-container">
+                    {% include 'App/template_blocks/item_container.html' %}
+                </div>
+                <div class="item-info-container">
+                    <p>{{g}} {{item.price_change}}</p>
+                </div>
             </div>
         {% endfor %}
         </div>

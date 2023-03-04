@@ -53,17 +53,6 @@
 
 <section id="layer2" class="layers">
 
-    <div id="chart-form-container">
-        <form action="{% url 'item' item.item_id %}" method="POST">
-            {% csrf_token %}
-            <label for="graph-data-form">Graph Data</label>
-            <select onchange="this.form.submit()" name="graph-metric">
-                {% for graph_option in graph_options %}
-                    <option value="{{graph_option.value}}">{{graph_option.text}}</option>
-                {% endfor %}
-            </select>
-        </form>
-    </div>
     <section id="chart-container">
         <div id="chart-background">
             {% include 'App/template_blocks/item_chart.html' %}
@@ -76,6 +65,15 @@
 
             <div id="slider-container">
                 <input id="slider" type="range" name="slider" min="2" max="{{item.dates|length}}" value="{{item.dates|length}}">
+            </div>
+
+            <div id="checkboxes">
+                {% for checkbox in graph_checkboxes %}
+                    <div class="checkbox-container">
+                        <label for="{{checkbox.value}}">{{checkbox.text}}</label>
+                        <input class="graph-checkbox" type="checkbox" name="{{checkbox.value}}" id="{{checkbox.value}}" checked="true">
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </section>
@@ -103,13 +101,12 @@
                             <option value="U">Used</option>
                         </select>
                     </div>
-
                     <div class="label-input-container">
                         <label for="quantity">Quantity</label>
-                        <input min="1" value="1" type="number" name="quantity">
+                        <input id="quantity-input" onchange="update_add_portfolio_text()" value="1" type="number" name="quantity">
                     </div>
 
-                    <button name="view-type" type="submit" value="portfolio">Add to Portfolio!</button>
+                    <button id="portfolio-button" name="view-type" type="submit" value="portfolio">Add to Portfolio!</button>
             
                 </div>
                 <div id="add-to-watchlist">
@@ -151,8 +148,8 @@
         <div class="sub-super-set-container">
         {% for piece in sub_sets %}
             <div class="piece-container">
-                <p>{{piece.piece_id}}</p>
-                <p>{{piece.piece_name}}</p>
+                <p><span>{{piece.piece_id}}</span> * {{piece.quantity}}</p>
+                <img src="{% static piece.img_path %}" alt="img">
             </div>
         {% endfor %}
         </div>
@@ -176,38 +173,37 @@
 
 {% endif %}
 
-{% with item.dates as dates  %}
-    {{ item.dates|json_script:"dates" }}
-{% endwith %}
 
-{% with item.prices as prices  %}
-    {{ item.prices|json_script:"prices" }}
-{% endwith %}
 <script>
     var slider = document.getElementById("slider");
     var output = document.getElementById("slider-output");
     var index = document.getElementById("slider-index")
+    var checkboxes = document.getElementsByClassName("graph-checkbox");
 
+    //slider
     slider.oninput = function() {
-        var dates = JSON.parse(document.getElementById('dates').textContent);
-        var prices = JSON.parse(document.getElementById('prices').textContent);
+        mychart.data.labels = JSON.parse(document.getElementById('{{item.dates_id}}').textContent).slice(0, slider.value)
+        for (let i = 0; i < checkboxes.length; i++) {
+            mychart.data.datasets[i].data = JSON.parse(document.getElementById(metric_data[i].id).textContent).slice(0, slider.value)
+            mychart.update()
 
-        dates = dates.slice(0, slider.value)
-        prices = prices.slice(0, slider.value)
-
+        }
         output.innerHTML = `Range : ${dates[0]} - ${dates[parseInt(slider.value)-1]}`
         index.innerHTML = slider.value -1
-
-        var data = [];
-        for (let i = 0; i < prices.length; i++) {
-            data.push({y:prices[i], x:dates[i]});
-        }
-
-        mychart.data.datasets[0].data = data
-        mychart.data.labels = dates
-        mychart.update()
-  
     }
+
+    //checkboxes
+    for (let i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].oninput = function() {
+            if (checkboxes[i].checked == false) {
+                mychart.data.datasets[i].hidden = true 
+            } else {
+                mychart.data.datasets[i].hidden = false
+            }
+            mychart.update()
+        }
+    }
+    
 </script>
 
 {% endblock %}

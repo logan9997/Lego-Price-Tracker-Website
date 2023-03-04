@@ -28,7 +28,11 @@
     {% endif %}
         {% csrf_token %}
         <div class="input-label-container">
+            {% if request.path == "/trending/" %}
+            <label for="sort-field">Metric</label>
+            {% else %}
             <label for="sort-field">Sort</label>
+            {% endif %}
             <select onchange="this.form.submit()" name="sort-field">
                 {% for sort in sort_options %}
                     <option value="{{sort.value}}">{{sort.text}}</option>

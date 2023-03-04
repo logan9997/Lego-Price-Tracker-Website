@@ -103,7 +103,11 @@ def item(request, item_id):
     metric = options.get("graph-metric", "avg_price")
 
     #[0] since list with one element (being the item)
-    item_info = format_item_info(DB.get_item_info(item_id, metric), graph_data={"metric":metric}, price_trend=True)
+    item_info = format_item_info(
+        DB.get_item_info(item_id, metric), price_trend=True,
+        graph_data=["avg_price", "min_price", "max_price", "total_quantity"]
+    )
+    
     if item_info == []:
         return redirect(request.META.get('HTTP_REFERER'))
     item_info = item_info[0]
@@ -171,6 +175,7 @@ def item(request, item_id):
         "in_watchlist":in_watchlist,
         "total_watchers":total_watchers,
         "total_owners":total_owners,
+        "graph_checkboxes":get_graph_checkboxes(),
         "sub_sets":format_sub_sets(sub_sets),
         "super_sets":format_super_sets(super_sets),
         "metric":"".join([f"{string.capitalize()} " for string in  metric.split("_")]),
@@ -196,25 +201,25 @@ def trending(request):
     request, options = save_POST_params(request)
 
     graph_metric = options.get("graph-metric", "avg_price")
-    sort_field = options.get("sort-field", "avg_price-desc")
+    trend_type = options.get("sort-field", "avg_price-desc")
     current_page = options.get("page", 1)
 
     graph_options = sort_dropdown_options(get_graph_options(), graph_metric)
-    sort_options = sort_dropdown_options(get_sort_options(), sort_field)
+    trend_options = sort_dropdown_options(get_trending_options(), trend_type)
 
     items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data={"metric":graph_metric})
 
     current_page = check_page_boundaries(current_page, items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(items, current_page, SEARCH_ITEMS_PER_PAGE)
 
-    items = sort_items(items, sort_field)
+    items = sort_items(items, trend_type)
     items = items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
 
     context = {
         "items":items,
         "show_graph":True,
         "graph_options":graph_options,
-        "sort_options":sort_options,
+        "sort_options":trend_options,
         "page_numbers":page_numbers
         }
     
@@ -525,6 +530,7 @@ def view_POST(request, view):
     portfolio_view = ""
     if view == "portfolio":
         portfolio_view = "?view=" + request.session.get("portfolio_view", "items")
+    DB.check_portfolio_quantity_boundaries()
     return redirect(f"http://127.0.0.1:8000/{view}/" + portfolio_view)
 
 
@@ -557,14 +563,19 @@ def add_to_user_items(request, item_id):
             condition = form.cleaned_data["condition"]
             quantity = form.cleaned_data["quantity"]
             if (item_id, condition) not in portfolio_items_and_condition:
+                print(1)
                 DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
             else:
+                print(2)
                 DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
     else:
         if item_id not in user_item_ids:
+            print(3)
             DB.add_to_user_items(user_id, item_id, view)
         else:
             request.session["add_to_user_items_error_msg"] = f"{item_id} is already in your watchlist"
+
+    DB.check_portfolio_quantity_boundaries()
 
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 

@@ -78,16 +78,19 @@ def format_item_info(items, **kwargs):
         graph_data = kwargs.get("graph_data", False)
 
         if graph_data != False:
-            graph_metric = graph_data.get("metric")
-            user_id = graph_data.get("user_id")
-
+            user_id = kwargs.get("user_id")
             item_dict.update({
-                "prices":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[0],
-                "dates":append_item_graph_info(item[0], graph_metric=graph_metric, user_id=user_id)[1],
                 "chart_id":f"{item[0]}_chart" + f"{kwargs.get('home_view', '')}",
-                "prices_id":f"{item[0]}_prices" + f"{kwargs.get('home_view', '')}",
+                "dates":append_graph_dates(item[0]),
                 "dates_id":f"{item[0]}_dates" + f"{kwargs.get('home_view', '')}",
             })
+
+            for metric in graph_data:
+                print(f"{metric}_id")
+                item_dict.update({
+                    f"{metric}_graph":append_item_graph_info(item[0], graph_metric=metric, user_id=user_id)[0],
+                    f"{metric}_id":f"{item[0]}_{metric}" + f"{kwargs.get('home_view', '')}",
+                })
 
         item_dicts.append(item_dict)
 
@@ -106,14 +109,15 @@ def format_theme_items(theme_items):
     return theme_items_formated
 
 
-def format_sub_sets(sets):
+def format_sub_sets(pieces):
     set_dicts = []
-    for _set in sets:
+    for piece in pieces:
         set_dict = {
-            "set_id":_set[0],
-            "set_name":_set[1],
-            "colour_id":_set[2],
-            "quantity":_set[3]
+            "piece_id":piece[0],
+            "piece_name":clean_html_codes(piece[1]),
+            "colour_id":piece[2],
+            "quantity":piece[3],
+            "img_path":f"App/images/{piece[2]}_{piece[0]}.png",
         }
         set_dicts.append(set_dict)
     return set_dicts
@@ -124,9 +128,10 @@ def format_super_sets(sets):
     for _set in sets:
         set_dict = {
             "set_id":_set[0],
-            "set_name":_set[1],
+            "set_name":clean_html_codes(_set[1]),
             "year_released":_set[2],
-            "quantity":_set[3]
+            "quantity":_set[3],
+            "img_path":f"App/images/{_set[0]}.png",
         }
         set_dicts.append(set_dict)
     return set_dicts
@@ -291,8 +296,15 @@ def append_item_graph_info(item_id:str, graph_metric:str, **kwargs):
     prices = [] ; dates = []
     for price_date_info in DB.get_item_graph_info(item_id, graph_metric, view=kwargs.get("view"), user_id=kwargs.get("user_id")):
         prices.append(price_date_info[0])
-        dates.append(price_date_info[1])
     return prices, dates
+
+
+def append_graph_dates(item_id, **kwargs):
+    dates = []
+    for price_date_info in DB.get_item_graph_info(item_id, "avg_price", view=kwargs.get("view"), user_id=kwargs.get("user_id")):
+        dates.append(price_date_info[1])
+    return dates
+
 
 
 def save_POST_params(request) -> tuple[dict, dict]:
