@@ -162,7 +162,7 @@ class DatabaseManagment():
     def get_biggest_trends(self, change_metric) -> list[str]:
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-            min_price, max_price, total_quantity, round((
+            min_price, max_price, total_quantity, ABS(ROUND((
                 (SELECT {change_metric}
                 FROM App_price P2
                 WHERE P2.item_id = P1.item_id
@@ -178,7 +178,7 @@ class DatabaseManagment():
                     SELECT min(date)
                     FROM App_price
                 ) 
-            ) * 100, 2) AS [percentage change]
+            ) * 100, 2)) AS [percentage change]
             FROM App_price P1, App_item I
             WHERE I.item_id = P1.item_id 
                 AND date = (
@@ -266,7 +266,61 @@ class DatabaseManagment():
             GROUP BY I.item_id
         """
         return self.SELECT(sql)
+    
 
+    def get_item_metric_changes(self, item_id, change_metric):
+        sql = f"""
+            SELECT round(
+                ((
+                SELECT {change_metric}
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND I.item_id = '{item_id}'
+                    AND date = (
+                        SELECT min(date)
+                        FROM App_price
+                        WHERE item_id = '{item_id}'
+                    ) 
+                ) - {change_metric}) *-1.0 / (
+                SELECT {change_metric}
+                FROM App_price P2
+                WHERE P2.item_id = P1.item_id
+                    AND I.item_id = '{item_id}'
+                    AND date = (
+                        SELECT min(date)
+                        FROM App_price
+                        WHERE item_id = '{item_id}'
+                    )
+            ) *100, 2) as '%change'
+
+            FROM App_price P1, App_item I
+            WHERE I.item_id = P1.item_id 
+                AND I.item_id = '{item_id}'
+                AND date = (
+                    SELECT max(date)
+                    FROM App_price
+                    WHERE item_id = '{item_id}'
+                ) 
+            GROUP BY I.item_id
+            """
+        return self.SELECT(sql, fetchone=True)[0]
+
+
+    def most_recent_set_appearance(self, item_id):
+        sql = f"""
+            SELECT year_released
+            FROM App_setparticipation SP, App_item I
+            WHERE SP.set_id = I.item_id
+            AND year_released = (
+                SELECT MAX(year_released)
+                FROM App_item I, App_setparticipation SP
+                WHERE SP.set_id = I.item_id
+                    AND SP.item_id = '{item_id}'
+            )
+            AND SP.item_id = '{item_id}'
+            GROUP BY I.item_id
+        """
+        return self.SELECT(sql, fetchone=True)[0]
 
     def insert_year_released(self, year_released, item_id) -> None:
         self.cursor.execute(f"""
@@ -465,6 +519,15 @@ class DatabaseManagment():
         self.con.commit()
 
 
+    def get_pieces_colours(self):
+        sql = """
+            SELECT piece_id, colour_id
+            FROM App_pieceparticipation
+            GROUP BY piece_id, colour_id
+        """
+        return self.SELECT(sql)
+
+
     def check_portfolio_quantity_boundaries(self):
         self.cursor.execute("""
             DELETE FROM App_portfolio
@@ -499,27 +562,21 @@ class DatabaseManagment():
     def biggest_portfolio_changes(self, user_id) -> list[str]:
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-            min_price, max_price, total_quantity, portfolio.condition, quantity, round(avg_price - (
+            min_price, max_price, total_quantity, ROUND((
                 SELECT avg_price
-                FROM App_price P2
-                WHERE P2.item_id = P1.item_id
-                    AND date = (
-                        SELECT min(date)
-                        FROM App_price
-                    ) 
-            ),2) as [£ change]
-
-            FROM App_price P1, App_item I, App_portfolio portfolio, App_user user
-            WHERE I.item_id = P1.item_id 
-                AND I.item_id = portfolio.item_id
-                AND portfolio.user_id = user.user_id
-                AND user.user_id = {user_id}
-                AND date = (
-                    SELECT max(date)
-                    FROM App_price
-                ) 
-            GROUP BY portfolio.item_id
-            ORDER BY [£ change] DESC
+                FROM App_price P1
+                WHERE date IN (SELECT MAX(date) FROM App_price WHERE P1.item_id = P2.item_id GROUP BY item_id)
+            ) - (
+                SELECT avg_price
+                FROM App_price P1
+                WHERE date IN (SELECT MIN(date) FROM App_price WHERE P1.item_id = P2.item_id GROUP BY item_id)
+            ),2) AS [Change]
+            FROM App_price P2 , App_portfolio Portfolio, App_item I
+            WHERE user_id = {user_id}
+                AND Portfolio.item_id = I.item_id
+                AND I.item_id = P2.item_id
+            GROUP BY I.item_id
+            ORDER BY [change] DESC
         """
         return self.SELECT(sql)
 
