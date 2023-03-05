@@ -559,24 +559,43 @@ class DatabaseManagment():
         return self.SELECT(sql)
 
 
-    def biggest_portfolio_changes(self, user_id) -> list[str]:
+    def biggest_portfolio_changes(self, user_id, metric) -> list[str]:
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-            min_price, max_price, total_quantity, ROUND((
-                SELECT avg_price
+            min_price, max_price, total_quantity, ROUND(
+            (
+                SELECT {metric}
                 FROM App_price P1
-                WHERE date IN (SELECT MAX(date) FROM App_price WHERE P1.item_id = P2.item_id GROUP BY item_id)
-            ) - (
-                SELECT avg_price
+                WHERE date IN (
+                    SELECT MAX(date) 
+                    FROM App_price 
+                    GROUP BY item_id
+                )
+                AND user_id = {user_id}
+                AND P1.item_id = I.item_id
+                AND I.item_id = PO.item_id
+            ) 
+            - 
+            (
+                SELECT {metric}
                 FROM App_price P1
-                WHERE date IN (SELECT MIN(date) FROM App_price WHERE P1.item_id = P2.item_id GROUP BY item_id)
-            ),2) AS [Change]
-            FROM App_price P2 , App_portfolio Portfolio, App_item I
+                WHERE date IN (
+                    SELECT MIN(date) 
+                    FROM App_price 
+                    GROUP BY item_id
+                )
+                AND user_id = {user_id}
+                AND P1.item_id = I.item_id
+                AND I.item_id = PO.item_id
+            )
+            ,2) AS [Change]
+
+            FROM App_price P2 , App_portfolio PO, App_item I
             WHERE user_id = {user_id}
-                AND Portfolio.item_id = I.item_id
+                AND PO.item_id = I.item_id
                 AND I.item_id = P2.item_id
             GROUP BY I.item_id
-            ORDER BY [change] DESC
+            ORDER BY ABS([change]) DESC
         """
         return self.SELECT(sql)
 
@@ -808,7 +827,7 @@ class DatabaseManagment():
                 theme_path = theme_path.replace(char, "~")
 
         if theme_path == '':
-            path = f"LIKE '{sub_theme}'%" 
+            path = f"LIKE '{sub_theme}%'" 
         else:
             path = f"LIKE '{theme_path}~{sub_theme}%'" 
 
@@ -820,10 +839,12 @@ class DatabaseManagment():
                 AND T.item_id = I.item_id
             GROUP BY theme_path
         """
+
         result = self.SELECT(sql, fetchone=True)
         if result == None:
             return 'No-Image'
         return result[0]
+
 
     def parent_themes(self, user_id:int, view:str, metric:str) -> list[str]:
         if view == "portfolio":
@@ -831,7 +852,6 @@ class DatabaseManagment():
         else:
             select_string = f"SELECT theme_path, COUNT(), ROUND(SUM({metric}),2), P.item_id"
            
-
         sql = f"""
             {select_string}
             FROM App_price P, App_theme T, App_{view} _view, App_item I
