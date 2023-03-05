@@ -14,18 +14,23 @@
     <section id="info-overview">
         <div class="info-block">
             <h3>Prices & Quantity</h3>
+            <div id="current-metrics-container">
+                <p>Total Quantity Available {{item.total_quantity}}</p>
+                <p>Avg Price {{item.avg_price}}</p>
+                <p>Min Price {{item.min_price}}</p>
+                <p>Max Price {{item.max_price}}</p>
+            </div>
             
             <div id="metric-change-container">
                 <div class="tool-tip">
                     <span class="tool-tip-icon">?</span>
                     <p class="tool-tip-text">% change since oldest record</p>
                 </div>
-                <p id="metric-change"> {{metric}} Change (%) {{ item.price_change|postivie_or_negative_sign }} </p>
-            </div>
-            <p>Total Quantity Available {{item.total_quantity}}</p>
-            <p>Avg Price {{item.avg_price}}</p>
-            <p>Min Price {{item.min_price}}</p>
-            <p>Max Price {{item.max_price}}</p>
+                {% for metric_change in metric_changes %}
+                    <p class="metric-change"> {{metric_change.metric}} Change (%) {{ metric_change.change|postivie_or_negative_sign }} </p>
+                {% endfor %}
+                </div>
+
 
         </div>
 
@@ -39,6 +44,7 @@
             <h3>General Info</h3>
             <p>Owned By : {{total_owners}}</p>
             <p>Watched By : {{total_watchers}}</p>
+            <p>Last Appearance : {{most_recent_set_appearance}}</p>
 
             <div id="item-themes-container">
                 <h4>Themes</h4>
@@ -70,7 +76,7 @@
             <div id="checkboxes">
                 {% for checkbox in graph_checkboxes %}
                     <div class="checkbox-container">
-                        <label for="{{checkbox.value}}">{{checkbox.text}}</label>
+                        <label style="color:{{checkbox.colour}};" for="{{checkbox.value}}">{{checkbox.text}}</label>
                         <input class="graph-checkbox" type="checkbox" name="{{checkbox.value}}" id="{{checkbox.value}}" checked="true">
                     </div>
                 {% endfor %}
@@ -129,7 +135,7 @@
         {% for set in super_sets %}
             <div class="set-container">
                 <div class="set-img-container">
-                    <img src="{% static set.img_path %}" alt="{{set.img_path}}">
+                    <img loading="lazy" src="{% static set.img_path %}" alt="{{set.img_path}}">
                 </div>
 
                 <div class="set-info-container">
@@ -203,7 +209,9 @@
             mychart.update()
         }
     }
-    
+    mychart.options.scales.yAxes[0].ticks.maxTicksLimit = 16
+    mychart.options.scales.xAxes[0].ticks.maxTicksLimit = 16
+    mychart.update()    
 </script>
 
 {% endblock %}

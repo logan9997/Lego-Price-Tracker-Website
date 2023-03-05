@@ -23,22 +23,20 @@
 
 
     <script>
-        const dates = JSON.parse(document.getElementById('{{item.dates_id}}').textContent)
-        const metric_data = [
+        var dates = JSON.parse(document.getElementById('{{item.dates_id}}').textContent)
+        var metric_data = [
             {
                 id:'{{item.avg_price_id}}',
                 backgroundColor:"red",
                 label:"Average Price",
                 borderColor:"red",
-                data:JSON.parse(document.getElementById('{{item.avg_price_id}}').textContent),
-                fill:false
+                fill:false,
             }, 
             {
                 id:'{{item.min_price_id}}',
                 backgroundColor:"#00CC00",
                 label:"Minimum Price",
                 borderColor:"#00CC00",
-                data:JSON.parse(document.getElementById('{{item.min_price_id}}').textContent),
                 fill:false
             }, 
             {
@@ -46,7 +44,6 @@
                 backgroundColor:"#3399FF",
                 label:"Maximum Price",
                 borderColor:"#3399FF",
-                data:JSON.parse(document.getElementById('{{item.max_price_id}}').textContent),
                 fill:false
             }, 
             {
@@ -54,22 +51,46 @@
                 backgroundColor:"#FF00FF",
                 label:"Quantity",
                 borderColor:"#FF00FF",
-                data:JSON.parse(document.getElementById('{{item.total_quantity_id}}').textContent),
                 fill:false,
             }
         ]
+
+        var new_data = []
+        for (let i = 0; i < metric_data.length; i++) {
+            if (metric_data[i].id != '') {
+                metric_data[i].data = JSON.parse(document.getElementById(metric_data[i].id).textContent)
+                new_data.push(metric_data[i])
+            } 
+        }
+
         
         var graph_data = {
             labels:dates,
-            datasets: metric_data,
+            datasets: new_data,
             
         }
 
         var chart_options = {
             legend: {
-                display: true,
+                display:false,
                 labels: {
                     fontColor: 'black'
+                }
+            },
+            scales: {
+                yAxes : [{
+                    ticks : {
+                        maxTicksLimit: 8,
+                    }
+                }],
+                xAxes : [{
+                    ticks : {
+                        maxTicksLimit: 8,
+                    }
+                }],
+                x: {
+                    type:"time",
+                    time: {unit:"day"}
                 }
             }
         };
