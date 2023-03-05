@@ -86,7 +86,6 @@ def format_item_info(items, **kwargs):
             })
 
             for metric in graph_data:
-                print(f"{metric}_id")
                 item_dict.update({
                     f"{metric}_graph":append_item_graph_info(item[0], graph_metric=metric, user_id=user_id)[0],
                     f"{metric}_id":f"{item[0]}_{metric}" + f"{kwargs.get('home_view', '')}",
@@ -182,7 +181,7 @@ def sort_themes(field:str, order:str, sub_themes:list[str]) -> list[str]:
     order_convert = {"asc":False, "desc":True}
     order = order_convert[order]
     if field == "theme_name":
-        return sorted(sub_themes, reverse=order)
+        return sorted(sub_themes, key=lambda x:x["sub_theme"], reverse=order)
     return sub_themes
 
     #elif field == "popularity":
@@ -207,21 +206,21 @@ def sort_dropdown_options(options:list[dict[str,str]], field:str) -> list[dict[s
     
     return options
 
-def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent:int, view:str) -> list[str]:
+def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], indent:int, view:str, metric:str) -> list[str]:
 
     indent += 1
     for theme in parent_themes:
-        sub_themes = DB.sub_themes(user_id, theme[0], view)
+        sub_themes = DB.sub_themes(user_id, theme[0], view, metric)
         sub_themes = [theme_path for theme_path in sub_themes if theme_path.count("~") == indent]
 
         themes.append({
             "theme_path":theme[0],
             "count":theme[1],
-            "total_price":theme[2],
+            "metric_total":theme[2],
             "sub_themes":sub_themes,
         })
 
-        get_sub_themes(user_id, sub_themes, themes, indent, view)
+        get_sub_themes(user_id, sub_themes, themes, indent, view, metric)
 
     return themes
 
@@ -229,7 +228,10 @@ def get_sub_themes(user_id:int, parent_themes:list[str], themes:list[dict], inde
 def clear_session_url_params(request, *keys, **sub_dict):
     #options to del values from a sub dict of request.session eg request.session["dict_name"]
     if sub_dict.get("sub_dict") != None:
-        _dict = request.session[sub_dict.get("sub_dict")]
+        if sub_dict.get("sub_dict") in request.session:
+            _dict = request.session[sub_dict.get("sub_dict")]
+        else:
+            _dict = request.session
     else:
         _dict = request.session
 
@@ -333,6 +335,7 @@ def similar_items_iterate(single_words:list[str], item_name:str, item_type:str, 
             return i, items
 
     return i, []
+
 
 def get_similar_items(item_name:str, item_type:str, item_id:str) -> list:
     single_words = [

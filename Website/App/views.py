@@ -188,17 +188,6 @@ def item(request, item_id):
         "most_recent_set_appearance":DB.most_recent_set_appearance(item_id)
     }
 
-    if item_id != "favicon.ico":
-
-        add_to_user_items_error_msg = request.session.get("add_to_user_items_error_msg", "")
-
-        context.update({
-            "add_to_user_items_error_msg":add_to_user_items_error_msg
-        })
-    
-        if "add_to_user_items_error_msg" in request.session:
-            del request.session["add_to_user_items_error_msg"]
-
     return render(request, "App/item.html", context=context)
 
 
@@ -253,7 +242,11 @@ def search(request, theme_path='all'):
         theme_path = theme_path.replace("all/", "")
 
     if theme_path == 'all':
-        sub_themes = [theme[0].strip("'") for theme in DB.get_parent_themes()]
+        sub_themes = [{
+            "sub_theme":theme[0].strip("'"),
+             "img_path": f"App/images/{DB.get_sub_theme_set('',theme[0])}.png"
+            } for theme in DB.get_parent_themes()
+        ]
         theme_items = [] 
     else:
         theme_items = DB.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
@@ -263,11 +256,17 @@ def search(request, theme_path='all'):
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
-        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~")) #return of all sub-themes (if any) for theme
-        #split "~" (used to seperate sub themes in database) with 
-        sub_themes = [theme[0].split("~")[0] for theme in sub_themes]
-        #remove duplicates
-        sub_themes = list(dict.fromkeys(sub_themes))
+        #return of all sub-themes (if any) for theme
+        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~"))
+        
+        sub_themes = [{
+            "sub_theme":theme[0].split("~")[0],
+            "img_path":f"App/images/{DB.get_sub_theme_set(theme_path,theme[0].split('~')[0])}.png"
+            } for theme in sub_themes]
+        
+        #remove duplicates and resort after tuple
+        sub_themes = sorted([dict(t) for t in {tuple(d.items()) for d in sub_themes}], key=lambda x:x["sub_theme"])
+                
 
     current_page = check_page_boundaries(current_page, theme_items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(theme_items, current_page, SEARCH_ITEMS_PER_PAGE)
@@ -452,11 +451,14 @@ def user_items(request, view, user_id):
     graph_options = sort_dropdown_options(graph_options, graph_metric)
 
     total_unique_items = len(items)
-    total_price = DB.user_items_total_price(user_id, graph_metric, view)
+    metric_total = {
+        "metric":' '.join(list(map(str.capitalize, graph_metric.split("_")))),
+        "total":DB.user_items_total_price(user_id, graph_metric, view) 
+        }
     items = items[(current_page - 1) * USER_ITEMS_ITEMS_PER_PAGE : int(current_page) * USER_ITEMS_ITEMS_PER_PAGE]
 
-    parent_themes = DB.parent_themes(user_id, view)
-    themes = get_sub_themes(user_id, parent_themes, [], -1, view)
+    parent_themes = DB.parent_themes(user_id, view, graph_metric)
+    themes = get_sub_themes(user_id, parent_themes, [], -1, view, graph_metric)
 
     context.update({
         "items":items,
@@ -465,7 +467,7 @@ def user_items(request, view, user_id):
         "graph_options":graph_options,
         "themes":themes,
         "total_unique_items":total_unique_items,
-        "total_price":total_price,
+        "metric_total":metric_total,
         "view":view,
         "current_page":current_page,
         "show_graph":True
@@ -569,18 +571,15 @@ def add_to_user_items(request, item_id):
             condition = form.cleaned_data["condition"]
             quantity = form.cleaned_data["quantity"]
             if (item_id, condition) not in portfolio_items_and_condition:
-                print(1)
                 DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
             else:
-                print(2)
                 DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
     else:
         if item_id not in user_item_ids:
-            print(3)
             DB.add_to_user_items(user_id, item_id, view)
         else:
-            request.session["add_to_user_items_error_msg"] = f"{item_id} is already in your watchlist"
-
+            DB.remove_from_watchlist(user_id, item_id)
+            
     DB.check_portfolio_quantity_boundaries()
 
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
