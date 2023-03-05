@@ -25,8 +25,12 @@ SECRET_KEY = 'django-insecure-yw92!lqu(z&m@5cl##=eoa&!3vhb!)qz2f587%le)=!snne6b-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+PYTHONUNBUFFERED = ''
 
+#stops error - 'database is locked' / 'The request's session was deleted before the request completed'
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -44,7 +48,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
