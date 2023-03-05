@@ -800,13 +800,36 @@ class DatabaseManagment():
             """        
 
         return self.SELECT(sql)
+    
 
+    def get_sub_theme_set(self ,theme_path:str, sub_theme:str):
+        for char in ["/", " "]:
+            if char in theme_path:
+                theme_path = theme_path.replace(char, "~")
 
-    def parent_themes(self, user_id:int, view:str) -> list[str]:
-        if view == "portfolio":
-            select_string = "SELECT theme_path, COUNT(), ROUND(SUM(avg_price * quantity),2), P.item_id"
+        if theme_path == '':
+            path = f"LIKE '{sub_theme}'%" 
         else:
-            select_string = "SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id"
+            path = f"LIKE '{theme_path}~{sub_theme}%'" 
+
+        sql = f"""
+            SELECT I.item_id
+            FROM App_theme T, App_item I
+            WHERE theme_path {path}
+                AND item_type = 'S'
+                AND T.item_id = I.item_id
+            GROUP BY theme_path
+        """
+        result = self.SELECT(sql, fetchone=True)
+        if result == None:
+            return 'No-Image'
+        return result[0]
+
+    def parent_themes(self, user_id:int, view:str, metric:str) -> list[str]:
+        if view == "portfolio":
+            select_string = f"SELECT theme_path, COUNT(), ROUND(SUM({metric} * quantity),2), P.item_id"
+        else:
+            select_string = f"SELECT theme_path, COUNT(), ROUND(SUM({metric}),2), P.item_id"
            
 
         sql = f"""
@@ -824,9 +847,9 @@ class DatabaseManagment():
         return self.SELECT(sql)
 
 
-    def sub_themes(self, user_id:int, theme_path:str, view:str) -> list[str]:
+    def sub_themes(self, user_id:int, theme_path:str, view:str, metric:str) -> list[str]:
         sql = f"""
-            SELECT theme_path, COUNT(), ROUND(SUM(avg_price),2), P.item_id
+            SELECT theme_path, COUNT(), ROUND(SUM({metric}),2), P.item_id
             FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
                 AND theme_path LIKE '{theme_path}%'
