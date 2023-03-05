@@ -9,17 +9,15 @@
     {% load tags %}
 
     <p id="important-info">Only theme with data <a href="http://127.0.0.1:8000/search/all/Star_Wars/">Star Wars</a></p>
-
     {% if sub_themes|length > 0 %}
 
     <section id="search-themes-container">
 
-
     <section id="all-themes-container">
         {% for theme in sub_themes %}
-        <a class="theme-container" href="{% url 'search' theme_path %}{{theme}}/">
-            <h3>{{theme|replace_underscore}}</h3>
-            <img src="{% static 'App/images/sw0001a.png' %}" alt="placeholder">
+        <a class="theme-container" href="{% url 'search' theme_path %}{{theme.sub_theme}}/">
+            <h3>{{theme.sub_theme|replace_underscore}}</h3>
+            <img src="{% static theme.img_path %}" alt="{{theme.img_path}}">
         </a>
         {% endfor %}
     </section>

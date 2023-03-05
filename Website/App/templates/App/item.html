@@ -116,7 +116,11 @@
             
                 </div>
                 <div id="add-to-watchlist">
+                    {% if in_watchlist == 'No' %}
                     <button name="view-type" type="submit" value="watchlist">Add to Watchlist!</button>
+                    {% else %}
+                    <button name="view-type" type="submit" value="watchlist">Remove from Watchlist!</button>
+                    {% endif %}
                 </div>
 
                 <p id="error-msg">{{ add_to_user_items_error_msg }}</p>

@@ -33,13 +33,22 @@
             {% endif %}
 
             <p>Total of {{ total_unique_items }} unique items in your {{ view }}.</p>
-            <p>Total Value £{{total_price}}</p>
+
+            {% if metric_total.metric != 'Total Quantity'%}
+                <p>Total {{metric_total.metric}} £{{metric_total.total | two_decimals}}</p>
+            {% else %}
+                <p>{{metric_total.metric}} {{metric_total.total | remove_decimals}}</p>
+            {% endif %}
         </div>
 
         <div class="tool-bar-div" id="themes-container">
-            <h3>Themes</h3>
+            <h3>Themes - <span id="themes-header-metric">({{metric_total.metric}})</span></h3>
             {% for theme in themes %}
-                <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.total_price}}</p>
+                {% if metric_total.metric != 'Total Quantity' %}
+                    <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.metric_total | two_decimals}}</p>
+                {% else %}
+                    <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : {{theme.metric_total | remove_decimals}}</p>
+                {% endif %}
             {% endfor %}
         </div>
     </section>
