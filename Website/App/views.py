@@ -55,7 +55,7 @@ def index(request):
     graph_options = sort_dropdown_options(graph_options, graph_metric)
 
     #if the user has no recently viewed items create a new emtpy list to store items in the future
-    if "recently-viewed" not in request.session and user_id == -1:
+    if "recently-viewed" not in request.session or user_id == -1:
         request.session["recently-viewed"] = []
 
     recently_viewed_ids = request.session["recently-viewed"][:RECENTLY_VIEWED_ITEMS_NUM]
@@ -64,9 +64,9 @@ def index(request):
     #duplicate list eg [1,2,3] -> [1,2,3,1,2,3] for infinite CSS carousel 
     '''recently_viewed.extend(recently_viewed)'''
 
-    recently_viewed = format_item_info(recently_viewed, graph_data={"metric":graph_metric, "user_id":user_id})
-    popular_items = format_item_info(DB.get_popular_items()[:10], popular_items=True, home_view="_popular_items", graph_data={"metric":graph_metric})
-    new_items = format_item_info(DB.get_new_items()[:10], home_view="_new_items", graph_data={"metric":graph_metric})[:10]
+    recently_viewed = format_item_info(recently_viewed, graph_data=[graph_metric], user_id=user_id)
+    popular_items = format_item_info(DB.get_popular_items()[:10], popular_items=True, home_view="_popular_items", graph_data=[graph_metric])
+    new_items = format_item_info(DB.get_new_items()[:10], home_view="_new_items", graph_data=[graph_metric])[:10]
 
     last_week = dt.today() - timedelta(days=7)
     last_week = last_week.strftime("%d/%m/%y")
@@ -88,10 +88,10 @@ def index(request):
 
     if user_id == -1 or len(DB.get_user_items(user_id, "portfolio")) == 0:
         context["portfolio_trending_items"] = False
-        context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data={"metric":"avg_price", "user_id":user_id})
+        context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data=[graph_metric], user_id=user_id)
     else:
         context["portfolio_trending_items"] = True
-        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data={"metric":"avg_price", "user_id":user_id})
+        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data=[graph_metric])
 
     return render(request, "App/home.html", context=context)
 
@@ -104,7 +104,7 @@ def item(request, item_id):
 
     #[0] since list with one element (being the item)
     item_info = format_item_info(
-        DB.get_item_info(item_id, metric), price_trend=True,
+        DB.get_item_info(item_id, metric),
         graph_data=["avg_price", "min_price", "max_price", "total_quantity"]
     )
     
@@ -164,6 +164,12 @@ def item(request, item_id):
     sub_sets = DB.get_item_subsets(item_id)
     super_sets = DB.get_item_supersets(item_id)
 
+    metric_changes = [
+        {"metric":" ".join(list(map(str.capitalize, metric_change.split("_")))) , 
+        "change":DB.get_item_metric_changes(item_id, metric_change)} 
+        for metric_change in ["avg_price", "min_price", "max_price", "total_quantity"]
+    ]
+
     context = {
         "show_year_released_availability":True,
         "show_graph":False,
@@ -178,9 +184,9 @@ def item(request, item_id):
         "graph_checkboxes":get_graph_checkboxes(),
         "sub_sets":format_sub_sets(sub_sets),
         "super_sets":format_super_sets(super_sets),
-        "metric":"".join([f"{string.capitalize()} " for string in  metric.split("_")]),
+        "metric_changes":metric_changes,
+        "most_recent_set_appearance":DB.most_recent_set_appearance(item_id)
     }
-
 
     if item_id != "favicon.ico":
 
@@ -200,14 +206,14 @@ def trending(request):
 
     request, options = save_POST_params(request)
 
-    graph_metric = options.get("graph-metric", "avg_price")
+    graph_metric = options.get("graph-metric")
     trend_type = options.get("sort-field", "avg_price-desc")
     current_page = options.get("page", 1)
 
     graph_options = sort_dropdown_options(get_graph_options(), graph_metric)
     trend_options = sort_dropdown_options(get_trending_options(), trend_type)
 
-    items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data={"metric":graph_metric})
+    items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data=[graph_metric])
 
     current_page = check_page_boundaries(current_page, items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(items, current_page, SEARCH_ITEMS_PER_PAGE)
@@ -251,7 +257,7 @@ def search(request, theme_path='all'):
         theme_items = [] 
     else:
         theme_items = DB.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
-        theme_items = format_item_info(theme_items, view="search",graph_data={"metric":graph_metric,"user_id":user_id} ,user_id=user_id)
+        theme_items = format_item_info(theme_items, view="search",graph_data=[graph_metric] ,user_id=user_id)
         if len(theme_items) == 0:
             print("REDIRECT - NO ITEMS []")
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
@@ -434,7 +440,7 @@ def user_items(request, view, user_id):
 
 
     items = DB.get_user_items(user_id, view)
-    items = format_item_info(items, view=view, graph_data={"metric":graph_metric, "user_id":user_id})
+    items = format_item_info(items, view=view, graph_data=[graph_metric], user_id=user_id)
 
     current_page = check_page_boundaries(current_page, items, USER_ITEMS_ITEMS_PER_PAGE)
     num_pages = slice_num_pages(items, current_page, USER_ITEMS_ITEMS_PER_PAGE)
