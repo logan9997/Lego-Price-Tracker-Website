@@ -127,6 +127,7 @@ nav ul li:hover .dropdown-content {
     width: 12rem;
     border-radius: 0.4rem;
     background: url("static/app/styling-images/search_button.png");
+    text-align: center;
 }
 
 #search-form button {
@@ -145,8 +146,6 @@ nav ul li:hover .dropdown-content {
     width: 1rem;
     height: 2rem;
     position: relative;
-    bottom: 0.15rem;
-
 }
 
 #logout img {

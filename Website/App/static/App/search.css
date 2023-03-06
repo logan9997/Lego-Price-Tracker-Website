@@ -59,7 +59,8 @@
 
 .theme-container img {
     background-color: red;
-    margin-top: calc((11rem - 80px) / 2 - 1rem)
+    width:88%;
+    height: 62%;
 }
 #theme-items-container {
     text-align: center;

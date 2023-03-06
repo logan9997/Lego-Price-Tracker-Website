@@ -68,6 +68,6 @@
 
 .item_canvas {
     width: 10rem;
-    height: 10rem;
+    height: 20rem;
     margin-top: calc((100% - 10rem) / 2);
 }

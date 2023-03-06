@@ -84,6 +84,7 @@
         </div>
     </section>
 
+    {% if logged_in %}
     <section id="in-collections-forms-container">
 
         <section id="in-collections">
@@ -109,7 +110,17 @@
                     </div>
                     <div class="label-input-container">
                         <label for="quantity">Quantity</label>
-                        <input id="quantity-input" onchange="update_add_portfolio_text()" value="1" type="number" name="quantity">
+                        <input id="quantity-input" onchange="update_add_portfolio_text()" value="1" type="number" name="quantity" min="0">
+                    </div>
+
+                    <div class="label-input-container">
+                        <label for="bought_for">Buy Price (£)</label>
+                        <input type="number" name="bought_for" id="" step=".01">
+                    </div>
+
+                    <div class="label-input-container">
+                        <label for="date_added">Date Added</label>
+                        <input type="date" name="date_added">
                     </div>
 
                     <button id="portfolio-button" name="view-type" type="submit" value="portfolio">Add to Portfolio!</button>
@@ -128,6 +139,11 @@
         </section>
 
     </section>
+    {% else %}
+    <section id="login-for-collections">
+        <p>Create an account to add to collection</p>
+    </section>
+    {% endif %}
 
 </section>
 

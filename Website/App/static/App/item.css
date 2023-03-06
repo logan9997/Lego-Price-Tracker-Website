@@ -42,25 +42,41 @@
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
 }
 
+#current-metrics-container {
+    padding: 0;
+    margin: 0;
+}
+
 #metric-change-container {
     display: flex;
     justify-content: center;
     flex-direction: column;
-    height: 2.5rem;
+    padding: 0;
+    margin: 0;
+    border-top: 0.1rem rgb(228, 220, 220) solid;
+    width: 80%;
+    margin-left: 10%;
+}
+
+.metric-change {
+    padding: 0;
+    margin: 0.4rem;
 }
 
 .tool-tip {
     position: relative;
     top: 2.3rem;
-    margin-left: 7%;
+    right: 1rem;
 }
 
 .info-block {
     width: 30.5%;
-    height: 20rem;
+    height: 21.5rem;
     margin: 1rem;
     background-color: white;
     border-radius: 1rem;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
 }
 
 .info-block h3 {
@@ -68,6 +84,7 @@
     border-bottom: 0.1rem orangered solid;
     border-top: 0.1rem orangered solid;
     padding: 0.5rem 0 0.5rem;
+    margin: 0;
 }
 
 .info-block p {
@@ -144,9 +161,14 @@
     margin: 0;
 }
 
-
 #slider {
     width: 10rem;
+}
+
+#checkboxes {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 #in-collections-forms-container {
@@ -166,14 +188,15 @@
 
 #form-container {
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
-    width: 18rem;
-    height: 16rem;
+    width: 22rem;
+    height: 20rem;
     margin-top: 1rem;
 }
 
 #form-container h3 {
     text-align: center;
     margin-bottom: 1.5rem;
+    margin-top: 2rem;
 }
 
 #add-to-watchlist {
@@ -201,12 +224,20 @@
 #form-container select, input {
     text-align: center;
     float: right;
-    width: 4rem;
+    width: 6rem;
     padding: 0;
 }
 
 #form-container select {
-    width: 4.2rem;
+    width: 6.2rem;
+}
+
+#form-container button {
+    width: 10.8rem;
+}
+
+#portfolio-button {
+    margin-top: 1rem;
 }
 
 #error-msg {
@@ -242,9 +273,6 @@
 #super-sets-container, #sub-sets-container {
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
 }
-
-
-
 
 .sub-super-set-container {
     display: flex;
@@ -282,7 +310,7 @@
 
 .piece-container {
     width: 26%;
-    height: 10rem;
+    height: 9rem;
     display: -webkit-box;
     -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;
@@ -294,5 +322,14 @@
     padding: 0.2rem;
 }
 
+.piece-container span {
+    text-decoration: underline;
+}
+
+.piece-container img {
+    width: 4rem;
+    height: 4rem;
+    box-shadow: 0 0 0.4rem 0.4rem rgb(225,225,225); 
+}
 
 

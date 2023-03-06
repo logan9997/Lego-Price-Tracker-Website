@@ -4,8 +4,13 @@
     margin-left: 20%;
 }
 
-.item-container-trending {
-    flex-direction: row;
+.main-item-container {
     width: 30rem;
     margin: 1rem;
+    display: flex;
+    flex-direction: row;
+}
+
+.item-info-container {
+    background-color: green;
 }

@@ -61,7 +61,15 @@
         <div class="item-and-side-bar-container">
             {% if request.path == "/portfolio/" %}
             <div class="items-options">
-                <div class="qty-condition-container">
+                <div class="view-owned">
+                    <form action="{% url 'portfolio' %}?item={{item.item_id}}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form-type" value="entries_button">
+                        <input type="hidden" name="item_id" value="{{item.item_id}}">
+                        <button type="submit">Entries</button>
+                    </form>
+                </div>
+                <div class="qty-condition-container">       
                     <p>{{item.owned_quantity}}</p>
                     <p>({{item.condition}})</p>
                 </div>
@@ -100,45 +108,13 @@
 
     {% else %}
     <section id="items-container">
-        <canvas id="trends-canvas"></canvas>
-
-        {{ trends_graph_dates|json_script:"dates" }}
-        {{ trends_graph_prices|json_script:"prices" }}
-
-        <script>
-
-            var prices = JSON.parse(document.getElementById('prices').textContent);
-            var dates = JSON.parse(document.getElementById('dates').textContent);
-
-            console.log(prices)
-
-            var data = [];
-            for (let i = 0; i < prices.length; i++) {
-                data.push({y:prices[i], x:dates[i]});
-            }
-            
-            new Chart("trends-canvas", {
-                type: "line",
-                data: {
-                    labels: dates,
-                    datasets: [{
-                    fill: false,
-                    backgroundColor: "orangered",
-                    borderColor: "orangered",
-                    data: data
-                    }]
-                },
-                options: {
-                    legend: {display: false},
-                    scales: {
-                        x : {
-                            type:"time",
-                            time: {unit:"day"}
-                        }
-                    }
-                }
-                });
-        </script>
+        {% if item_entries != None and item_entries|length != 0 %}
+            {% for item in item_entries %}
+                {% include 'App/template_blocks/item_container.html' %}
+            {% endfor %}
+        {% else %}
+            <p>No items</p>
+        {% endif %}
     </section>
     {% endif %}
 
