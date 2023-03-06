@@ -27,8 +27,14 @@ DEBUG = True
 
 PYTHONUNBUFFERED = ''
 
+#####################################-ADDED-############################################
+
 #stops error - 'database is locked' / 'The request's session was deleted before the request completed'
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+#SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+SESSION_COOKIE_AGE = 1209600 
+
+#####################################-ADDED-############################################
 
 ALLOWED_HOSTS = []
 
