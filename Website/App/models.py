@@ -50,7 +50,10 @@ class Portfolio(models.Model):
         ("U", "used"), ("N", "new")
     ))
     quantity = models.IntegerField()
-    date_added = models.DateField(auto_now=True)
+    date_added = models.DateField()
+    bought_for = models.FloatField()
+    sold_for = models.FloatField(null=True)
+    date_sold = models.DateField(null=True)
 
 
 class Watchlist(models.Model):
@@ -61,8 +64,13 @@ class Watchlist(models.Model):
 
 
 class Piece(models.Model):
-    piece = models.CharField(max_length=40, primary_key=True)
-    piece_name = models.CharField(max_length=120)
+    piece_id = models.CharField(max_length=40, primary_key=True)
+    piece_name = models.CharField(max_length=360)
+    type = models.CharField(max_length=20, choices=(
+        ("MINIFIG", "MINIFIG"), ("PART", "PART"), ("SET", "SET"), ("GEAR", "GEAR"),
+        ("CATALOG", "CATALOG"), ("INSTRUCTION", "INSTRUCTION"), ("UNSORTED_LOT", "UNSORTED_LOT"),
+        ("ORIGINAL_BOX", "ORIGINAL_BOX")
+    ))
 
 
 class PieceParticipation(models.Model):
@@ -70,6 +78,7 @@ class PieceParticipation(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     piece = models.ForeignKey(Piece, on_delete=models.CASCADE)
     quantity = models.IntegerField()
+    colour_id = models.CharField(max_length=40)
 
 
 class SetParticipation(models.Model):

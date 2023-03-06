@@ -1,4 +1,4 @@
-import random
+import sys
 
 from datetime import (
     datetime as dt, 
@@ -41,14 +41,11 @@ def search_item(request, current_view):
         return redirect(f"http://127.0.0.1:8000/item/{selected_item}")
     return redirect(f"http://127.0.0.1:8000{current_view}")
 
-
+@timer
 def index(request):
-
     if "user_id" not in request.session:
         request.session["user_id"] = -1
     user_id = request.session["user_id"]
-
-    item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
 
     graph_options = get_graph_options()
     graph_metric = request.POST.get("graph-metric", "avg_price")
@@ -91,7 +88,8 @@ def index(request):
         context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data=[graph_metric], user_id=user_id)
     else:
         context["portfolio_trending_items"] = True
-        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id), graph_data=[graph_metric])
+        context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id, graph_metric), graph_data=[graph_metric])
+
 
     return render(request, "App/home.html", context=context)
 
@@ -221,7 +219,7 @@ def trending(request):
 
     return render(request, "App/trending.html", context=context)
 
-
+@timer
 def search(request, theme_path='all'):
 
     if "search" not in request.META.get('HTTP_REFERER'):
@@ -257,16 +255,17 @@ def search(request, theme_path='all'):
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
         #return of all sub-themes (if any) for theme
-        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~"))
         
+        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~"))
+
         sub_themes = [{
             "sub_theme":theme[0].split("~")[0],
             "img_path":f"App/images/{DB.get_sub_theme_set(theme_path,theme[0].split('~')[0])}.png"
             } for theme in sub_themes]
-        
+
         #remove duplicates and resort after tuple
         sub_themes = sorted([dict(t) for t in {tuple(d.items()) for d in sub_themes}], key=lambda x:x["sub_theme"])
-                
+        
 
     current_page = check_page_boundaries(current_page, theme_items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(theme_items, current_page, SEARCH_ITEMS_PER_PAGE)
@@ -282,8 +281,7 @@ def search(request, theme_path='all'):
 
     theme_items = sort_items(theme_items,sort_field)
 
-    theme_items = theme_items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
-    
+    theme_items = theme_items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]    
 
     if request.method == "POST": 
         if request.POST.get("form-type") != "theme-url":
@@ -309,6 +307,12 @@ def search(request, theme_path='all'):
 
 def login(request):
     context = {}
+
+    if "user_id" in request.session:
+        if request.session["user_id"] != -1:
+            return redirect("index")
+    else:
+        return redirect("index")
 
     #if not login attempts have been made set to 0
     if "login_attempts" not in request.session:
@@ -386,6 +390,12 @@ def join(request):
 
     context = {}
 
+    if "user_id" in request.session:
+        if request.session["user_id"] != -1:
+            return redirect("index")
+    else:
+        return redirect("index")
+
     if request.method == 'POST':
         form = SignupFrom(request.POST)
         if form.is_valid():
@@ -422,7 +432,7 @@ def user_items(request, view, user_id):
 
     context = {}
 
-    if view not in request.META.get('HTTP_REFERER'):
+    if view not in request.META.get('HTTP_REFERER', ""):
         request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
 
     graph_options = get_graph_options()
@@ -491,14 +501,8 @@ def portfolio(request):
     context["total_items"] = DB.total_portfolio_items(user_id)
     context["view_param"] = f"/?view=items"
 
-    if view == "trends":
-        trends_graph_data = DB.get_portfolio_price_trends(user_id)
-
-        trends_graph_dates = [data[0] for data in trends_graph_data]
-        trends_graph_prices = [data[1] for data in trends_graph_data]
-
-        context["trends_graph_dates"] = trends_graph_dates
-        context["trends_graph_prices"] = trends_graph_prices
+    if request.GET.get("item") != None:
+        context["item_entries"] = format_item_info(DB.get_all_portfolio_item_entries(request.GET.get("item"), user_id))
 
     return render(request, "App/portfolio.html", context=context)
 
@@ -570,8 +574,11 @@ def add_to_user_items(request, item_id):
         if form.is_valid():
             condition = form.cleaned_data["condition"]
             quantity = form.cleaned_data["quantity"]
+            bought_for = form.cleaned_data["bought_for"]
+            date_added = form.cleaned_data["date_added"]
+
             if (item_id, condition) not in portfolio_items_and_condition:
-                DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity)
+                DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity, bought_for=bought_for, date_added=date_added)
             else:
                 DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
     else:

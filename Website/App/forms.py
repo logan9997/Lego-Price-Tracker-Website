@@ -7,6 +7,8 @@ class ItemSelect(forms.Form):
 class AddItemToPortfolio(forms.Form):
     condition = forms.CharField(max_length=1)
     quantity = forms.IntegerField()
+    bought_for = forms.FloatField()
+    date_added = forms.DateField()
 
 
 class PortfolioItemsSort(forms.Form):
@@ -19,8 +21,8 @@ class PortfolioItemsSort(forms.Form):
 
 
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=16)
-    password = forms.CharField(max_length=22)
+    username = forms.CharField(max_length=416)
+    password = forms.CharField(max_length=142)
 
 
 class SignupFrom(forms.Form):
