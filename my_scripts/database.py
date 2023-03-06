@@ -320,7 +320,10 @@ class DatabaseManagment():
             AND SP.item_id = '{item_id}'
             GROUP BY I.item_id
         """
-        return self.SELECT(sql, fetchone=True)[0]
+        result = self.SELECT(sql, fetchone=True)
+        if result == None:
+            return None
+        return result[0]
 
     def insert_year_released(self, year_released, item_id) -> None:
         self.cursor.execute(f"""
@@ -330,6 +333,18 @@ class DatabaseManagment():
         """)
         self.con.commit()
 
+
+    def get_all_portfolio_item_entries(self, item_id, user_id):
+        sql = f"""
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity
+            FROM App_portfolio PO, App_item I, App_price PR
+            WHERE I.item_id = '{item_id}'
+                AND user_id = {user_id}
+                AND I.item_id = PO.item_id
+                AND PR.item_id = I.item_id
+        """
+        return self.SELECT(sql)
 
     def get_item_info(self, item_id, change_metric) -> list[str]:
         sql = f"""
@@ -396,7 +411,7 @@ class DatabaseManagment():
             self.con.commit()
 
 
-    def get_sub_themes(self, parent_theme) -> list[str]:
+    def get_sub_themes(self, parent_theme):
         sql = f"""
             SELECT REPLACE(theme_path, '{parent_theme}~', '')
             FROM App_theme, App_item
@@ -783,9 +798,11 @@ class DatabaseManagment():
         if view == "portfolio":
             condition = portfolio_args["condition"]
             quantity = portfolio_args["quantity"]
+            bought_for = portfolio_args["bought_for"]
+            date_added = portfolio_args["date_added"]
 
-            sql_fields += ",'condition', 'quantity')"
-            sql_values += f",'{condition}', {quantity})"
+            sql_fields += ",'condition', 'quantity', 'bought_for', 'date_added')"
+            sql_values += f",'{condition}', {quantity}, {bought_for}, '{date_added}')"
         else:
             sql_fields += ")"
             sql_values += ")"
@@ -838,6 +855,7 @@ class DatabaseManagment():
                 AND item_type = 'S'
                 AND T.item_id = I.item_id
             GROUP BY theme_path
+            LIMIT 1
         """
 
         result = self.SELECT(sql, fetchone=True)
