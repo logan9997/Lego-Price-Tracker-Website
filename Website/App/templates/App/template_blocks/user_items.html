@@ -11,14 +11,7 @@
     </div>
     
     <div id="items-header" class="headers">
-        {% if request.path == "/portfolio/" %}
-            <a href="{% url 'portfolio' %}?view=items">items</a>
-            <a href="{% url 'portfolio' %}?view=trends">trends</a>
-        {% endif %}
-
-        {% if request.GET.view == "items" or request.path == "/watchlist/" %}
-            {% include 'App/template_blocks/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
-        {% endif %}
+        {% include 'App/template_blocks/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
     </div>
     
 </section>
@@ -109,9 +102,49 @@
     {% else %}
     <section id="items-container">
         {% if item_entries != None and item_entries|length != 0 %}
-            {% for item in item_entries %}
-                {% include 'App/template_blocks/item_container.html' %}
-            {% endfor %}
+            <div id="entry-item-container">
+                <div id="item-profile">
+                    {% include 'App/template_blocks/item_container.html' with item=item_info show_graph=False show_year_released_availability=True %}
+                </div>
+
+                <div id="chart-container">
+                    <div id="header-and-graph-container">
+                        <h3>{{graph_metric|capitalise_split_words}} Trends</h3>
+                        {% include 'App/template_blocks/item_chart.html' with item=item_info %}
+                    </div>
+                </div>
+
+                <div id="metric-change-container">
+                    <h3>Trends</h3>
+                    <p>{{graph_metric|capitalise_split_words}} Change (%) {{item_info.price_change|postivie_or_negative_sign}}</p>
+                </div>
+            </div>
+            <div id="entries-items-container">
+                <h3>Entries</h3>
+                <div id="entries-items-loop-container">
+                {% for item in item_entries %}
+                    <div class="entry-item-container">
+                        <div class="entry-counter">
+                            <p>{{item_entries|index:item}}</p>
+                        </div>
+                        
+                        <div class="bought-data entry-item-div">
+                            <p>Date Aquired : {{item.date_added|none_to_hyphens}}</p>
+                            <p>Bought For : £{{item.bought_for}}</p>
+                        </div>
+
+                        <div class="sold-data entry-item-div">
+                            <p>Date Sold : {{item.date_sold|none_to_hyphens}}</p>
+                            <p>Sold For : £{{item.sold_for|none_to_hyphens}}</p>
+                        </div>
+
+                        <div class="notes entry-item-div">
+                            <p>Notes : {{item.notes|none_to_hyphens}}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         {% else %}
             <p>No items</p>
         {% endif %}
