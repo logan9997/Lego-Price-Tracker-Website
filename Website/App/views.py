@@ -542,7 +542,7 @@ def view_POST(request, view):
     portfolio_view = ""
     if view == "portfolio":
         portfolio_view = "?view=" + request.session.get("portfolio_view", "items")
-    DB.check_portfolio_quantity_boundaries()
+
     return redirect(f"http://127.0.0.1:8000/{view}/" + portfolio_view)
 
 
@@ -567,7 +567,6 @@ def add_to_user_items(request, item_id):
     user_id = request.session["user_id"]
 
     user_item_ids = [_item[0] for _item in DB.get_user_items(user_id, view)]
-    portfolio_items_and_condition = DB.get_portfolio_items_condition(user_id)
 
     if view == "portfolio":
         form = AddItemToPortfolio(request.POST)
@@ -577,18 +576,14 @@ def add_to_user_items(request, item_id):
             bought_for = form.cleaned_data["bought_for"]
             date_added = form.cleaned_data["date_added"]
 
-            if (item_id, condition) not in portfolio_items_and_condition:
-                DB.add_to_user_items(user_id, item_id, view, condition=condition, quantity=quantity, bought_for=bought_for, date_added=date_added)
-            else:
-                DB.update_portfolio_item_quantity(user_id, item_id, condition, quantity)
+            for _ in range(quantity):
+                DB.add_to_user_items(user_id, item_id, view,date_added, condition=condition, bought_for=bought_for)
     else:
         if item_id not in user_item_ids:
-            DB.add_to_user_items(user_id, item_id, view)
+            DB.add_to_user_items(user_id, item_id, view, datetime.datetime.today().strftime('%Y-%m-%d'))
         else:
             DB.remove_from_watchlist(user_id, item_id)
             
-    DB.check_portfolio_quantity_boundaries()
-
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 
 

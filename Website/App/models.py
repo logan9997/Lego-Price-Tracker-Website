@@ -49,11 +49,11 @@ class Portfolio(models.Model):
     condition = models.CharField(max_length=1, choices=(
         ("U", "used"), ("N", "new")
     ))
-    quantity = models.IntegerField()
     date_added = models.DateField()
     bought_for = models.FloatField()
     sold_for = models.FloatField(null=True)
     date_sold = models.DateField(null=True)
+    notes = models.CharField(max_length=300, null=True)
 
 
 class Watchlist(models.Model):

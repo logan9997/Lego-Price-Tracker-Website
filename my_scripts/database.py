@@ -451,7 +451,7 @@ class DatabaseManagment():
 
         sql_select = "SELECT I.item_id, item_name, year_released, item_type,avg_price, min_price, max_price, total_quantity"
         if view == "portfolio":
-            sql_select += ", condition, quantity"
+            sql_select += ",COUNT(), condition"
 
         sql = f"""
             {sql_select}
@@ -468,7 +468,7 @@ class DatabaseManagment():
     def is_item_in_user_items(self, user_id, view, item_id) -> bool:
 
         if view == "portfolio":
-            sql_select = "SELECT condition, quantity" 
+            sql_select = "SELECT condition, COUNT()" 
             sql_group = "GROUP BY condition"
         else:
             sql_select = "SELECT item_id" 
@@ -500,20 +500,15 @@ class DatabaseManagment():
 
     def total_portfolio_items(self, user_id) -> list[str]:
         sql = f"""
-            SELECT SUM(quantity)
+            SELECT COUNT()
             FROM App_portfolio 
             WHERE user_id = {user_id}
         """
         return self.SELECT(sql)[0][0]
 
     def user_items_total_price(self, user_id, metric, view) -> list[str]:
-        if view == "portfolio":
-            select_string = f"SELECT ROUND(SUM({metric} * quantity), 2)"
-        else:
-            select_string = f"SELECT ROUND(SUM({metric}), 2)"
-
         sql = f"""
-        {select_string}
+        SELECT ROUND(SUM({metric}), 2)
         FROM App_{view} _view, App_item I, App_price P
         WHERE user_id = {user_id}
             AND (date, I.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
@@ -541,14 +536,6 @@ class DatabaseManagment():
             GROUP BY piece_id, colour_id
         """
         return self.SELECT(sql)
-
-
-    def check_portfolio_quantity_boundaries(self):
-        self.cursor.execute("""
-            DELETE FROM App_portfolio
-            WHERE quantity < 1;
-        """)
-        self.con.commit()
 
 
     def get_portfolio_item_quantity(self, item_id, condition, user_id) -> int:
@@ -789,20 +776,18 @@ class DatabaseManagment():
         """
         return self.SELECT(sql)
 
-    def add_to_user_items(self, user_id, item_id, view, **portfolio_args) -> None:
-        date = datetime.date.today().strftime('%Y-%m-%d')
+    def add_to_user_items(self, user_id, item_id, view, date_added, **portfolio_args) -> None:
+        
         
         sql_fields = "('user_id', 'item_id', 'date_added'"
-        sql_values = f"VALUES ({user_id},'{item_id}','{date}'"
+        sql_values = f"VALUES ({user_id},'{item_id}','{date_added}'"
 
         if view == "portfolio":
             condition = portfolio_args["condition"]
-            quantity = portfolio_args["quantity"]
             bought_for = portfolio_args["bought_for"]
-            date_added = portfolio_args["date_added"]
 
-            sql_fields += ",'condition', 'quantity', 'bought_for', 'date_added')"
-            sql_values += f",'{condition}', {quantity}, {bought_for}, '{date_added}')"
+            sql_fields += ",'condition', 'bought_for')"
+            sql_values += f",'{condition}', {bought_for})"
         else:
             sql_fields += ")"
             sql_values += ")"
@@ -864,14 +849,9 @@ class DatabaseManagment():
         return result[0]
 
 
-    def parent_themes(self, user_id:int, view:str, metric:str) -> list[str]:
-        if view == "portfolio":
-            select_string = f"SELECT theme_path, COUNT(), ROUND(SUM({metric} * quantity),2), P.item_id"
-        else:
-            select_string = f"SELECT theme_path, COUNT(), ROUND(SUM({metric}),2), P.item_id"
-           
+    def parent_themes(self, user_id:int, view:str, metric:str) -> list[str]:           
         sql = f"""
-            {select_string}
+            SELECT theme_path, COUNT(), ROUND(SUM({metric}),2)
             FROM App_price P, App_theme T, App_{view} _view, App_item I
             WHERE user_id = {user_id}
                 AND theme_path NOT LIKE '%~%'
