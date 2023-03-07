@@ -66,7 +66,7 @@ def format_item_info(items, **kwargs):
             })
 
         elif kwargs.get("price_trend", False):
-             item_dict.update({
+            item_dict.update({
                 "price_change":item[8]
             })   
 
@@ -74,6 +74,7 @@ def format_item_info(items, **kwargs):
             item_dict.update({
                 "views":item[8], 
             })        
+            
 
         graph_data = kwargs.get("graph_data", False)
 
@@ -93,6 +94,22 @@ def format_item_info(items, **kwargs):
 
         item_dicts.append(item_dict)
 
+    return item_dicts
+
+
+def format_portfolio_items(items):
+    item_dicts = []
+    for _item in items:
+    
+        item_dicts.append({
+            "condtion":_item[0],
+            "bought_for":_item[1],
+            "sold_for":_item[2],
+            "date_added":_item[3],
+            "date_sold":_item[4],
+            "notes":_item[5],
+            "entry_id":_item[6]
+        })
     return item_dicts
 
 

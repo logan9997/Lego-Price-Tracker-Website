@@ -479,8 +479,9 @@ def user_items(request, view, user_id):
         "total_unique_items":total_unique_items,
         "metric_total":metric_total,
         "view":view,
+        "graph_metric":graph_metric,
         "current_page":current_page,
-        "show_graph":True
+        "show_graph":True,
     })
 
     return context
@@ -501,8 +502,14 @@ def portfolio(request):
     context["total_items"] = DB.total_portfolio_items(user_id)
     context["view_param"] = f"/?view=items"
 
-    if request.GET.get("item") != None:
-        context["item_entries"] = format_item_info(DB.get_all_portfolio_item_entries(request.GET.get("item"), user_id))
+    item_id = request.GET.get("item")
+    if item_id != None:
+        items = DB.get_all_portfolio_item_entries(item_id, user_id)
+        items = format_portfolio_items(items)
+        context["item_entries"] = items
+        item_info = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=True)[0]
+        context["item_info"] =  item_info
+        print(context.keys())
 
     return render(request, "App/portfolio.html", context=context)
 
