@@ -336,13 +336,10 @@ class DatabaseManagment():
 
     def get_all_portfolio_item_entries(self, item_id, user_id):
         sql = f"""
-            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-            min_price, max_price, total_quantity
-            FROM App_portfolio PO, App_item I, App_price PR
-            WHERE I.item_id = '{item_id}'
-                AND user_id = {user_id}
-                AND I.item_id = PO.item_id
-                AND PR.item_id = I.item_id
+            SELECT condition, bought_for, sold_for, date_added, date_sold, notes, portfolio_id
+            FROM App_portfolio PO
+            WHERE item_id = '{item_id}'
+                AND user_id = {user_id}     
         """
         return self.SELECT(sql)
 
