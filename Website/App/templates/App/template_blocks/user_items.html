@@ -19,31 +19,42 @@
 <section id="main-container">
 
     <section id="tool-bar">
-        <div class="tool-bar-div" id="stats">
-            <h3>Stats</h3>
-            {% if request.path == "/portfolio/" %}
-                <p>Total of {{ total_items }} items in your portfolio.</p>
-            {% endif %}
-
-            <p>Total of {{ total_unique_items }} unique items in your {{ view }}.</p>
-
-            {% if metric_total.metric != 'Total Quantity'%}
-                <p>Total {{metric_total.metric}} £{{metric_total.total | two_decimals}}</p>
+            {% if request.GET.item != None%}
+                <div class="tool-bar-div" id="stats">
+                    <h3>Stats</h3>
+                    <p>Total bought for price : {{total_bought_price}}</p>
+                    <p>Total sold for price : {{total_sold_price|none_to_hyphens}}</p>
+                </div>
             {% else %}
-                <p>{{metric_total.metric}} {{metric_total.total | remove_decimals}}</p>
-            {% endif %}
-        </div>
 
-        <div class="tool-bar-div" id="themes-container">
-            <h3>Themes - <span id="themes-header-metric">({{metric_total.metric}})</span></h3>
-            {% for theme in themes %}
-                {% if metric_total.metric != 'Total Quantity' %}
-                    <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.metric_total | two_decimals}}</p>
-                {% else %}
-                    <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : {{theme.metric_total | remove_decimals}}</p>
+            <div class="tool-bar-div" id="stats">
+                <h3>Stats</h3>
+
+                {% if request.path == "/portfolio/" %}
+                    <p>Total of {{ total_items }} items in your portfolio.</p>
                 {% endif %}
-            {% endfor %}
-        </div>
+
+                <p>Total of {{ total_unique_items }} unique items in your {{ view }}.</p>
+
+                {% if metric_total.metric != 'Total Quantity'%}
+                    <p>Total {{metric_total.metric}} £{{metric_total.total | two_decimals}}</p>
+                {% else %}
+                    <p>{{metric_total.metric}} {{metric_total.total | remove_decimals}}</p>
+                {% endif %}
+            </div>
+
+            <div class="tool-bar-div" id="themes-container">
+                <h3>Themes - <span id="themes-header-metric">({{metric_total.metric}})</span></h3>
+                {% for theme in themes %}
+                    {% if metric_total.metric != 'Total Quantity' %}
+                        <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : £{{theme.metric_total | two_decimals}}</p>
+                    {% else %}
+                        <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : {{theme.metric_total | remove_decimals}}</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% endif %}
     </section>
 
     {% if request.GET.view == "items" or request.path == "/watchlist/" %}
@@ -54,6 +65,11 @@
         <div class="item-and-side-bar-container">
             {% if request.path == "/portfolio/" %}
             <div class="items-options">
+                <div class="qty-condition-container">       
+                    <p>{{item.owned_quantity}}</p>
+                    <p>({{item.condition}})</p>
+                </div>
+
                 <div class="view-owned">
                     <form action="{% url 'portfolio' %}?item={{item.item_id}}" method="post">
                         {% csrf_token %}
@@ -62,24 +78,6 @@
                         <button type="submit">Entries</button>
                     </form>
                 </div>
-                <div class="qty-condition-container">       
-                    <p>{{item.owned_quantity}}</p>
-                    <p>({{item.condition}})</p>
-                </div>
-
-                <form action="{% url 'view_POST' view %}" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="form-type" value="remove-or-add-portfolio-item">
-                    <input type="hidden" name="condition" value="{{item.condition}}">
-                    <input type="hidden" name="item_id" value="{{item.item_id}}">
-                    
-                    <div class="label-input-container">
-                        <input min="1" type="number" name="quantity" value="1">
-                    </div>
-                    
-                    <input class="add-item" name="remove_or_add" type="submit" value="+">
-                    <input class="remove-item" name="remove_or_add" type="submit" value="-">
-                </form>
             </div>
             {% else %}
             <div class="items-options watchlist-options">
@@ -122,27 +120,55 @@
             <div id="entries-items-container">
                 <h3>Entries</h3>
                 <div id="entries-items-loop-container">
-                {% for item in item_entries %}
-                    <div class="entry-item-container">
+                {% for entry in item_entries %}
+                <div>
+                    <form class="entry-item-container" action="{% url 'view_POST' view %}" method="post">
+                        {% csrf_token %}
+
+                        <input type="hidden" name="form-type" value="entry-edit">
+                        <input type="hidden" name="entry_id" value="{{entry.entry_id}}">
+                        <input type="hidden" name="item_id" value="{{item_info.item_id}}">
+
                         <div class="entry-counter">
-                            <p>{{item_entries|index:item}}</p>
+                            <button type="submit" name="remove-entry" value="remove!">Remove</button>
+                            <p>{{item_entries|index:entry}}</p>
                         </div>
                         
-                        <div class="bought-data entry-item-div">
-                            <p>Date Aquired : {{item.date_added|none_to_hyphens}}</p>
-                            <p>Bought For : £{{item.bought_for}}</p>
+                        <div class="main-input-set">
+                            <div class="label-input-container">
+                                <label for="date_added">Date Added : </label>
+                                <input onchange="input_validation(this, 'date')" class="date-price-input" type="text" value="{{entry.date_added|none_to_empty_string}}" name="date_added" id="">
+                            </div>
+
+                            <div class="label-input-container">
+                                <label for="bought_for">Bought For : </label>
+                                <input onchange="input_validation(this, 'price')" class="date-price-input" type="text" name="bought_for" value="{{entry.bought_for|none_to_zero}}">
+                            </div>
                         </div>
 
-                        <div class="sold-data entry-item-div">
-                            <p>Date Sold : {{item.date_sold|none_to_hyphens}}</p>
-                            <p>Sold For : £{{item.sold_for|none_to_hyphens}}</p>
+                        <div class="main-input-set">
+                            <div class="label-input-container">
+                                <label for="date_sold">Date Sold : </label>
+                                <input onchange="input_validation(this, 'date')" class="date-price-input" type="text" value="{{entry.date_sold|none_to_empty_string}}" name="date_sold" id="">
+                            </div>
+
+                            <div class="label-input-container">
+                                <label for="sold_for">Sold For : </label>
+                                <input onchange="input_validation(this, 'price')" class="date-price-input" type="text" name="sold_for" value="{{entry.sold_for|none_to_zero}}">
+                            </div>                               
                         </div>
 
-                        <div class="notes entry-item-div">
-                            <p>Notes : {{item.notes|none_to_hyphens}}</p>
+                        <div class="main-input-set notes">
+                            <label for="notes">Notes</label>
+                            <textarea onchange="this.form.submit()" name="notes" rows="6" cols="30">{{entry.notes|none_to_empty_string}}</textarea>
                         </div>
+                    </form>
+                    
+                    <div class="error-msg-container">
+                        <p class="error-msg"></p>
                     </div>
-                    {% endfor %}
+                </div>
+                {% endfor %}
                 </div>
             </div>
         {% else %}
