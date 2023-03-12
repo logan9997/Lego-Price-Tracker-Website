@@ -1,6 +1,25 @@
 import math
 import time
 import itertools
+from datetime import datetime
+
+from .models import (
+    User,
+    Item, 
+    Theme,
+    Price,
+    Piece,
+    Portfolio,
+    PieceParticipation,
+    SetParticipation,
+    Watchlist
+)
+
+from django.db.models import (
+    Q,
+    Sum,
+    Count,
+) 
 
 from .config import *
 
@@ -31,8 +50,8 @@ def format_item_info(items, **kwargs):
     #graph_data:bool new_items:bool
 
     if kwargs.get("view") == "search":
-        user_item_ids_portfolio = DB.user_item_ids(kwargs.get("user_id"), "portfolio")
-        user_item_ids_watchlist = DB.user_item_ids(kwargs.get("user_id"), "watchlist")
+        user_item_ids_portfolio = Portfolio.objects.filter(user_id=kwargs.get("user_id")).values_list("item_id", flat=True).annotate(items=Count("item_id"))
+        user_item_ids_watchlist = Watchlist.objects.filter(user_id=kwargs.get("user_id")).values_list("item_id", flat=True).annotate(items=Count("item_id"))
 
     item_dicts = []
     for item in items:
@@ -50,8 +69,8 @@ def format_item_info(items, **kwargs):
 
         if kwargs.get("view") == "portfolio":
             item_dict.update({
-                "condition":item[8],
-                "owned_quantity":item[9]
+                "owned_quantity_new":item[8],
+                "owned_quantity_used":item[9],
             })
 
         elif kwargs.get("view") == "search":
@@ -62,7 +81,7 @@ def format_item_info(items, **kwargs):
 
         if kwargs.get("price_trend", False) and kwargs.get("view") == "portfolio":
             item_dict.update({
-                "price_change":item[10]
+                "price_change":item[11]
             })
 
         elif kwargs.get("price_trend", False):
@@ -100,13 +119,24 @@ def format_item_info(items, **kwargs):
 def format_portfolio_items(items):
     item_dicts = []
     for _item in items:
-    
+        print(_item)
+
+        if _item[3] != None:
+            date_added = _item[3].strftime("%Y-%m-%d")
+        else:
+            date_added = _item[4]
+
+        if _item[4] != None:
+            date_sold = _item[4].strftime("%Y-%m-%d")
+        else:
+            date_sold = _item[4]
+
         item_dicts.append({
-            "condtion":_item[0],
+            "condition":_item[0],
             "bought_for":_item[1],
             "sold_for":_item[2],
-            "date_added":_item[3],
-            "date_sold":_item[4],
+            "date_added":date_added,
+            "date_sold":date_sold,
             "notes":_item[5],
             "entry_id":_item[6]
         })

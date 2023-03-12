@@ -33,6 +33,14 @@ from .models import (
     Watchlist
 )
 
+import django.db.models
+
+from django.db.models import (
+    Q,
+    Sum,
+    Count,
+) 
+
 from my_scripts.responses import * 
 from my_scripts.database import *
 from my_scripts.misc import get_price_colour
@@ -40,7 +48,8 @@ from my_scripts.misc import get_price_colour
 
 def search_item(request, current_view):
     #get a list of all item ids that exist inside the database 
-    item_ids = [item_id[0] for item_id in DB.get_item_ids()] 
+    item_ids = Item.objects.all().values_list("item_id",flat=True)
+    print(item_ids)
     
     #get item from the search bar, if it exists redirect to that items info page
     selected_item = request.POST.get("item_id")
@@ -161,7 +170,7 @@ def item(request, item_id):
     else:
         in_watchlist = "No"
 
-    item_themes = DB.get_items_themes(item_id)
+    item_themes = Theme.objects.filter(item_id=item_id).values_list("theme_path")
     similar_items = format_item_info(get_similar_items(item_info["item_name"], item_info["item_type"], item_info["item_id"]))
 
     total_watchers = DB.get_total_owners_or_watchers("watchlist", item_id) 
@@ -345,7 +354,7 @@ def login(request):
             password = form.cleaned_data["password"]
 
             #check if username and password match, create new user_id session, del login_attempts session
-            if DB.check_login(username, password):
+            if len(User.objects.filter(username=username, password=password)) == 1:
                 #filter database to find user with corrisponding username and password
                 user = User.objects.filter(username=username, password=password)
 
@@ -416,10 +425,13 @@ def join(request):
             if password == password_confirmation:
 
                 #check if the username / email already exists inside the database, cannot be duplicates
-                if not DB.if_username_or_email_already_exists(username, email):
-
+                if len(User.objects.filter(Q(username=username) | Q(email=email))) == 0:
                     #if the username or email does not already exist, add the new users details to database
-                    DB.add_user(username, email, password)
+                    new_user = User(
+                        username=username,email=email,password=password,
+                        email_preference="All", region="None", date_joined=datetime.date.today().strftime('%Y-%m-%d')
+                    )
+                    new_user.save()
 
                     #get the new users id to add to session
                     user = User.objects.filter(username=username, password=password)
@@ -489,6 +501,7 @@ def user_items(request, view, user_id):
         "graph_metric":graph_metric,
         "current_page":current_page,
         "show_graph":True,
+        "user_id":user_id,
     })
 
     return context
@@ -504,18 +517,19 @@ def portfolio(request, item_id=None):
     
     context = user_items(request, "portfolio", user_id)
 
-    context["total_items"] = DB.total_portfolio_items(user_id)
+    context["total_items"] = Portfolio.objects.filter(user_id=user_id).count()
 
     item_id = request.GET.get("item")
     if item_id != None:
-        items = DB.get_all_portfolio_item_entries(item_id, user_id)
+        items = Portfolio.objects.filter(item_id=item_id, user_id=user_id).values_list("condition", "bought_for", "sold_for", "date_added", "date_sold", "notes", "portfolio_id")[:25]
         items = format_portfolio_items(items)
         context["item_entries"] = items
         context["item_id"] = item_id
         context["metric_changes"] = [{"metric":metric,"change":DB.get_item_metric_changes(item_id, metric)} for metric in ALL_METRICS]
         context["item_info"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
-        context["total_bought_price"] = DB.total_portfolio_price(item_id, user_id, "bought_for") 
-        context["total_sold_price"] = DB.total_portfolio_price(item_id, user_id, "sold_for") 
+        if len(Portfolio.objects.filter(item_id=item_id, user_id=user_id)) > 0:
+            context["total_bought_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).annotate(total=Sum("bought_for")).values_list("bought_for", flat=True)[0]
+            context["total_sold_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).annotate(total=Sum("bought_for")).values_list("sold_for", flat=True)[0] 
 
     return render(request, "App/portfolio.html", context=context)
 
@@ -548,7 +562,7 @@ def view_POST(request, view):
 
     if request.POST.get("form-type") == "remove-watchlist-item":
         item_id = request.POST.get("item_id")
-        DB.remove_from_watchlist(user_id, item_id)
+        Watchlist.objects.filter(user_id=user_id, item_id=item_id).delete()
 
     request = save_POST_params(request)[0]
 
@@ -556,16 +570,16 @@ def view_POST(request, view):
     if item_id != None:
         return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
 
+    item_id = request.POST.get("item_id")
+
     if request.POST.get("remove-entry") != None:
         entry_id = request.POST.get("entry_id")
-        item_id = request.POST.get("item_id")
         Portfolio.objects.filter(portfolio_id=entry_id).delete()
         return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
     
 
     if request.POST.get("form-type") == "entry-edit":
         entry_id = request.POST.get("entry_id")
-        item_id = request.POST.get("item_id")
         fields = {
             "date_added" : str(request.POST.get("date_added")),
             "bought_for" : float(request.POST.get("bought_for")),
@@ -576,6 +590,12 @@ def view_POST(request, view):
         fields = {k:v for k, v in fields.items() if v != ''}
 
         DB.update_entry_item(entry_id, fields)
+        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+    
+    if request.POST.get("form-type") == "new-entry":
+        values = {k:v for k,v in request.POST.items() if k not in ["csrfmiddlewaretoken", "form-type"] and v != ''}
+        print(values)
+        Portfolio(**values).save()
         return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
     
     return redirect(view)
@@ -595,13 +615,13 @@ def watchlist(request):
 
 def add_to_user_items(request, item_id):
 
-    view = request.POST.get("view-type")
+    view:str = request.POST.get("view-type")
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
     user_id = request.session["user_id"]
 
-    user_item_ids = [_item[0] for _item in DB.get_user_items(user_id, view)]
+    user_item_ids = eval(view.capitalize()).objects.filter(user_id=user_id).values_list("item_id", flat=True).annotate(t=Count("item_id"))
 
     if view == "portfolio":
         form = AddItemToPortfolio(request.POST)
@@ -647,13 +667,13 @@ def profile(request):
                 #list of rules that must all return True for the password to be updated, with corrisponding error messages
                 #to be displayed to the user.
                 rules:list[dict] = [ 
-                    {DB.check_password_id_match(user_id, old_password):"'Old password' is incorrect"},
+                    {len(User.objects.filter(user_id=user_id, password=old_password)) > 0:"'Old password' is incorrect"},
                     {new_password == confirm_password:"'New password' and 'Confirm password' do not match"},
                 ]
 
                 #add all dict keys to list, use all() method on list[bool] to see if all password change conditions are met
                 if all([all(rule) for rule in rules]):
-                    DB.update_password(user_id, old_password, new_password)
+                    User.objects.filter(password=old_password, user_id=user_id).update(password=new_password)
                 else:
                     #pass an error message to context, based on what condition was not satisfied
                     context["change_password_error_message"] = get_change_password_error_message(rules)
@@ -664,7 +684,7 @@ def profile(request):
             if form.is_valid():
                 email = form.cleaned_data["email"]
                 preference = form.cleaned_data["preference"][0]
-                DB.update_email_preferences(user_id, email, preference)
+                User.objects.filter(user_id=user_id, email=email).update(email_preference=preference)
 
         #-Change personal info
         elif request.POST.get("form-type") == "personal-details-form":
@@ -673,7 +693,7 @@ def profile(request):
                 username = form.cleaned_data["username"]
 
                 #update username is database
-                DB.change_username(user_id, username)
+                User.objects.filter(user_id=user_id).update(username=username)
 
     #USER INFO
 
