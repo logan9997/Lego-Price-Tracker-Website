@@ -66,9 +66,9 @@ def format_item_info(items, **kwargs):
             })
 
         elif kwargs.get("price_trend", False):
-            item_dict.update({
-                "price_change":item[8]
-            })   
+            item_dict["metric_changes"] = {}
+            for metric in  kwargs.get("price_trend"):
+                item_dict["metric_changes"][f"{metric}_change"] = item[8]
 
         if kwargs.get("popular_items"):
             item_dict.update({

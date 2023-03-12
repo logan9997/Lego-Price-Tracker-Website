@@ -160,6 +160,7 @@ class DatabaseManagment():
 
     
     def get_biggest_trends(self, change_metric) -> list[str]:
+
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
             min_price, max_price, total_quantity, ABS(ROUND((
@@ -342,6 +343,27 @@ class DatabaseManagment():
                 AND user_id = {user_id}     
         """
         return self.SELECT(sql)
+    
+
+    def total_portfolio_price(self, item_id, user_id, price_type):
+        sql = f"""
+            SELECT ROUND(SUM({price_type}),4)
+            FROM App_portfolio
+            WHERE item_id = '{item_id}'
+                AND user_id = {user_id}
+        """
+        return self.SELECT(sql, fetchone=True)[0]
+    
+
+    def update_entry_item(self, entry_id, fields_dict:dict):
+        values = ''.join([f"'{k}' = '{v}'," if type(v) != float else f"'{k}' = {v}," for k,v in fields_dict.items()])[:-1]
+        sql = f"""
+            UPDATE App_portfolio SET {values}
+            WHERE portfolio_id = {entry_id}
+        """
+        self.cursor.execute(sql)
+        
+
 
     def get_item_info(self, item_id, change_metric) -> list[str]:
         sql = f"""

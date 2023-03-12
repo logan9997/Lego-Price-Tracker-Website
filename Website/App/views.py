@@ -93,7 +93,7 @@ def index(request):
 
     if user_id == -1 or len(DB.get_user_items(user_id, "portfolio")) == 0:
         context["portfolio_trending_items"] = False
-        context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data=[graph_metric], user_id=user_id)
+        context["trending"] = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=[graph_metric], graph_data=[graph_metric], user_id=user_id)
     else:
         context["portfolio_trending_items"] = True
         context["trending"] = format_item_info(DB.biggest_portfolio_changes(user_id, graph_metric), graph_data=[graph_metric])
@@ -208,7 +208,7 @@ def trending(request):
     graph_options = sort_dropdown_options(get_graph_options(), graph_metric)
     trend_options = sort_dropdown_options(get_trending_options(), trend_type)
 
-    items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=True, graph_data=[graph_metric])
+    items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=[graph_metric], graph_data=[graph_metric])
 
     current_page = check_page_boundaries(current_page, items, SEARCH_ITEMS_PER_PAGE)
     page_numbers = slice_num_pages(items, current_page, SEARCH_ITEMS_PER_PAGE)
@@ -512,11 +512,11 @@ def portfolio(request, item_id=None):
         items = format_portfolio_items(items)
         context["item_entries"] = items
         context["item_id"] = item_id
-        context["item_info"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=True)[0]
+        context["metric_changes"] = [{"metric":metric,"change":DB.get_item_metric_changes(item_id, metric)} for metric in ALL_METRICS]
+        context["item_info"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
         context["total_bought_price"] = DB.total_portfolio_price(item_id, user_id, "bought_for") 
         context["total_sold_price"] = DB.total_portfolio_price(item_id, user_id, "sold_for") 
 
-        request.session["entry_item"] = item_id
     return render(request, "App/portfolio.html", context=context)
 
 

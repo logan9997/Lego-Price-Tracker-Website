@@ -113,7 +113,9 @@
 
                 <div id="metric-change-container">
                     <h3>Trends</h3>
-                    <p>{{graph_metric|capitalise_split_words}} Change (%) {{item_info.price_change|postivie_or_negative_sign}}</p>
+                    {% for trend in metric_changes %}
+                        <p>{{trend.metric|capitalise_split_words}} : (%) {{trend.change}}</p>
+                    {% endfor %}
                 </div>
             </div>
             <div id="entries-items-container">
