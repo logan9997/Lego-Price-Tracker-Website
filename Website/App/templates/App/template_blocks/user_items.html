@@ -11,7 +11,7 @@
     </div>
     
     <div id="items-header" class="headers">
-        {% include 'App/template_blocks/item_filters_and_sorts.html' with view='view_POST' sub_view=view %}
+        {% include 'App/template_blocks/item_filters_and_sorts.html' with view='view_POST' sub_view=view item_id=item_id %}
     </div>
     
 </section>
@@ -56,8 +56,7 @@
 
             {% endif %}
     </section>
-
-    {% if request.GET.view == "items" or request.path == "/watchlist/" %}
+    {% if request.GET.item == None %}
     <section id="items-container">
         <div id="items">
         {% for item in items %}

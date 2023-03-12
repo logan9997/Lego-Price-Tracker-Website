@@ -44,9 +44,17 @@
     {% endif %}
 
     {% if sub_view != "" %}
-        <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+        {% if item_id == "" %}
+            <form id="page-buttons-form" action="{% url 'view_POST' sub_view %}" method="POST">
+        {% else %}
+            <form id="page-buttons-form" action="{% url 'view_POST' sub_view %}?item={{item_id}}" method="POST">
+        {% endif %}
     {% else %}
-        <form id="page-buttons-form" action="{% url view %}" method="POST">
+        {% if item_id == "" %}
+            <form id="page-buttons-form" action="{% url 'view_POST' %}" method="POST">
+        {% else %}
+            <form id="page-buttons-form" action="{% url 'view_POST' %}?item={{item_id}}" method="POST">
+        {% endif %}
     {% endif %}
         {% csrf_token %}
         <label for="graph-data-form">Graph Data</label>

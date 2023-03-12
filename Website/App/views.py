@@ -23,6 +23,14 @@ from .forms import (
 
 from .models import (
     User,
+    Item, 
+    Theme,
+    Price,
+    Piece,
+    Portfolio,
+    PieceParticipation,
+    SetParticipation,
+    Watchlist
 )
 
 from my_scripts.responses import * 
@@ -447,7 +455,6 @@ def user_items(request, view, user_id):
     current_page = int(options.get("page", 1))
     sort_field = options.get("sort-field", "avg_price-desc")
 
-
     items = DB.get_user_items(user_id, view)
     items = format_item_info(items, view=view, graph_data=[graph_metric], user_id=user_id)
 
@@ -487,30 +494,29 @@ def user_items(request, view, user_id):
     return context
 
 
-def portfolio(request):
+def portfolio(request, item_id=None):
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
     user_id = request.session["user_id"]
 
-    view = request.GET.get("view")
-
-    request.session["portfolio_view"] = view
-
+    item_id = request.GET.get("item")
+    
     context = user_items(request, "portfolio", user_id)
 
     context["total_items"] = DB.total_portfolio_items(user_id)
-    context["view_param"] = f"/?view=items"
 
     item_id = request.GET.get("item")
     if item_id != None:
         items = DB.get_all_portfolio_item_entries(item_id, user_id)
         items = format_portfolio_items(items)
         context["item_entries"] = items
-        item_info = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=True)[0]
-        context["item_info"] =  item_info
-        print(context.keys())
+        context["item_id"] = item_id
+        context["item_info"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=True)[0]
+        context["total_bought_price"] = DB.total_portfolio_price(item_id, user_id, "bought_for") 
+        context["total_sold_price"] = DB.total_portfolio_price(item_id, user_id, "sold_for") 
 
+        request.session["entry_item"] = item_id
     return render(request, "App/portfolio.html", context=context)
 
 
@@ -546,11 +552,33 @@ def view_POST(request, view):
 
     request = save_POST_params(request)[0]
 
-    portfolio_view = ""
-    if view == "portfolio":
-        portfolio_view = "?view=" + request.session.get("portfolio_view", "items")
+    item_id = request.GET.get("item")
+    if item_id != None:
+        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
 
-    return redirect(f"http://127.0.0.1:8000/{view}/" + portfolio_view)
+    if request.POST.get("remove-entry") != None:
+        entry_id = request.POST.get("entry_id")
+        item_id = request.POST.get("item_id")
+        Portfolio.objects.filter(portfolio_id=entry_id).delete()
+        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+    
+
+    if request.POST.get("form-type") == "entry-edit":
+        entry_id = request.POST.get("entry_id")
+        item_id = request.POST.get("item_id")
+        fields = {
+            "date_added" : str(request.POST.get("date_added")),
+            "bought_for" : float(request.POST.get("bought_for")),
+            "date_sold" : str(request.POST.get("date_sold")),
+            "sold_for" : float(request.POST.get("sold_for")),
+            "notes" : str(request.POST.get("notes")),
+        }
+        fields = {k:v for k, v in fields.items() if v != ''}
+
+        DB.update_entry_item(entry_id, fields)
+        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+    
+    return redirect(view)
 
 
 
