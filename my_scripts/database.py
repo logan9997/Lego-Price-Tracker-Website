@@ -216,15 +216,6 @@ class DatabaseManagment():
         return self.SELECT(sql)
     
 
-    def get_items_themes(self, item_id) -> list[str]:
-        sql = f"""
-            SELECT theme_path
-            FROM App_theme
-            WHERE item_id = '{item_id}'
-        """
-        return self.SELECT(sql)
-
-
     def get_theme_items(self, theme_path) -> list[str]:
         try:
             self.lock.acquire(True)
@@ -248,14 +239,6 @@ class DatabaseManagment():
         finally:
             self.lock.release()
 
-
-    def get_item_ids(self) -> list[str]:
-        sql = """
-            SELECT App_item.item_id
-            FROM App_item
-        """
-        return self.SELECT(sql)
-    
 
     def get_star_wars_sets(self):
         sql = """
@@ -334,26 +317,6 @@ class DatabaseManagment():
         """)
         self.con.commit()
 
-
-    def get_all_portfolio_item_entries(self, item_id, user_id):
-        sql = f"""
-            SELECT condition, bought_for, sold_for, date_added, date_sold, notes, portfolio_id
-            FROM App_portfolio PO
-            WHERE item_id = '{item_id}'
-                AND user_id = {user_id}     
-        """
-        return self.SELECT(sql)
-    
-
-    def total_portfolio_price(self, item_id, user_id, price_type):
-        sql = f"""
-            SELECT ROUND(SUM({price_type}),4)
-            FROM App_portfolio
-            WHERE item_id = '{item_id}'
-                AND user_id = {user_id}
-        """
-        return self.SELECT(sql, fetchone=True)[0]
-    
 
     def update_entry_item(self, entry_id, fields_dict:dict):
         values = ''.join([f"'{k}' = '{v}'," if type(v) != float else f"'{k}' = {v}," for k,v in fields_dict.items()])[:-1]
@@ -470,16 +433,19 @@ class DatabaseManagment():
 
         sql_select = "SELECT I.item_id, item_name, year_released, item_type,avg_price, min_price, max_price, total_quantity"
         if view == "portfolio":
-            sql_select += ",COUNT(), condition"
+            sql_select += f""",
+                (SELECT COUNT() FROM App_portfolio P2 WHERE user_id = 1 AND condition = 'N' AND _view1.item_id = P2.item_id GROUP BY item_id) as 'N',
+                (SELECT COUNT() FROM App_portfolio P2 WHERE user_id = 1 AND condition = 'U' AND _view1.item_id = P2.item_id GROUP BY item_id) as 'U'
+            """
 
         sql = f"""
             {sql_select}
-            FROM App_{view} _view, App_item I, App_price P
+            FROM App_{view} _view1, App_item I, App_price P
             WHERE user_id = {user_id}
                 AND (date, I.item_id) IN (SELECT MAX(date), item_id FROM App_price GROUP BY item_id)
-                AND I.item_id = _view.item_id 
+                AND I.item_id = _view1.item_id 
                 AND I.item_id = P.item_id
-            GROUP BY I.item_id
+            GROUP BY I.item_id 
         """
         return self.SELECT(sql)
 
@@ -516,14 +482,6 @@ class DatabaseManagment():
         """
         return self.SELECT(sql)
 
-
-    def total_portfolio_items(self, user_id) -> list[str]:
-        sql = f"""
-            SELECT COUNT()
-            FROM App_portfolio 
-            WHERE user_id = {user_id}
-        """
-        return self.SELECT(sql)[0][0]
 
     def user_items_total_price(self, user_id, metric, view) -> list[str]:
         sql = f"""
@@ -652,40 +610,7 @@ class DatabaseManagment():
         """
         return self.SELECT(sql)
 
-
-    def check_login(self, username, password) -> bool:
-        sql = f"""
-            SELECT *
-            FROM App_user
-            WHERE username = '{username}'
-                AND password = '{password}'
-        """
-        if len(self.SELECT(sql)) == 1:
-            return True
-        return False
     
-    
-    def if_username_or_email_already_exists(self, username, email) -> bool:
-        sql = f"""
-            SELECT username, email
-            FROM App_user
-            WHERE username = '{username}' 
-                OR email = '{email}'
-        """
-        if len(self.SELECT(sql)) > 0:
-            return True
-        return False
-
-
-    def add_user(self, username, email, password) -> None:
-        date = datetime.date.today().strftime('%Y-%m-%d')
-        self.cursor.execute(f"""
-            INSERT INTO App_user ('username','email','password', 'email_preference', 'region', 'date_joined')
-            VALUES ('{username}', '{email}', '{password}', 'All', 'None', {date})
-        """)
-        self.con.commit()
-
-
     def sample_prices(self, portfolio_items) -> None:
         from random import randint
         for p in portfolio_items:
@@ -694,16 +619,6 @@ class DatabaseManagment():
                 VALUES ('2022-12-26',{randint(1,55)},'{randint(1,55)}','{randint(1,55)}','{randint(1,55)}','{p[0]}')
             """)
             self.con.commit()
-
-
-    def remove_from_watchlist(self, user_id, item_id):
-        sql = f"""
-            DELETE FROM App_watchlist
-            WHERE user_id = {user_id}
-                AND item_id = '{item_id}'
-        """
-        self.cursor.execute(sql)
-        self.con.commit()
 
 
     def get_portfolio_items_condition(self, user_id) -> list[str]:
@@ -737,6 +652,7 @@ class DatabaseManagment():
         """
         return self.SELECT(sql)
 
+
     def insert_item_info(self, item_info) -> None:
         type_convert = {"MINIFIG":"M", "SET":"S"}
         self.cursor.execute(f"""
@@ -746,54 +662,6 @@ class DatabaseManagment():
         """)
         self.con.commit()
 
-
-    def update_password(self, user_id, old_password, new_password) -> None:
-        self.cursor.execute(f"""
-            UPDATE App_user
-            SET password = '{new_password}'
-            WHERE password = '{old_password}'
-                AND user_id = {user_id}
-        """)
-        self.con.commit()
-
-
-    def check_password_id_match(self, user_id, old_password) -> bool:
-        sql = f"""
-            SELECT *
-            FROM App_user
-            WHERE user_id = {user_id}
-                AND password = '{old_password}'
-        """
-        if len(self.SELECT(sql)) > 0:
-            return True
-        return False
-
-
-    def change_username(self, user_id, username) -> None:
-        self.cursor.execute(f"""
-            UPDATE App_user
-            SET username = '{username}'
-            WHERE user_id = {user_id}
-        """)
-
-    def update_email_preferences(self, user_id, email, preference) -> None:
-        self.cursor.execute(f"""
-            UPDATE App_user
-            SET email_preference = '{preference}'
-            WHERE user_id = {user_id}
-                AND email = '{email}'
-        """)
-        self.con.commit()
-
-
-    def user_item_ids(self, user_id, view):
-        sql = f"""
-            SELECT item_id
-            FROM App_{view}
-            WHERE user_id = {user_id}
-            GROUP BY item_id
-        """
-        return self.SELECT(sql)
 
     def add_to_user_items(self, user_id, item_id, view, date_added, **portfolio_args) -> None:
         
