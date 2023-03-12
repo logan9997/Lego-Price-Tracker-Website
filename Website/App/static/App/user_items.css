@@ -116,14 +116,14 @@ h1 {
 .items-options {
     background-color: white;
     font-size: 1rem;
-    height: 7rem;
+    height: 4rem;
     display: flex;
     flex-direction: row;
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 0.5rem;    
     padding: 0.5rem;
-    width: 3rem;
+    width: 2.2rem;
 }
 
 .watchlist-options {
@@ -154,14 +154,21 @@ h1 {
 .qty-condition-container {
     display: flex;
     position: relative;
+    flex-direction: column;
     margin: 0;
     padding: 0;
     top: 0.3rem;
+    height: 3rem;
 }
 
 .qty-condition-container p {
-    padding: 0.2rem;
     margin: 0;
+    width: 3rem;
+    text-align: center;
+}
+
+.view-owned button {
+    padding: 0.1rem;
 }
 
 .item-container {
@@ -309,6 +316,14 @@ h1 {
     text-align: center;
 }
 
+#add-new-entry {
+    text-align: center;
+    position: relative;
+    top: 5rem;
+    width: 90%;
+    margin-left: calc(5% - 0.1rem);
+}
+
 #entries-items-container {
     margin-top: 6rem;
     background-color: white;
@@ -325,7 +340,7 @@ h1 {
 
 #entries-items-loop-container {
     overflow-y: scroll;
-    height: 75rem;
+    height: 60rem;
 }
 
 .entry-item-container {
@@ -334,25 +349,101 @@ h1 {
     margin:1rem 5% 0;
     display: flex;
     height: 8rem;
+    border-bottom: 0.1rem rgb(228, 220, 220) solid;
 }
 
-.entry-item-div {
-    width: 40%;
-    margin: 1rem;
-}
 
-.entry-counter {
+.entry-item-container .entry-counter {
     height: 100%;
     width: 4rem;
+    border-left: 0.1rem black solid;
     border-right: 0.1rem black solid;
+    border-bottom: 0.1rem black solid;
     text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.notes {
-    width: 50%;
+.entry-counter button {
+    background-color: red;
+    border-right: none;
+    border-left: none;
+    position: relative;
+    bottom:0.21rem
+}
+
+.entry-item-container .main-input-set {
+    margin: 2rem 1rem 0;
+}
+
+.entry-item-container .label-input-container {
+    display: flex;
+}
+
+.entry-item-container label {
+    height: 1.6rem;
+    margin: 0.5rem 0.5rem 0;
+    float: left;
+    width: 5.8rem;
+}
+
+.entry-item-container input {
+    height: 1.6rem;
+    border: none;
+    border-bottom: 0.1rem black solid;
+    margin: 0.2rem;
+    background-color: transparent;
+    width: 7rem;
+    float: right;
+    padding: 0;
+}
+
+.entry-item-container input:focus {
+    outline: none;
+}
+
+.entry-item-container .notes {
+    display: flex;
+    flex-direction: column;
+    justify-content: center ;
+    height: 7rem;  
+    margin: 0 1rem 0;
+}
+
+.notes label {
+    position: relative;
+    right: 0.3rem;
+}
+
+#condition-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#condition-container select {
+    width: 5rem;
+    margin-left: 1rem;
+}
+
+#submit {
+    height: 2rem;
+    margin-top:2.5rem;
+}
+
+.error-msg-container {
+    width: 90%;
+    background-color: rgb(228, 220, 220);
+    margin-left: 5%;
+    border-top: 0.1rem black solid;
+    display: none;
+}
+
+.error-msg {
+    margin: 0 5% 0.5rem;
+    padding: 0.2rem;
+    color: red;
 }
 
 .entry-item-container:nth-child(odd) {
