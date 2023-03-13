@@ -10,6 +10,10 @@ h1 {
     margin-top: 4rem;
 } 
 
+textarea {
+    resize: none;
+}
+
 #header {
     height: 30rem;
     display: flex;
@@ -321,7 +325,13 @@ h1 {
     position: relative;
     top: 5rem;
     width: 90%;
-    margin-left: calc(5% - 0.1rem);
+    margin: 2rem calc(5% - 0.1rem) 7rem;
+}
+
+#new-entry-sub-container {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 0.3rem 0.2rem 2rem;
 }
 
 #entries-items-container {
@@ -416,7 +426,7 @@ h1 {
     right: 0.3rem;
 }
 
-#condition-container {
+#condition-container-and-submit {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -428,8 +438,13 @@ h1 {
 }
 
 #submit {
-    height: 2rem;
-    margin-top:2.5rem;
+    height: 1.6rem;
+    border-radius: 1rem;
+    background-color:green ;
+    border: 0.1rem rgb(4, 158, 4) solid;
+    width: 4rem;
+    margin-left: calc(100% - 5.5rem);
+    margin-top: 1rem;
 }
 
 .error-msg-container {
