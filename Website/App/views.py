@@ -49,7 +49,6 @@ from my_scripts.misc import get_price_colour
 def search_item(request, current_view):
     #get a list of all item ids that exist inside the database 
     item_ids = Item.objects.all().values_list("item_id",flat=True)
-    print(item_ids)
     
     #get item from the search bar, if it exists redirect to that items info page
     selected_item = request.POST.get("item_id")
@@ -267,7 +266,6 @@ def search(request, theme_path='all'):
         theme_items = DB.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
         theme_items = format_item_info(theme_items, view="search",graph_data=[graph_metric] ,user_id=user_id)
         if len(theme_items) == 0:
-            print("REDIRECT - NO ITEMS []")
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
 
@@ -594,12 +592,10 @@ def view_POST(request, view):
     
     if request.POST.get("form-type") == "new-entry":
         values = {k:v for k,v in request.POST.items() if k not in ["csrfmiddlewaretoken", "form-type"] and v != ''}
-        print(values)
         Portfolio(**values).save()
         return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
     
     return redirect(view)
-
 
 
 def watchlist(request):

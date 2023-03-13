@@ -5,9 +5,9 @@
 <section id="main-forms-container">
 
 {% if sub_view != "" %}
-    <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+    <form id="page-buttons-form" action="{% url action_view sub_view %}" method="POST">
 {% else %}
-    <form id="page-buttons-form" action="{% url view %}" method="POST">
+    <form id="page-buttons-form" action="{% url action_view %}" method="POST">
 {% endif %}
 
     {% csrf_token %}
@@ -23,9 +23,9 @@
 <div id="dropdown-forms">
     {% if request.GET.item == None %}
         {% if sub_view != "" %}
-            <form id="page-buttons-form" action="{% url view sub_view %}" method="POST">
+            <form id="page-buttons-form" action="{% url action_view sub_view %}" method="POST">
         {% else %}
-            <form id="page-buttons-form" action="{% url view %}" method="POST">
+            <form id="page-buttons-form" action="{% url action_view %}" method="POST">
         {% endif %}
             {% csrf_token %}
             <div class="input-label-container">
@@ -42,20 +42,15 @@
             </div>
         </form>
     {% endif %}
+        {{sub_view}} {{item_id}} {{action_view}}
 
-    {% if sub_view != "" %}
-        {% if item_id == "" %}
-            <form id="page-buttons-form" action="{% url 'view_POST' sub_view %}" method="POST">
-        {% else %}
-            <form id="page-buttons-form" action="{% url 'view_POST' sub_view %}?item={{item_id}}" method="POST">
-        {% endif %}
+    {% if item_id == None or item_id == "" %}
+        <form id="page-buttons-form" action="{% url action_view sub_view %}" method="POST">
     {% else %}
-        {% if item_id == "" %}
-            <form id="page-buttons-form" action="{% url 'view_POST' %}" method="POST">
-        {% else %}
-            <form id="page-buttons-form" action="{% url 'view_POST' %}?item={{item_id}}" method="POST">
-        {% endif %}
+        <form id="page-buttons-form" action="{% url 'view_POST' sub_view %}?item={{item_id}}" method="POST">
     {% endif %}
+
+
         {% csrf_token %}
         <label for="graph-data-form">Graph Data</label>
         <select onchange="this.form.submit()" name="graph-metric">
