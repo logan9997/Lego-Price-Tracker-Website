@@ -189,7 +189,7 @@
 #form-container {
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
     width: 22rem;
-    height: 20rem;
+    height: 50rem;
     margin-top: 1rem;
 }
 
@@ -332,4 +332,20 @@
     box-shadow: 0 0 0.4rem 0.4rem rgb(225,225,225); 
 }
 
+.entry-item-container {
+    flex-wrap: wrap;
+    background-color: whitesmoke !important;
+    margin-bottom: 3rem !important;
+}
 
+.main-input-set {
+    width: 90%;
+}
+
+#condition-container-and-submit {
+    justify-content: space- !important;
+}
+
+#submit {
+    width: 5rem !important;
+}
