@@ -1,13 +1,11 @@
 import sqlite3
 import datetime
-import threading
 
 class DatabaseManagment():
 
     def __init__(self) -> None:
         self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\website\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
-        self.lock = threading.Lock()
 
 
     def SELECT(self, sql, **kwargs):
@@ -217,27 +215,24 @@ class DatabaseManagment():
     
 
     def get_theme_items(self, theme_path) -> list[str]:
-        try:
-            self.lock.acquire(True)
-            sql = f"""
-                SELECT I.item_id, item_name, year_released, item_type, avg_price, 
-                min_price, max_price, total_quantity, date
-                FROM App_item I, App_theme T, App_price P1
-                WHERE T.item_id = I.item_id
-                    AND I.item_id = P1.item_id
-                    AND theme_path = '{theme_path}'
-                    AND item_type = 'M'
-                    AND date = (
-                        SELECT MAX(date) 
-                        FROM App_price P2 
-                        WHERE P2.item_id = P1.item_id 
-                        GROUP BY item_id
-                    )
-                GROUP BY I.item_id
-            """
-            return self.SELECT(sql)      
-        finally:
-            self.lock.release()
+        sql = f"""
+            SELECT I.item_id, item_name, year_released, item_type, avg_price, 
+            min_price, max_price, total_quantity, date
+            FROM App_item I, App_theme T, App_price P1
+            WHERE T.item_id = I.item_id
+                AND I.item_id = P1.item_id
+                AND theme_path = '{theme_path}'
+                AND item_type = 'M'
+                AND date = (
+                    SELECT MAX(date) 
+                    FROM App_price P2 
+                    WHERE P2.item_id = P1.item_id 
+                    GROUP BY item_id
+                )
+            GROUP BY I.item_id
+        """
+        return self.SELECT(sql)      
+
 
 
     def get_star_wars_sets(self):
@@ -316,16 +311,6 @@ class DatabaseManagment():
             WHERE item_id = '{item_id}'
         """)
         self.con.commit()
-
-
-    def update_entry_item(self, entry_id, fields_dict:dict):
-        values = ''.join([f"'{k}' = '{v}'," if type(v) != float else f"'{k}' = {v}," for k,v in fields_dict.items()])[:-1]
-        sql = f"""
-            UPDATE App_portfolio SET {values}
-            WHERE portfolio_id = {entry_id}
-        """
-        self.cursor.execute(sql)
-        
 
 
     def get_item_info(self, item_id, change_metric) -> list[str]:
@@ -492,8 +477,10 @@ class DatabaseManagment():
             AND I.item_id = _view.item_id 
             AND I.item_id = P.item_id
         """
-
-        return self.SELECT(sql)[0][0]
+        result = self.SELECT(sql, fetchone=True)[0]
+        if result == None:
+            return 0.0
+        return result
 
     def update_portfolio_item_quantity(self, user_id, item_id, condition, quantity) -> None:
         self.cursor.execute(f"""
