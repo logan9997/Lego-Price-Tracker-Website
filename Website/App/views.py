@@ -188,6 +188,8 @@ def item(request, item_id):
         "show_year_released_availability":True,
         "show_graph":False,
         "item":item_info,
+        "item_id":item_info["item_id"],
+        "user_id":user_id,
         "item_themes":item_themes,
         "similar_items":similar_items,
         "graph_options":graph_options,
@@ -482,6 +484,7 @@ def user_items(request, view, user_id):
         "metric":' '.join(list(map(str.capitalize, graph_metric.split("_")))),
         "total":DB.user_items_total_price(user_id, graph_metric, view) 
         }
+
     items = items[(current_page - 1) * USER_ITEMS_ITEMS_PER_PAGE : int(current_page) * USER_ITEMS_ITEMS_PER_PAGE]
 
     parent_themes = DB.parent_themes(user_id, view, graph_metric)
@@ -507,6 +510,8 @@ def user_items(request, view, user_id):
 
 def portfolio(request, item_id=None):
 
+    #del request.POST
+
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
     user_id = request.session["user_id"]
@@ -519,16 +524,14 @@ def portfolio(request, item_id=None):
 
     item_id = request.GET.get("item")
     if item_id != None:
-        items = Portfolio.objects.filter(item_id=item_id, user_id=user_id).values_list("condition", "bought_for", "sold_for", "date_added", "date_sold", "notes", "portfolio_id")[:25]
+        items = Portfolio.objects.filter(item_id=item_id, user_id=user_id).values_list("condition", "bought_for", "sold_for", "date_added", "date_sold", "notes", "portfolio_id")
         items = format_portfolio_items(items)
         context["item_entries"] = items
-        context["item_id"] = item_id
         context["metric_changes"] = [{"metric":metric,"change":DB.get_item_metric_changes(item_id, metric)} for metric in ALL_METRICS]
-        context["item_info"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
+        context["item"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
         if len(Portfolio.objects.filter(item_id=item_id, user_id=user_id)) > 0:
-            context["total_bought_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).annotate(total=Sum("bought_for")).values_list("bought_for", flat=True)[0]
-            context["total_sold_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).annotate(total=Sum("bought_for")).values_list("sold_for", flat=True)[0] 
-
+            context["total_bought_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).aggregate(total_bought_for=Sum("bought_for"))["total_bought_for"]
+            context["total_sold_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).aggregate(total_sold_for=Sum("sold_for"))["total_sold_for"] 
     return render(request, "App/portfolio.html", context=context)
 
 
@@ -568,33 +571,6 @@ def view_POST(request, view):
     if item_id != None:
         return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
 
-    item_id = request.POST.get("item_id")
-
-    if request.POST.get("remove-entry") != None:
-        entry_id = request.POST.get("entry_id")
-        Portfolio.objects.filter(portfolio_id=entry_id).delete()
-        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
-    
-
-    if request.POST.get("form-type") == "entry-edit":
-        entry_id = request.POST.get("entry_id")
-        fields = {
-            "date_added" : str(request.POST.get("date_added")),
-            "bought_for" : float(request.POST.get("bought_for")),
-            "date_sold" : str(request.POST.get("date_sold")),
-            "sold_for" : float(request.POST.get("sold_for")),
-            "notes" : str(request.POST.get("notes")),
-        }
-        fields = {k:v for k, v in fields.items() if v != ''}
-
-        DB.update_entry_item(entry_id, fields)
-        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
-    
-    if request.POST.get("form-type") == "new-entry":
-        values = {k:v for k,v in request.POST.items() if k not in ["csrfmiddlewaretoken", "form-type"] and v != ''}
-        Portfolio(**values).save()
-        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
-    
     return redirect(view)
 
 
@@ -637,6 +613,51 @@ def add_to_user_items(request, item_id):
             
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 
+
+
+def entry_item_handler(request, view):
+    item_id = request.POST.get("item_id")
+    entry_id = request.POST.get("entry_id")
+
+    if request.POST.get("remove-entry") != None:
+        Portfolio.objects.filter(portfolio_id=entry_id).delete()
+        if view == "portfolio":
+            return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+        return redirect(f"http://127.0.0.1:8000/{view}/{item_id}/")
+    
+
+    elif "CLEAR" in request.POST.get("clear-input", ""):
+        nulled_field = request.POST.get("clear-input").split("_CLEAR")[0]
+        Portfolio.objects.filter(portfolio_id=entry_id).update(**{nulled_field:None})
+        if view == "portfolio":
+            return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+        return redirect(f"http://127.0.0.1:8000/{view}/{item_id}/")
+    
+
+    elif request.POST.get("form-type") == "entry-edit":
+        fields = {
+            "date_added" : str(request.POST.get("date_added")),
+            "bought_for" : float(request.POST.get("bought_for")),
+            "date_sold" : str(request.POST.get("date_sold")),
+            "sold_for" : float(request.POST.get("sold_for")),
+            "notes" : str(request.POST.get("notes")),
+        }
+
+        #set fields in database to null rather than empty string
+        for k, v in fields.items():
+            if v == "":
+                fields[k] = None
+
+        Portfolio.objects.filter(portfolio_id=entry_id).update(**fields)
+        return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+    
+    elif request.POST.get("form-type") == "new-entry":
+        values = {k:v for k,v in request.POST.items() if k not in ["csrfmiddlewaretoken", "form-type"] and v != ''}
+        print(values)
+        Portfolio(**values).save()
+        if view == "portfolio":
+            return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
+        return redirect(f"http://127.0.0.1:8000/{view}/{item_id}/")
 
 def profile(request):
 

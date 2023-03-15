@@ -119,12 +119,11 @@ def format_item_info(items, **kwargs):
 def format_portfolio_items(items):
     item_dicts = []
     for _item in items:
-        print(_item)
 
         if _item[3] != None:
             date_added = _item[3].strftime("%Y-%m-%d")
         else:
-            date_added = _item[4]
+            date_added = _item[3]
 
         if _item[4] != None:
             date_sold = _item[4].strftime("%Y-%m-%d")
