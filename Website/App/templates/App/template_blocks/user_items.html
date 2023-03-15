@@ -57,61 +57,64 @@
             {% endif %}
     </section>
     {% if request.GET.item == None %}
-    <section id="items-container">
-        <div id="items">
-        {% for item in items %}
+        <section id="items-container">
+            {% if items|length == 0%}
+                <p>No items in {{view}}</p>
+            {% else %}
+            <div id="items">
+            {% for item in items %}
 
-        <div class="item-and-side-bar-container">
-            {% if request.path == "/portfolio/" %}
-            <div class="items-options">
-                <div class="qty-condition-container">      
-                    {% if item.owned_quantity_new != None %} 
-                        <p>{{item.owned_quantity_new}} (N)</p>
-                    {% endif %}
+            <div class="item-and-side-bar-container">
+                {% if request.path == "/portfolio/" %}
+                <div class="items-options">
+                    <div class="qty-condition-container">      
+                        {% if item.owned_quantity_new != None %} 
+                            <p>{{item.owned_quantity_new}} (N)</p>
+                        {% endif %}
 
-                    {% if item.owned_quantity_used != None %}
-                        <p>{{item.owned_quantity_used}} (U)</p>
-                    {% endif %}
+                        {% if item.owned_quantity_used != None %}
+                            <p>{{item.owned_quantity_used}} (U)</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="view-owned">
+                        <form action="{% url 'portfolio' %}?item={{item.item_id}}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form-type" value="entries_button">
+                            <input type="hidden" name="item_id" value="{{item.item_id}}">
+                            <button type="submit">Entries</button>
+                        </form>
+                    </div>
                 </div>
-
-                <div class="view-owned">
-                    <form action="{% url 'portfolio' %}?item={{item.item_id}}" method="post">
+                {% else %}
+                <div class="items-options watchlist-options">
+                    <form action="{% url 'view_POST' view %}" method="POST">
                         {% csrf_token %}
-                        <input type="hidden" name="form-type" value="entries_button">
+                        <input type="hidden" name="form-type" value="remove-watchlist-item">
                         <input type="hidden" name="item_id" value="{{item.item_id}}">
-                        <button type="submit">Entries</button>
+                        <button type="submit">-</button>
                     </form>
                 </div>
-            </div>
-            {% else %}
-            <div class="items-options watchlist-options">
-                <form action="{% url 'view_POST' view %}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="form-type" value="remove-watchlist-item">
-                    <input type="hidden" name="item_id" value="{{item.item_id}}">
-                    <button type="submit">-</button>
-                </form>
-            </div>
-            {% endif %}
-
-            {% include 'App/template_blocks/item_container.html' %}
-
-            </div>
-            {% endfor %}
-        </div>       
-    </section>
+                {% endif %}
+                {% include 'App/template_blocks/item_container.html' %}
+                </div>
+                {% endfor %}
+            </div>  
+            {% endif%}     
+        </section>
+        
 
     {% else %}
     <section id="items-container">
             <div id="entry-item-container">
                 <div id="item-profile">
-                    {% include 'App/template_blocks/item_container.html' with item=item_info show_graph=False show_year_released_availability=True %}
+                    {% include 'App/template_blocks/item_container.html' with item=item show_graph=False show_year_released_availability=True %}
                 </div>
 
                 <div id="chart-container">
                     <div id="header-and-graph-container">
                         <h3>{{graph_metric|capitalise_split_words}} Trends</h3>
-                        {% include 'App/template_blocks/item_chart.html' with item=item_info %}
+                        {% include 'App/template_blocks/item_chart.html' with item=item %}
                     </div>
                 </div>
 
@@ -126,7 +129,7 @@
             <div id="add-new-entry">
                 <div id="new-entry-sub-container">
                     <h3>Add New Entry</h3>
-                    {% include 'App/template_blocks/entry_item_form.html' with add_new=True %}
+                    {% include 'App/template_blocks/entry_item_form.html' with add_new=True show_notes=True %}
                 </div>
             </div>
 
@@ -134,7 +137,7 @@
                 <h3>Entries</h3>
                 <div id="entries-items-loop-container">
                 {% for entry in item_entries %}
-                    {% include 'App/template_blocks/entry_item_form.html' with add_new=False %}
+                    {% include 'App/template_blocks/entry_item_form.html' with add_new=False show_notes=True %}
                 {% endfor %}
                 </div>
             </div>

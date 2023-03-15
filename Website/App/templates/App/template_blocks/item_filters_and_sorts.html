@@ -42,8 +42,7 @@
             </div>
         </form>
     {% endif %}
-        {{sub_view}} {{item_id}} {{action_view}}
-
+    
     {% if item_id == None or item_id == "" %}
         <form id="page-buttons-form" action="{% url action_view sub_view %}" method="POST">
     {% else %}
