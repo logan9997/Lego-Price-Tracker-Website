@@ -47,6 +47,21 @@ def none_to_hyphens(date):
         return " - - - -"
     return date
 
+
+@register.filter
+def none_to_empty_string(string):
+    if string == None:
+        return ''
+    return string
+
+
+@register.filter
+def none_to_zero(num):
+    if num == None or num == "":
+        return 0
+    return num
+
+
 @register.filter
 def index(iterable, item):
     return iterable.index(item) + 1
