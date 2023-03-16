@@ -304,6 +304,7 @@ class DatabaseManagment():
             return None
         return result[0]
 
+
     def insert_year_released(self, year_released, item_id) -> None:
         self.cursor.execute(f"""
             UPDATE App_item
@@ -358,24 +359,6 @@ class DatabaseManagment():
             WHERE year_released is null
         """
         return self.SELECT(sql)
-
-
-    def transfer_to_theme(self) -> None:
-        sql = """
-            SELECT App_item.item_id, theme_path
-            FROM App_item, App_theme
-            WHERE App_item.item_id = App_theme.item_id
-                AND item.item_type = 'S'
-
-        """ 
-        results = self.SELECT(sql)
-
-        for result in results:
-            self.cursor.execute(f"""
-                INSERT INTO theme VALUES
-                    ('{result[0]}', '{result[1]}')
-            """)
-            self.con.commit()
 
 
     def get_sub_themes(self, parent_theme):
@@ -598,16 +581,6 @@ class DatabaseManagment():
         return self.SELECT(sql)
 
     
-    def sample_prices(self, portfolio_items) -> None:
-        from random import randint
-        for p in portfolio_items:
-            self.cursor.execute(f"""
-                INSERT INTO App_price ('date','avg_price','min_price','max_price','total_quantity','item_id')
-                VALUES ('2022-12-26',{randint(1,55)},'{randint(1,55)}','{randint(1,55)}','{randint(1,55)}','{p[0]}')
-            """)
-            self.con.commit()
-
-
     def get_portfolio_items_condition(self, user_id) -> list[str]:
         sql = f"""
             SELECT item_id, condition
