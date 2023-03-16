@@ -177,9 +177,13 @@
 }
 
 #in-collections {
-    height: 7rem;
+    height: 4rem;
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
-    margin:2rem 0 2rem;
+    margin: 1rem 0 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 1rem;
 }
 
 #in-collections p {
@@ -189,43 +193,26 @@
 #form-container {
     box-shadow: 0 0 1rem 1rem rgb(225,225,225); 
     width: 22rem;
-    height: 50rem;
+    height: 31rem;
     margin-top: 1rem;
+    border-radius: 1rem;
 }
 
 #form-container h3 {
     text-align: center;
-    margin-bottom: 1.5rem;
     margin-top: 2rem;
+    padding-bottom: 1rem;
+    width: 80%;
+    margin-left: 10%;
+    border-bottom: 0.1rem black solid;
 }
 
 #add-to-watchlist {
-    margin: 1rem 2.5rem 0;
+    margin: 0.5rem 2.5rem 0;
     border-top: 0.05rem black solid;
     padding-top: 1rem;
-
-}
-
-#add-to-portfolio {
-    margin: 1rem 2.5rem 0;
-    width: 60%;
-}
-
-#add-to-portfolio .label-input-container {
-    margin-bottom: 0.8rem;
-}
-
-#form-container label {
-    width:180px;
-    text-align:left;
-    padding-right:10px;
-}
-
-#form-container select, input {
     text-align: center;
-    float: right;
-    width: 6rem;
-    padding: 0;
+
 }
 
 #form-container select {
@@ -338,14 +325,42 @@
     margin-bottom: 3rem !important;
 }
 
-.main-input-set {
-    width: 90%;
+#condition-container-and-submit {
+    text-align: center;
+    width: 10rem;
+    margin-left: 5rem;
+    display: flex;
+    justify-content: center;
 }
 
-#condition-container-and-submit {
-    justify-content: space- !important;
+.main-input-set {
+    width: 90%;
+    margin: 0rem 1rem 0 !important;
+}
+
+#condition-container-and-submit label, #condition-container-and-submit select {
+    margin-left: 2.5rem;
+    width: 5rem;
+    text-align: center;
+}
+
+.label-input-container {
+    margin-bottom: 1rem;
+}
+
+#condition-container-and-submit select {
+    border-radius: 1rem;
 }
 
 #submit {
-    width: 5rem !important;
+    width: 6rem !important;
+    margin-left: 2rem !important;
+}
+
+.error-msg-container {
+    margin-top: 11.5rem ;
+    border-top:none !important;
+    border-radius: 1rem; 
+    text-align: center;
+    background-color: whitesmoke !important;
 }
