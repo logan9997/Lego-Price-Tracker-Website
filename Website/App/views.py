@@ -609,7 +609,7 @@ def add_to_user_items(request, item_id):
         if item_id not in user_item_ids:
             DB.add_to_user_items(user_id, item_id, view, datetime.datetime.today().strftime('%Y-%m-%d'))
         else:
-            DB.remove_from_watchlist(user_id, item_id)
+            Watchlist.objects.filter(user_id=user_id, item_id=item_id).delete()
             
     return redirect(f"http://127.0.0.1:8000/item/{item_id}")
 

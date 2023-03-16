@@ -91,9 +91,8 @@
             {% if in_portfolio|length != 0%}
                 <p>In Portfolio | {% for condition in in_portfolio %} {{condition.condition}} : {{condition.count}} | {% endfor %}</p>
             {% else %}
-                <p>In Portfolio : No</p>
+                <p>In Portfolio | New : 0 | Used : 0 |</p>
             {% endif %}
-            <p>In Watchlist : {{in_watchlist}}</p>
         </section>
 
         <section id="form-container">
@@ -101,6 +100,14 @@
     
             {% include 'App/template_blocks/entry_item_form.html' with view='item' add_new=True show_notes=False %}
             
+            <form id="add-to-watchlist" action="{% url 'add_to_user_items' item.item_id %}" method="post">
+                {% csrf_token %}
+                {% if in_watchlist == 'No' %}
+                <button name="view-type" type="submit" value="watchlist">Add to Watchlist!</button>
+                {% else %}
+                <button name="view-type" type="submit" value="watchlist">Remove from Watchlist!</button>
+                {% endif %}
+            </form>
             
         </section>
 
