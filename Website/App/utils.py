@@ -287,7 +287,7 @@ def clear_session_url_params(request, *keys, **sub_dict):
     return request
 
 
-def check_page_boundaries(current_page, items:list, items_per_page:int):
+def check_page_boundaries(current_page, list_len:int, items_per_page:int):
 
     try:
         current_page = int(current_page)
@@ -295,7 +295,7 @@ def check_page_boundaries(current_page, items:list, items_per_page:int):
         return 1
 
     conditions = [
-        current_page <= math.ceil(len(items) / items_per_page),
+        current_page <= math.ceil(list_len / items_per_page),
         current_page > 0,
     ]
 
@@ -305,8 +305,8 @@ def check_page_boundaries(current_page, items:list, items_per_page:int):
     return current_page
 
 
-def slice_num_pages(items:list, current_page:int, items_per_page:int):
-    num_pages = [i+1 for i in range((len(items) // items_per_page ) + 1)]
+def slice_num_pages(list_len:int, current_page:int, items_per_page:int):
+    num_pages = [i+1 for i in range((list_len // items_per_page ) + 1)]
     last_page = num_pages[-1] -1
 
     list_slice_start = current_page - (PAGE_NUM_LIMIT // 2)
@@ -322,7 +322,7 @@ def slice_num_pages(items:list, current_page:int, items_per_page:int):
     num_pages = num_pages[list_slice_start:list_slice_end]
 
     #remove last page. if len(items) % != 0 by ITEMS_PER_PAGE -> blank page with no items
-    if len(items) % items_per_page == 0:
+    if list_len % items_per_page == 0:
         num_pages.pop(-1)
 
     if 1 not in num_pages:

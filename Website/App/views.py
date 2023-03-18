@@ -39,6 +39,7 @@ from django.db.models import (
     Q,
     Sum,
     Count,
+    Max,
 ) 
 
 from my_scripts.responses import * 
@@ -238,55 +239,44 @@ def trending(request):
     return render(request, "App/trending.html", context=context)
 
 @timer
-def search(request, theme_path='all'):
+def search(request, theme_path):
 
-    if "search" not in request.META.get('HTTP_REFERER'):
-        request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
+    if request.META.get('HTTP_REFERER') != None:
+        if "search" not in request.META.get('HTTP_REFERER'):
+            request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
 
     request, options = save_POST_params(request)
 
     graph_metric = options.get("graph-metric", "avg_price")
     sort_field = options.get("sort-field", "avg_price-desc")
-    current_page = options.get("page", 1)
+    current_page = int(options.get("page", 1))
 
     if "user_id" in request.session:
         user_id = request.session["user_id"]
     else:
         user_id = -1
-
-    if theme_path != "all":
-        theme_path = theme_path.replace("all/", "")
-
-    if theme_path == 'all':
-        sub_themes = [{
-            "sub_theme":theme[0].strip("'"),
-             "img_path": f"App/images/{DB.get_sub_theme_set('',theme[0])}.png"
-            } for theme in DB.get_parent_themes()
-        ]
+    
+    if theme_path == None:
+        sub_themes = [{"sub_theme":theme[0], "img_path":f"App/images/{theme[1]}.png"} for theme in DB.get_sub_theme_set('', 0)]
+        print(sub_themes, theme_path)
+        
         theme_items = [] 
     else:
-        theme_items = DB.get_theme_items(theme_path.replace("/", "~")) #return all sets for theme
+        theme_items = DB.get_theme_items(theme_path.replace("/", "~"), sort_field.split("-"))[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE] #return all sets for theme
         theme_items = format_item_info(theme_items, view="search",graph_data=[graph_metric] ,user_id=user_id)
+
         if len(theme_items) == 0:
             redirect_path = "".join([f"{sub_theme}/" for sub_theme in theme_path.split("/")][:-1])
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
+       
+        sub_theme_indent = request.path.replace("/search/", "").count("/")
+        print(sub_theme_indent)
+        sub_themes = [{"sub_theme":theme[0].split("~")[sub_theme_indent], "img_path":f"App/images/{theme[1]}.png"} for theme in DB.get_sub_theme_set(theme_path.replace("/", "~"), sub_theme_indent)]
 
-        #return of all sub-themes (if any) for theme
-        
-        sub_themes = DB.get_sub_themes(theme_path.replace("/", "~"))
+    total_theme_items = Theme.objects.filter(theme_path=theme_path.replace("/", "~"), item__item_type="M").count()
 
-        sub_themes = [{
-            "sub_theme":theme[0].split("~")[0],
-            "img_path":f"App/images/{DB.get_sub_theme_set(theme_path,theme[0].split('~')[0])}.png"
-            } for theme in sub_themes]
-
-        #remove duplicates and resort after tuple
-        sub_themes = sorted([dict(t) for t in {tuple(d.items()) for d in sub_themes}], key=lambda x:x["sub_theme"])
-        
-
-    current_page = check_page_boundaries(current_page, theme_items, SEARCH_ITEMS_PER_PAGE)
-    page_numbers = slice_num_pages(theme_items, current_page, SEARCH_ITEMS_PER_PAGE)
-
+    current_page = check_page_boundaries(current_page, total_theme_items, SEARCH_ITEMS_PER_PAGE)
+    page_numbers = slice_num_pages(total_theme_items, current_page, SEARCH_ITEMS_PER_PAGE)
 
     theme_sort_option = request.POST.get("sort-order", "theme_name-asc")
     theme_sort_options = get_search_sort_options()
@@ -298,13 +288,12 @@ def search(request, theme_path='all'):
 
     theme_items = sort_items(theme_items,sort_field)
 
-    theme_items = theme_items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]    
-
     if request.method == "POST": 
-        if request.POST.get("form-type") != "theme-url":
+        if request.POST.get("form-type") == "theme-url":
             order = theme_sort_option.split("-")[1]
             field = theme_sort_option.split("-")[0]
-            sub_themes = sort_themes(field, order, sub_themes)
+            print(order, field)
+            #sub_themes = sort_themes(field, order, sub_themes)
 
     context = {
         "show_graph":True,
@@ -524,14 +513,25 @@ def portfolio(request, item_id=None):
 
     item_id = request.GET.get("item")
     if item_id != None:
+      
         items = Portfolio.objects.filter(item_id=item_id, user_id=user_id).values_list("condition", "bought_for", "sold_for", "date_added", "date_sold", "notes", "portfolio_id")
         items = format_portfolio_items(items)
         context["item_entries"] = items
         context["metric_changes"] = [{"metric":metric,"change":DB.get_item_metric_changes(item_id, metric)} for metric in ALL_METRICS]
         context["item"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
+        
+        context["total_profit"] = Portfolio.objects.filter(user_id=user_id, item_id=item_id).aggregate(profit=Sum("bought_for") - Sum("sold_for"))["profit"]
+        context["total_owners"] = len(Portfolio.objects.filter(item_id=item_id).aggregate(Count("user_id")))
+        context["total_watchers"] = Watchlist.objects.filter(item_id=item_id).count()
+        
+        context["total_market_value"] = Price.objects.filter(
+            item_id=item_id, date=Price.objects.filter(item_id=item_id).aggregate(Max("date"))["date__max"]
+        ).values_list("avg_price", flat=True)[0] * Portfolio.objects.filter(item_id=item_id, user_id=user_id).count()
+
         if len(Portfolio.objects.filter(item_id=item_id, user_id=user_id)) > 0:
             context["total_bought_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).aggregate(total_bought_for=Sum("bought_for"))["total_bought_for"]
             context["total_sold_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).aggregate(total_sold_for=Sum("sold_for"))["total_sold_for"] 
+
     return render(request, "App/portfolio.html", context=context)
 
 
