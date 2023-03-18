@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import sys 
 
 class DatabaseManagment():
 
@@ -214,7 +215,9 @@ class DatabaseManagment():
         return self.SELECT(sql)
     
 
-    def get_theme_items(self, theme_path) -> list[str]:
+    def get_theme_items(self, theme_path, sort_field) -> list[str]:
+        if sort_field[0] == "item_id":
+            sort_field[0] = "I.item_id"
         sql = f"""
             SELECT I.item_id, item_name, year_released, item_type, avg_price, 
             min_price, max_price, total_quantity, date
@@ -226,10 +229,10 @@ class DatabaseManagment():
                 AND date = (
                     SELECT MAX(date) 
                     FROM App_price P2 
-                    WHERE P2.item_id = P1.item_id 
                     GROUP BY item_id
                 )
             GROUP BY I.item_id
+            ORDER BY {sort_field[0]} {sort_field[1]}
         """
         return self.SELECT(sql)      
 
@@ -670,30 +673,25 @@ class DatabaseManagment():
         return self.SELECT(sql)
     
 
-    def get_sub_theme_set(self ,theme_path:str, sub_theme:str):
+    def get_sub_theme_set(self ,theme_path:str, sub_theme_indent:int):
         for char in ["/", " "]:
             if char in theme_path:
                 theme_path = theme_path.replace(char, "~")
 
-        if theme_path == '':
-            path = f"LIKE '{sub_theme}%'" 
-        else:
-            path = f"LIKE '{theme_path}~{sub_theme}%'" 
-
         sql = f"""
-            SELECT I.item_id
+            SELECT theme_path, I.item_id
             FROM App_theme T, App_item I
-            WHERE theme_path {path}
+            WHERE T.item_id = I.item_id
                 AND item_type = 'S'
-                AND T.item_id = I.item_id
+                AND theme_path LIKE '{theme_path}%'
+                AND LENGTH(theme_path) - LENGTH(REPLACE(theme_path, '~', '')) = {sub_theme_indent}
             GROUP BY theme_path
-            LIMIT 1
         """
 
-        result = self.SELECT(sql, fetchone=True)
+        result = self.SELECT(sql)
         if result == None:
             return 'No-Image'
-        return result[0]
+        return result
 
 
     def parent_themes(self, user_id:int, view:str, metric:str) -> list[str]:           
