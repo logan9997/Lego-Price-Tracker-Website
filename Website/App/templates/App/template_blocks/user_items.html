@@ -22,14 +22,23 @@
             {% if request.GET.item != None%}
                 <div class="tool-bar-div" id="stats">
                     <h3>Stats</h3>
-                    <p>Total bought for price : {{total_bought_price}}</p>
-                    <p>Total sold for price : {{total_sold_price|none_to_hyphens}}</p>
+                    <p>Total Market Value : £{{total_market_value}}</p>
+                    <p>Total bought for price : £{{total_bought_price}}</p>
+                    <p>Total sold for price : £{{total_sold_price|none_to_hyphens}}</p>
+                    {% if total_profit < 0 %}
+                        <p>Total Loss £{{total_profit|times_negative_one}}</p>
+                    {% else %}
+                        <p>Total Profit : £{{total_profit}}</p>
+                    {% endif %}
+                    <br>
+                    <p>Total Owners : {{total_owners}}</p>
+                    <p>Total Watchers : {{total_watchers}}</p>
                 </div>
             {% else %}
 
             <div class="tool-bar-div" id="stats">
-                <h3>Stats</h3>
-
+                <h3>aaaStats</h3>
+                    
                 {% if request.path == "/portfolio/" %}
                     <p>Total of {{ total_items }} items in your portfolio.</p>
                 {% endif %}
