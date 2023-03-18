@@ -463,8 +463,8 @@ def user_items(request, view, user_id):
     items = DB.get_user_items(user_id, view)
     items = format_item_info(items, view=view, graph_data=[graph_metric], user_id=user_id)
 
-    current_page = check_page_boundaries(current_page, items, USER_ITEMS_ITEMS_PER_PAGE)
-    num_pages = slice_num_pages(items, current_page, USER_ITEMS_ITEMS_PER_PAGE)
+    current_page = check_page_boundaries(current_page, len(items), USER_ITEMS_ITEMS_PER_PAGE)
+    num_pages = slice_num_pages(len(items), current_page, USER_ITEMS_ITEMS_PER_PAGE)
 
     items = sort_items(items, sort_field)
     #keep selected sort field option as first <option> tag
@@ -514,9 +514,18 @@ def portfolio(request, item_id=None):
     context = user_items(request, "portfolio", user_id)
 
     context["total_items"] = Portfolio.objects.filter(user_id=user_id).count()
+    context["total_bought_price"] = Portfolio.objects.filter(user_id=user_id).aggregate(total_bought_for=Sum("bought_for"))["total_bought_for"]
+    context["total_sold_price"] = Portfolio.objects.filter(user_id=user_id).aggregate(total_sold_for=Sum("sold_for"))["total_sold_for"] 
+    context["total_profit"] = round(Portfolio.objects.filter(user_id=user_id).aggregate(profit=Sum("bought_for") - Sum("sold_for"))["profit"], 2)
+
 
     item_id = request.GET.get("item")
     if item_id != None:
+
+        if "graph_metric" in request.session:
+            context["graph_metric"] = request.session["graph_metric"]
+            context["graph_options"] = request.session["graph_options"]
+            del request.session["graph_metric"] ; del request.session["graph_options"]
       
         items = Portfolio.objects.filter(item_id=item_id, user_id=user_id).values_list("condition", "bought_for", "sold_for", "date_added", "date_sold", "notes", "portfolio_id")
         items = format_portfolio_items(items)
@@ -524,7 +533,7 @@ def portfolio(request, item_id=None):
         context["metric_changes"] = [{"metric":metric,"change":DB.get_item_metric_changes(item_id, metric)} for metric in ALL_METRICS]
         context["item"] = format_item_info(DB.get_item_info(item_id, context["graph_metric"]), graph_data=[context["graph_metric"]], price_trend=ALL_METRICS)[0]
         
-        context["total_profit"] = Portfolio.objects.filter(user_id=user_id, item_id=item_id).aggregate(profit=Sum("bought_for") - Sum("sold_for"))["profit"]
+        context["total_profit"] = round(Portfolio.objects.filter(user_id=user_id, item_id=item_id).aggregate(profit=Sum("bought_for") - Sum("sold_for"))["profit"], 2)
         context["total_owners"] = len(Portfolio.objects.filter(item_id=item_id).aggregate(Count("user_id")))
         context["total_watchers"] = Watchlist.objects.filter(item_id=item_id).count()
         
@@ -540,6 +549,12 @@ def portfolio(request, item_id=None):
 
 
 def view_POST(request, view):
+
+    if "?item=" in request.META.get('HTTP_REFERER'):
+        print(request.POST)
+        request.session["graph_metric"] = request.POST.get("graph-metric", "avg_price")
+        request.session["graph_options"] = sort_dropdown_options(get_graph_options(), request.POST.get("graph-metric", "avg_price"))
+        return redirect(request.META.get('HTTP_REFERER'))
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")

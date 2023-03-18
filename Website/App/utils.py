@@ -243,7 +243,7 @@ def sort_items(items, sort , **order) -> list[str]:
 
 
 def sort_dropdown_options(options:list[dict[str,str]], field:str) -> list[dict[str,str]]:
-
+    print(options, field)
     #loop through all options. If options["value"] matches to desired sort field, assign to variable
     selected_field = [option for option in options if option["value"] == field][0]
 
@@ -387,7 +387,7 @@ def get_similar_items(item_name:str, item_type:str, item_id:str) -> list:
     single_words = [
         ''.join(char for char in word if char not in REMOVE_CHARS) 
         for word in item_name.split(" ")
-        if len(word) >= 3 and ''.join(char for char in word if char not in REMOVE_CHARS) not in REMOVE_WORDS
+        if len(word) > 3 and ''.join(char for char in word if char not in REMOVE_CHARS) not in REMOVE_WORDS
     ]
 
     i = len(single_words) ; items = []
