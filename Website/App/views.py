@@ -239,7 +239,10 @@ def trending(request):
     return render(request, "App/trending.html", context=context)
 
 @timer
-def search(request, theme_path):
+def search(request, theme_path='all'):
+
+    if 'all' in request.path:
+        return redirect(request.path.replace("all/", ""))
 
     if request.META.get('HTTP_REFERER') != None:
         if "search" not in request.META.get('HTTP_REFERER'):
@@ -255,8 +258,9 @@ def search(request, theme_path):
         user_id = request.session["user_id"]
     else:
         user_id = -1
+
     
-    if theme_path == None:
+    if theme_path == 'all':
         sub_themes = [{"sub_theme":theme[0], "img_path":f"App/images/{theme[1]}.png"} for theme in DB.get_sub_theme_set('', 0)]
         print(sub_themes, theme_path)
         
