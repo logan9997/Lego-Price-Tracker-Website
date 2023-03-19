@@ -51,6 +51,56 @@ h2 {
     margin-left: calc((100% - 14rem) / 2);
 }
 
+
+
+
+#slider {
+    height: 32rem;
+    position: relative;
+    overflow: hidden;
+}
+
+#slider::before,
+#slider::after {
+  background: linear-gradient(to bottom, whitesmoke 0%, rgba(255, 255, 255, 0) 100%);
+  content: "";
+  height: 10px;
+  position: absolute;
+  width: 14.7rem;
+  z-index: 2;
+  left:0;
+}
+
+#slider::after {
+    bottom:0;
+    right: 0;
+    transform: rotateZ(180deg);
+  }
+
+#slide-track {
+    overflow-y: hidden;
+    position: relative;
+    top: 1rem;
+}
+
+.slide {
+    margin-bottom: 1rem;
+    text-align: center;
+    margin-left: calc((100% - 13rem) / 2);
+}
+
+#slider #slide-track {
+    animation: scroll 16s linear infinite;
+    display: flex;
+    flex-direction: column;
+  }
+
+#slider .slide {
+    width: 13rem;
+    height: 12rem;
+}
+
+
 #ads {
     box-shadow: 1rem 1rem 1rem 1rem rgb(225,225,225);   
     margin-right: 2rem;

@@ -11,6 +11,25 @@
 <h2>- Lego Market Trends -</h2>
 {% endif %}
 
+{% if trending|length >= 3%}
+
+<style>
+@keyframes scroll {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(calc(-13rem * {{trending|length}}));
+    }
+}
+
+#slider #slide-track {
+    height: calc(13rem * {{trending|length}} * 2);
+  }
+</style>
+
+{% endif %}
+
 <section id="container-layer1" class="layers">
 
     <section id="biggest-trends" class="side-bars">
@@ -19,12 +38,24 @@
         {% else %}
             <h3>Trending Items</h3>
         {% endif %}
-        <div id="trending-items-container">
-            {% for item in trending %}
-                <div class="main-item-container">
-                {% include 'App/template_blocks/item_container.html' %}
-                </div>
-            {% endfor %}
+        <div id="slider">
+            <div id="slide-track">
+                {% for item in trending %}
+                    <div class="slide">
+                        {% include 'App/template_blocks/item_container.html' %}
+                    </div>
+                {% endfor %}
+
+                {% if trending|length >= 3%}
+
+                {% for item in trending %}
+                    <div class="slide">
+                        {% include 'App/template_blocks/item_container.html' %}
+                    </div>
+                {% endfor %}
+
+                {% endif %}
+            </div>
         </div>
     </section>
 
