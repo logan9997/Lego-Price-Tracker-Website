@@ -1,6 +1,12 @@
 #main-forms-container {
     display: flex;
     margin-bottom: 0.5rem;
+    justify-content: center;
+    flex-direction: row;
+}
+
+#main-forms-container label {
+    padding-right: 1rem;
 }
 
 #page-buttons-form {

@@ -107,7 +107,7 @@
     background-color: rgb(228, 220, 220);
     margin-left: 5%;
     border-top: 0.1rem black solid;
-    display: block;
+    display: none;
 }
 
 .error-msg {

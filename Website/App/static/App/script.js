@@ -89,7 +89,7 @@ function isValidDate(date) {
 }
 
 
-function input_validation(input, type) {
+function input_validation(input, type, add_new) {
     var form = input.parentElement.parentElement.parentElement
 
     var inputs = form.getElementsByTagName("input")
@@ -118,7 +118,12 @@ function input_validation(input, type) {
     if (msg != "") {
         form.parentElement.getElementsByClassName("error-msg-container")[0].style.display = "block";
         form.parentElement.getElementsByClassName("error-msg")[0].innerHTML = msg;
-        form.parentElement.getElementsByClassName("entry-counter")[0].style["border-bottom"] = "none";
+
+        var watchlist_button = document.getElementById("add-to-watchlist")
+        if (watchlist_button != null) {
+            watchlist_button.style.marginTop = "1.5rem"
+        }
+        // form.parentElement.getElementsByClassName("entry-counter")[0].style.borderTop = "none";
     } else {
         form.parentElement.getElementsByClassName("error-msg-container")[0].style.display = "none"
         form.parentElement.getElementsByClassName("error-msg")[0].innerHTML = ""
@@ -143,14 +148,20 @@ function input_validation(input, type) {
         console.log(inputs[i].value)
     }
 
-    console.log("VALID", valid)
+    var submit_button = document.getElementById("submit")
+
+    console.log(add_new, valid)
 
     if (valid) {
-        console.log("form submitting...")
-        form.submit() 
+        if (add_new) {
+            submit_button.disabled = false
+        } else {
+            form.submit()
+        } 
     } else {
-        console.log("form invalid...")
-        form.reset()
+        if (add_new) {
+            input.value = ""
+        }
     }
 }
 

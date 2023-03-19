@@ -11,9 +11,10 @@ DB = DatabaseManagment()
 
 RECENTLY_VIEWED_ITEMS_NUM = 6
 PAGE_NUM_LIMIT = 8
-SEARCH_ITEMS_PER_PAGE = 24
+SEARCH_ITEMS_PER_PAGE = 50
 USER_ITEMS_ITEMS_PER_PAGE = 10
 MAX_SIMILAR_ITEMS = 12
+ALL_METRICS = ["avg_price", "min_price", "max_price", "total_quantity"]
 
 REMOVE_CHARS = ["(", ")"]
 REMOVE_WORDS = [
@@ -83,9 +84,9 @@ def get_trending_options() -> list[dict[str, str]]:
 
 def get_graph_checkboxes() -> list[dict[str, str]]:
     CHECKBOXES = [
-        {"value":"avg_price", "text":"Average Price"},
-        {"value":"min_price", "text":"Minimum Price"},
-        {"value":"max_price", "text":"Maximum Price"},
-        {"value":"total_quantity", "text":"Quantity"},
+        {"value":"avg_price", "text":"Average Price", "colour":"red"},
+        {"value":"min_price", "text":"Minimum Price", "colour":"#00CC00"},
+        {"value":"max_price", "text":"Maximum Price", "colour":"#3399FF"},
+        {"value":"total_quantity", "text":"Quantity", "colour":"#FF00FF"},
     ]
     return CHECKBOXES

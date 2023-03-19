@@ -1,5 +1,6 @@
 {% extends 'App/template_blocks/base.html' %}
 {% block content %}
+{% load tags %}
 
 {% load static %}
 <link rel="stylesheet" href="{% static 'App/home.css' %}">
@@ -12,7 +13,6 @@
 {% endif %}
 
 {% if trending|length >= 3%}
-
 <style>
 @keyframes scroll {
     0% {
@@ -128,7 +128,7 @@
 
                 <div class="info-container">
                     <p class="view-count">Weekly Views<br>{{item.views}}</p>
-                    <p class="weeks-price-trend">Change since {{last_week}} : <br> {{item.change}}</p>
+                    <p class="weeks-price-trend">{{metric|capitalise_split_words}} Change since {{last_week}} : <br> {{item.change}}</p>
                 </div>
             </div>
             {% endfor %}

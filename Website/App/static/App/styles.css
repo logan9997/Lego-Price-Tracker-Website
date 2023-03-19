@@ -154,13 +154,20 @@ nav ul li:hover .dropdown-content {
 }
 
 footer {
-    height: 10rem;
+    min-height: 10rem;
     background-color: white;
     top: 0;
     width: 100vw;
     padding: 0;
     border-top: 0.1rem rgb(228, 220, 220) solid;
     text-align: center;
+    padding-bottom: 1rem;
+}
+
+footer #smaller-text {
+    font-size: 0.73rem;
+    font-style: italic;
+    color: gray;
 }
 
 .tool-tip {
@@ -172,14 +179,17 @@ footer {
     font-size: 0.9rem;
     text-align: center;
     border: 0.1rem orangered solid;
+    position: relative;
+    top: 4rem;
+    right: 1rem;
 }
 
 .tool-tip-text {
     visibility: hidden;
     position: absolute;
     width: 10rem;
-    bottom: 1rem;
-    left: -4.35rem;
+    bottom: 1.5rem;
+    left: -4.65rem;
     background-color: rgb(224, 212, 212);
     border-radius: 0.5rem;
     border: 0.1rem orangered solid;
@@ -199,3 +209,4 @@ footer {
     border-style: solid;
     border-color: orangered transparent transparent transparent;
   }
+

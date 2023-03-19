@@ -175,6 +175,22 @@ h2 {
     box-shadow: 0 1rem 1rem 1rem rgb(225,225,225);   
 }
 
+#graph-options:before, #graph-options:after {
+    position: relative;
+    top: 2.5rem;
+    overflow: hidden;
+    width: 42%;
+    height: 2px;
+    content: '\a0';
+    background-color: orangered;
+
+}
+
+#graph-options:before {
+    margin-left: 0%;
+    text-align: right;
+}
+
 #graph-options label, select {
     display: block;
     text-align: center;
@@ -194,6 +210,8 @@ h2 {
     width:46.5%;
     height: 60rem;
     text-align: center;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
 
 }
 

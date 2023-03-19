@@ -3,11 +3,11 @@
 {% load tags %}
 <link rel="stylesheet" href="{% static 'App/user_items.css' %}">
 
-<h1>{{view|capitalise}}</h1>
+<h1>&nbsp;&nbsp;{{view|capitalise}}&nbsp;&nbsp;</h1>
 
 <section id="header">
     <div id="tool-bar-header" class="headers">
-        <h2>Tool Bar</h2>
+        <h2>Overview</h2>
     </div>
     
     <div id="items-header" class="headers">
@@ -22,22 +22,24 @@
             {% if request.GET.item != None%}
                 <div class="tool-bar-div" id="stats">
                     <h3>Stats</h3>
-                    <p>Total Market Value : £{{total_market_value}}</p>
-                    <p>Total bought for price : £{{total_bought_price}}</p>
+                    <p>Total Market Value : £{{total_market_value|two_decimals}}</p>
+                    <p>Total bought for price : £{{total_bought_price|two_decimals}}</p>
                     <p>Total sold for price : £{{total_sold_price|none_to_hyphens}}</p>
+
                     {% if total_profit < 0 %}
-                        <p>Total Loss £{{total_profit|times_negative_one}}</p>
+                        <p>Total Loss £{{total_profit|times_negative_one|two_decimals}}</p>
                     {% else %}
-                        <p>Total Profit : £{{total_profit}}</p>
+                        <p>Total Profit : £{{total_profit|two_decimals}}</p>
                     {% endif %}
                     <br>
                     <p>Total Owners : {{total_owners}}</p>
                     <p>Total Watchers : {{total_watchers}}</p>
+                    <br>
                 </div>
             {% else %}
 
             <div class="tool-bar-div" id="stats">
-                <h3>aaaStats</h3>
+                <h3>Stats</h3>
                     
                 {% if request.path == "/portfolio/" %}
                     <p>Total of {{ total_items }} items in your portfolio.</p>
@@ -50,6 +52,19 @@
                 {% else %}
                     <p>{{metric_total.metric}} {{metric_total.total | remove_decimals}}</p>
                 {% endif %}
+
+                <br>
+
+                {% if request.path == "/portfolio/" %}
+                    <p>Total Price Bought For : £{{total_bought_price|two_decimals}}</p>
+                    <p>Total Price Sold For : £{{total_sold_price|two_decimals}}</p>
+                    {% if total_profit < 0 %}
+                        <p>Total Loss £{{total_profit|times_negative_one|two_decimals}}</p>
+                    {% else %}
+                        <p>Total Profit : £{{total_profit|two_decimals}}</p>
+                    {% endif %}
+                {% endif %}
+
             </div>
 
             <div class="tool-bar-div" id="themes-container">
@@ -61,6 +76,7 @@
                         <p>{{theme.theme_path | count_theme_indent }} ({{theme.count}}) : {{theme.metric_total | remove_decimals}}</p>
                     {% endif %}
                 {% endfor %}
+                <br>
             </div>
 
             {% endif %}

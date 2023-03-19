@@ -42,6 +42,13 @@ def postivie_or_negative_sign(num:float):
 
 
 @register.filter
+def times_negative_one(number:float):
+    if number < 0:
+        return number *-1
+    return number
+
+
+@register.filter
 def none_to_hyphens(date):
     if date == None:
         return " - - - -"
@@ -87,8 +94,9 @@ def remove_decimals(number:float):
 
 @register.filter
 def two_decimals(number:float):
-    if len(str(number).split(".")[1]) == 1:
-        return str(number).split(".")[0] + "." + str(number).split(".")[1] + "0"
+    if "." in str(number):
+        if len(str(number).split(".")[1]) == 1:
+            return str(number).split(".")[0] + "." + str(number).split(".")[1] + "0"
     return number
 
 

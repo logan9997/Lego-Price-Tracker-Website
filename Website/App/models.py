@@ -49,10 +49,10 @@ class Portfolio(models.Model):
     condition = models.CharField(max_length=1, choices=(
         ("U", "used"), ("N", "new")
     ))
-    date_added = models.DateField()
-    bought_for = models.FloatField()
+    date_added = models.DateField(DATE_FORMAT, null=True)
+    bought_for = models.FloatField(null=True)
     sold_for = models.FloatField(null=True)
-    date_sold = models.DateField(null=True)
+    date_sold = models.DateField(DATE_FORMAT, null=True)
     notes = models.CharField(max_length=300, null=True)
 
 

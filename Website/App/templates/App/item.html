@@ -16,9 +16,9 @@
             <h3>Prices & Quantity</h3>
             <div id="current-metrics-container">
                 <p>Total Quantity Available {{item.total_quantity}}</p>
-                <p>Avg Price {{item.avg_price}}</p>
-                <p>Min Price {{item.min_price}}</p>
-                <p>Max Price {{item.max_price}}</p>
+                <p>Avg Price £{{item.avg_price|two_decimals}}</p>
+                <p>Min Price £{{item.min_price|two_decimals}}</p>
+                <p>Max Price £  {{item.max_price|two_decimals}}</p>
             </div>
             
             <div id="metric-change-container">
@@ -27,7 +27,11 @@
                     <p class="tool-tip-text">% change since oldest record</p>
                 </div>
                 {% for metric_change in metric_changes %}
-                    <p class="metric-change"> {{metric_change.metric}} Change (%) {{ metric_change.change|postivie_or_negative_sign }} </p>
+                    {% if metric_change.change < 0 %}
+                        <p class="metric-change"> {{metric_change.metric}} Change (%) <span style="color:red;" >{{ metric_change.change|postivie_or_negative_sign }}</span> </p>
+                    {% else %}
+                        <p class="metric-change"> {{metric_change.metric}} Change (%) <span style="color: green;" >{{ metric_change.change|postivie_or_negative_sign }}</span> </p>
+                    {% endif %}
                 {% endfor %}
                 </div>
 
@@ -42,8 +46,10 @@
 
         <div class="info-block">
             <h3>General Info</h3>
+            <br>
             <p>Owned By : {{total_owners}}</p>
             <p>Watched By : {{total_watchers}}</p>
+            <br>
             <p>Last Appearance : {{most_recent_set_appearance}}</p>
 
             <div id="item-themes-container">
@@ -89,9 +95,9 @@
 
         <section id="in-collections">
             {% if in_portfolio|length != 0%}
-                <p>In Portfolio | {% for condition in in_portfolio %} {{condition.condition}} : {{condition.count}} | {% endfor %}</p>
+                <p><a href="{% url 'portfolio' %}?item={{item.item_id}}">In Portfolio</a>| {% for condition in in_portfolio %} {{condition.condition}} : {{condition.count}} | {% endfor %}</p>
             {% else %}
-                <p>In Portfolio | New : 0 | Used : 0 |</p>
+                <p><a href="{% url 'portfolio' %}?view=items">In Portfolio</a> | New : 0 | Used : 0 |</p>
             {% endif %}
         </section>
 
@@ -114,7 +120,20 @@
     </section>
     {% else %}
     <section id="login-for-collections">
-        <p>Create an account to add to collection</p>
+        <h2>Create an account to add to collection.</h2>
+        <div id="login-or-join">
+            <p><a href="{% url 'login' %}">Login</a> | <a href="{% url 'join' %}">Join</a></p>
+        </div>
+
+        <div class="login-block">
+            <h3>Create your own portfolio!</h3>
+            <img src="{% static 'App/styling-images/portfolio-icon.jpg' %}" alt="">
+        </div>
+
+        <div class="login-block">
+            <h3>Track your profits!</h3>
+            <img src="{% static 'App/styling-images/growth-graphic.png' %}" alt="">
+        </div>
     </section>
     {% endif %}
 
@@ -132,7 +151,7 @@
                 </div>
 
                 <div class="set-info-container">
-                    <p><a href="{% url 'item' set.set_id %}">{{set.set_id}}</a></p>
+                    <p>{{set.set_id}}</p>
                     <p>{{set.set_name}}</p>
                     <p>Year Released : {{set.year_released}}</p>
                     <p>Quantity : {{set.quantity}}</p>
@@ -147,7 +166,7 @@
         <div class="sub-super-set-container">
         {% for piece in sub_sets %}
             <div class="piece-container">
-                <p><span>{{piece.piece_id}}</span> * {{piece.quantity}}</p>
+                <p>{{piece.piece_id}} * {{piece.quantity}}</p>
                 <img src="{% static piece.img_path %}" alt="img">
             </div>
         {% endfor %}
@@ -163,7 +182,7 @@
         <div id="similar-items-container">
             {% for item in similar_items %}
             <div class="similar-item-container">
-                {% include 'App/template_blocks/item_container.html' with item=item %} 
+                {% include 'App/template_blocks/item_container.html' with item=item scroll_to_top=True %} 
             </div>
             {% endfor %}
         </div>

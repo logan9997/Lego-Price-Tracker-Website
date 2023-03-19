@@ -1,5 +1,3 @@
-import sys
-
 from datetime import (
     datetime as dt, 
     timedelta
@@ -33,8 +31,6 @@ from .models import (
     Watchlist
 )
 
-import django.db.models
-
 from django.db.models import (
     Q,
     Sum,
@@ -44,7 +40,6 @@ from django.db.models import (
 
 from my_scripts.responses import * 
 from my_scripts.database import *
-from my_scripts.misc import get_price_colour
 
 
 def search_item(request, current_view):
@@ -83,7 +78,7 @@ def index(request):
     new_items = format_item_info(DB.get_new_items()[:10], home_view="_new_items", graph_data=[graph_metric])[:10]
 
     last_week = dt.today() - timedelta(days=7)
-    last_week = last_week.strftime("%d/%m/%y")
+    last_week = last_week.strftime('%Y-%m-%d')
 
     for popular_item in popular_items:
         popular_item["change"] = DB.get_weekly_item_metric_change(popular_item["item_id"], last_week, graph_metric)[0] 
@@ -97,7 +92,8 @@ def index(request):
         "popular_items":popular_items,
         "new_items":new_items,
         "recently_viewed":recently_viewed,
-        "show_graph":False
+        "show_graph":False,
+        "metric":graph_metric,
     }
 
     if user_id == -1 or len(DB.get_user_items(user_id, "portfolio")) == 0:
@@ -212,7 +208,7 @@ def trending(request):
 
     request, options = save_POST_params(request)
 
-    graph_metric = options.get("graph-metric")
+    graph_metric = options.get("graph-metric", "avg_price")
     trend_type = options.get("sort-field", "avg_price-desc")
     current_page = options.get("page", 1)
 
@@ -221,8 +217,8 @@ def trending(request):
 
     items = format_item_info(DB.get_biggest_trends(graph_metric), price_trend=[graph_metric], graph_data=[graph_metric])
 
-    current_page = check_page_boundaries(current_page, items, SEARCH_ITEMS_PER_PAGE)
-    page_numbers = slice_num_pages(items, current_page, SEARCH_ITEMS_PER_PAGE)
+    current_page = check_page_boundaries(current_page, len(items), SEARCH_ITEMS_PER_PAGE)
+    page_numbers = slice_num_pages(len(items), current_page, SEARCH_ITEMS_PER_PAGE)
 
     items = sort_items(items, trend_type)
     items = items[(current_page-1) * SEARCH_ITEMS_PER_PAGE : (current_page) * SEARCH_ITEMS_PER_PAGE]
@@ -274,7 +270,6 @@ def search(request, theme_path='all'):
             #return redirect(f"http://127.0.0.1:8000/search/{redirect_path}")
        
         sub_theme_indent = request.path.replace("/search/", "").count("/")
-        print(sub_theme_indent)
         sub_themes = [{"sub_theme":theme[0].split("~")[sub_theme_indent], "img_path":f"App/images/{theme[1]}.png"} for theme in DB.get_sub_theme_set(theme_path.replace("/", "~"), sub_theme_indent)]
 
     total_theme_items = Theme.objects.filter(theme_path=theme_path.replace("/", "~"), item__item_type="M").count()
@@ -296,8 +291,7 @@ def search(request, theme_path='all'):
         if request.POST.get("form-type") == "theme-url":
             order = theme_sort_option.split("-")[1]
             field = theme_sort_option.split("-")[0]
-            print(order, field)
-            #sub_themes = sort_themes(field, order, sub_themes)
+            sub_themes = sort_themes(field, order, sub_themes)
 
     context = {
         "show_graph":True,
@@ -443,8 +437,6 @@ def join(request):
 
 def user_items(request, view, user_id):
 
-    context = {}
-
     if view not in request.META.get('HTTP_REFERER', ""):
         request = clear_session_url_params(request, "graph-metric", "sort-field", "page", sub_dict="url_params")
 
@@ -483,7 +475,7 @@ def user_items(request, view, user_id):
     parent_themes = DB.parent_themes(user_id, view, graph_metric)
     themes = get_sub_themes(user_id, parent_themes, [], -1, view, graph_metric)
 
-    context.update({
+    context = {
         "items":items,
         "num_pages":num_pages,
         "sort_options":sort_options,
@@ -496,14 +488,12 @@ def user_items(request, view, user_id):
         "current_page":current_page,
         "show_graph":True,
         "user_id":user_id,
-    })
+    }
 
     return context
 
 
 def portfolio(request, item_id=None):
-
-    #del request.POST
 
     if "user_id" not in request.session or request.session["user_id"] == -1:
         return redirect("index")
@@ -539,7 +529,7 @@ def portfolio(request, item_id=None):
         
         context["total_market_value"] = Price.objects.filter(
             item_id=item_id, date=Price.objects.filter(item_id=item_id).aggregate(Max("date"))["date__max"]
-        ).values_list("avg_price", flat=True)[0] * Portfolio.objects.filter(item_id=item_id, user_id=user_id).count()
+        ).values_list("avg_price", flat=True)[0] * Portfolio.objects.filter(item_id=item_id, user_id=user_id, date_sold=None).count()
 
         if len(Portfolio.objects.filter(item_id=item_id, user_id=user_id)) > 0:
             context["total_bought_price"] = Portfolio.objects.filter(item_id=item_id, user_id=user_id).aggregate(total_bought_for=Sum("bought_for"))["total_bought_for"]
@@ -551,7 +541,6 @@ def portfolio(request, item_id=None):
 def view_POST(request, view):
 
     if "?item=" in request.META.get('HTTP_REFERER'):
-        print(request.POST)
         request.session["graph_metric"] = request.POST.get("graph-metric", "avg_price")
         request.session["graph_options"] = sort_dropdown_options(get_graph_options(), request.POST.get("graph-metric", "avg_price"))
         return redirect(request.META.get('HTTP_REFERER'))
@@ -647,7 +636,12 @@ def entry_item_handler(request, view):
 
     elif "CLEAR" in request.POST.get("clear-input", ""):
         nulled_field = request.POST.get("clear-input").split("_CLEAR")[0]
-        Portfolio.objects.filter(portfolio_id=entry_id).update(**{nulled_field:None})
+
+        new_data = {nulled_field:None}
+        if "_for" in nulled_field:
+            new_data = {nulled_field:0}
+
+        Portfolio.objects.filter(portfolio_id=entry_id).update(**new_data)
         if view == "portfolio":
             return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")
         return redirect(f"http://127.0.0.1:8000/{view}/{item_id}/")
@@ -672,7 +666,6 @@ def entry_item_handler(request, view):
     
     elif request.POST.get("form-type") == "new-entry":
         values = {k:v for k,v in request.POST.items() if k not in ["csrfmiddlewaretoken", "form-type"] and v != ''}
-        print(values)
         Portfolio(**values).save()
         if view == "portfolio":
             return redirect(f"http://127.0.0.1:8000/{view}/?item={item_id}")

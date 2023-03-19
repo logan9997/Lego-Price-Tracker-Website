@@ -243,7 +243,6 @@ def sort_items(items, sort , **order) -> list[str]:
 
 
 def sort_dropdown_options(options:list[dict[str,str]], field:str) -> list[dict[str,str]]:
-    print(options, field)
     #loop through all options. If options["value"] matches to desired sort field, assign to variable
     selected_field = [option for option in options if option["value"] == field][0]
 
