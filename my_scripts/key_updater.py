@@ -4,11 +4,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-driver = webdriver.Chrome()
-url = "https://www.bricklink.com/v2/api/register_consumer.page"
+
 
 
 def update_ip(key):
+    driver = webdriver.Chrome()
+    url = "https://www.bricklink.com/v2/api/register_consumer.page"
     driver.get(url)
     try:
         driver.find_element(By.XPATH, """//*[@id="js-btn-save"]/button[2]""").click()

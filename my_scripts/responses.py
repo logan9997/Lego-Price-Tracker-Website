@@ -1,14 +1,20 @@
 from requests_oauthlib import OAuth1Session
 
-from my_scripts.keys import *
-
 import json
 
 class Response():
 
     def __init__(self) -> None:
         self.base_url = "https://api.bricklink.com/api/store/v1/"
-        self.auth = OAuth1Session(CONSUMER_KEY, CONSUMER_SECRET, TOKEN_VALUE, TOKEN_SECRET)
+        self.keys = self.get_keys()
+        self.auth = OAuth1Session(self.keys[0], self.keys[1], self.keys[2], self.keys[3])
+
+
+    def get_keys(self):
+        with open("../my_scripts/keys.txt", "r") as keys:
+            keys = keys.readlines()
+            keys = [k.rstrip("\n") for k in keys]
+        return keys
 
 
     def get_response_data(self, sub_url:str, **display:bool) -> dict[str]:
@@ -27,9 +33,10 @@ class Response():
 
 
 def main():
+
     resp = Response()
     a = resp.get_response_data(f"items/MINIFIG/sw0001a/price")
-
+    print(a)
         
 if __name__ == "__main__":
     main()

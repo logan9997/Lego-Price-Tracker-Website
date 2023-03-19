@@ -25,6 +25,7 @@ def check_http_response():
 
         #recall Response() to pass new keys inside __init__
         resp = Response()
+        print(resp.keys)
 
 
 def update_items():
@@ -47,22 +48,24 @@ def update_items():
 
 
 def update_prices():
-    
+    DB = DatabaseManagment()
     sw_ids = db.get_all_itemIDs()
 
     #update keys if outdated
     check_http_response()
+    recorded_ids = [_item[0] for _item in DB.get_todays_price_records()]
 
     for item in sw_ids:
-        print(item[0])
+        if item[0] not in recorded_ids:
+            print(item[0])
 
-        item_info = resp.get_response_data(f"items/MINIFIG/{item[0]}/price")
+            item_info = resp.get_response_data(f"items/MINIFIG/{item[0]}/price")
 
-        try:
-            db.add_price_info(item_info)
-        except KeyError:
-            print("ERROR -", item_info)
-            break
+            try:
+                db.add_price_info(item_info)
+            except KeyError:
+                print("ERROR -", item_info)
+                break
 
 
 def remove_sql_chars(string:str):
@@ -99,8 +102,10 @@ def super_sets():
                 info = {"quantity":entry["quantity"], "item_id":_item[0], "set_id":entry["item"]["no"]}
                 DB.add_set_participation(info)
 
+
+
 def main():
-    super_sets()
+    update_prices()
 
 if __name__ == "__main__":
     start = time.time()

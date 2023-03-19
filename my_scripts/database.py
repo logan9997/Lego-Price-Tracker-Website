@@ -742,21 +742,20 @@ class DatabaseManagment():
     
 
     def get_weekly_item_metric_change(self, item_id, last_weeks_date, metric) -> int:
-        two_weeks_ago_date = datetime.datetime.today() - datetime.timedelta(days = 14)
-        two_weeks_ago_date.strftime('%Y-%m-%d')
+
+        print(metric)
         
         sql = f"""
             SELECT (
             (SELECT AVG({metric})
             FROM App_price
-            WHERE date > '{last_weeks_date}'
+            WHERE date = '{last_weeks_date}'
                 AND item_id = '{item_id}'
             ) 
             - 
             (SELECT AVG({metric})
             FROM App_price
-            WHERE date > '{two_weeks_ago_date}'
-                AND date < '{last_weeks_date}'
+            WHERE date = '{datetime.datetime.today().strftime("%Y-%m-%d")}'
                 AND item_id = '{item_id}'
             )
         ) AS 'change'

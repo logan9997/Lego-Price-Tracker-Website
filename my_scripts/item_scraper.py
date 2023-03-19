@@ -180,14 +180,15 @@ class ImageScrape():
 
 
     def loop_through_images(self):
-        self.item_ids = self.db.get_star_wars_sets()
+        self.item_ids = self.db.get_pieces_colours()[1901:]
+        directory = r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\Website\App\static\App\images"
         import time, requests, os
         for item in self.item_ids:
             #1 = type, #0 = item_id
             
-            url = f"https://img.bricklink.com/ItemImage/SN/0/{item[0]}.png"
-            img_name = fr"{item[0]}.png"
-            if img_name not in os.listdir(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\Website\App\static\App\images"):
+            url = f"https://img.bricklink.com/ItemImage/PN/{item[1]}/{item[0]}.png"
+            img_name = directory + fr"/{item[1]}_{item[0]}.png"
+            if img_name not in os.listdir(directory):
                 print(item[0])
                 img_data = requests.get(url).content
                 with open(img_name, "wb") as handler:
