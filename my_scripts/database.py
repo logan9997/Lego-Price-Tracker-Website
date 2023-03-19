@@ -5,7 +5,7 @@ import sys
 class DatabaseManagment():
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\website\db.sqlite3", check_same_thread=False)
+        self.con = sqlite3.connect(r"C:\Users\logan\OneDrive\Documents\Programming\Python\apis\BL_API\legosite\db.sqlite3", check_same_thread=False)
         self.cursor = self.con.cursor()
 
 
