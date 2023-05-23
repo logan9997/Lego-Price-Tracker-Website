@@ -1,4 +1,4 @@
-# Bricklink-Price-Tracker
+# Lego-Price-Tracker
 
 A Django driven web app to track prices of lego sets and minifigures
 
