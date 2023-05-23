@@ -5,7 +5,7 @@ A Django driven web app to track prices of lego sets and minifigures
 
 Features:
 
--View detials and price trends of any lego set or minifigure.
+-View details and price trends of any lego set or minifigure.
 
 -Create your own portfolio of owned items
 
