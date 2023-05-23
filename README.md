@@ -1,6 +1,6 @@
 # Bricklink-Price-Tracker
 
-A website that shows price data and trends of lego sets and minifigures.
+A Django driven web app to track prices of lego sets and minifigures
 
 
 Features:
@@ -13,3 +13,15 @@ Features:
 
 -Look through all items included in particular themes and sub themes.
 
+
+Techologies Used:
+
+-Django
+
+-Heroku
+
+-Python
+
+-CSS, HTML, JS
+
+-Postgres
